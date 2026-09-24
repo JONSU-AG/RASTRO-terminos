@@ -1,0 +1,60 @@
+FICHA DE PLAY STORE — RASTRO
+==============================
+Categoría: Educación
+Correo de contacto: [REEMPLAZA con tu correo, ej. contacto@tudominio.com]
+URL política de privacidad: https://rumbo-jonsu.web.app/privacidad
+ID de app: com.jonsuapps.rastro
+
+────────────────────────────────
+1) DESCRIPCIÓN CORTA (máx. 80 caracteres)
+────────────────────────────────
+Prepárate para la UNSA con cursos, simulacros y más.
+
+────────────────────────────────
+2) DESCRIPCIÓN LARGA
+────────────────────────────────
+RASTRO es tu plataforma de preparación preuniversitaria para ingresar a la UNSA.
+
+TODO LO QUE NECESITAS PARA TU INGRESO:
+📚 Cursos por materia con teoría oficial CEPREUNSA
+📝 Simulacros con puntaje y ranking en tiempo real
+📖 Biblioteca de recursos y material de estudio
+🃏 Flashcards para memorizar rápido
+❌ Banco de errores: aprende de cada equivocación
+🔥 Rachas de estudio y widgets en tu pantalla de inicio
+⏱️ Temporizador Pomodoro para sesiones de enfoque
+🤖 Asistente con IA para resolver tus dudas
+👥 Comunidad de postulantes como tú
+
+Tu progreso se guarda automáticamente en tu cuenta: sigue donde te quedaste, en cualquier momento.
+
+Descarga RASTRO y empieza hoy tu camino a la UNSA. ¡El ingreso empieza aquí! 🚀
+
+────────────────────────────────
+3) NOVEDADES — versión 1.0 (primer lanzamiento)
+────────────────────────────────
+¡Bienvenido a RASTRO! 🎉
+• Cursos, biblioteca y simulacros CEPREUNSA
+• Flashcards, ranking y banco de errores
+• Rachas, widgets y temporizador Pomodoro
+• Asistente con IA y comunidad de postulantes
+
+────────────────────────────────
+4) RESPUESTAS GUÍA — SEGURIDAD DE LOS DATOS
+────────────────────────────────
+• Datos recogidos: nombre, correo electrónico, foto de perfil,
+  identificadores de usuario, actividad en la app (progreso,
+  simulacros, rachas), archivos del usuario, diagnósticos.
+• Finalidad: funcionalidad, personalización y gestión de la cuenta.
+• Compartidos con terceros: solo proveedores de servicios
+  (Google Firebase). No se venden datos.
+• Cifrado en tránsito: Sí. Solicitud de borrado: Sí
+  (canal de atención en la app, sección Políticas).
+
+────────────────────────────────
+5) ARCHIVOS DE ESTA CARPETA
+────────────────────────────────
+• icono-512.png → súbelo como ícono de la tienda (512x512)
+• grafico-1024x500.png → súbelo como gráfico de funciones
+• Faltan: 2 a 8 capturas de pantalla (tómalas del emulador
+  o tu celular: inicio, cursos, simulacro y perfil).

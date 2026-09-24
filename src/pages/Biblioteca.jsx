@@ -1,0 +1,1560 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  FileText, 
+  Folder, 
+  Download, 
+  Flag, 
+  Users, 
+  Eye, 
+  EyeOff, 
+  Plus, 
+  ExternalLink, 
+  UploadCloud,
+  Sparkles,
+  Search,
+  CheckCircle,
+  Share2,
+  MessageSquare,
+  X,
+  Trash2,
+  BookOpen
+} from 'lucide-react';
+import { ReportModal } from '../components/ReportModal';
+import { UploadModal } from '../components/UploadModal';
+import { SuccessModal } from '../components/SuccessModal';
+import { ConfirmModal, NoticeModal } from '../components/ConfirmModal';
+import { InspirationalDailyBanner } from '../components/InspirationalDailyBanner';
+import { ReactionsBar } from '../components/ReactionsBar';
+import { CommentsSection } from '../components/CommentsSection';
+import { BookmarkButton } from '../components/BookmarkButton';
+import { LiveUserAvatar, LiveUserName } from '../components/LiveUserAvatar';
+import { CommunityUploadCard } from '../components/CommunityUploadCard';
+import { LibrosCollectionModal } from '../components/LibrosCollectionModal';
+import { useSiteTexts } from '../lib/siteTexts';
+import { useAuth, ADMIN_EMAILS, isAuthorOfFirebase } from '../context/AuthContext';
+import { TOMOS, PRACTICAS } from '../data/legacyData';
+import { searchMatches } from '../lib/searchHelper';
+import { db } from '../lib/firebase';
+import { collection, onSnapshot, doc, updateDoc, deleteDoc, increment, query, orderBy, arrayRemove } from 'firebase/firestore';
+import { getDirectImageUrl, getDriveThumbnailUrl, getDriveFileId, getDirectFileViewerUrl } from '../lib/storageHelper';
+import { subscribeToSiteSettings, toggleHideDefaultItem, isDefaultItemHidden, getCachedSiteSettings, setOficialesHiddenAll } from '../lib/siteSettings';
+import { VERSION_CONFIG } from '../config/appVersionConfig';
+
+export const Biblioteca = () => {
+  const { user, isAdmin } = useAuth();
+  const { getText } = useSiteTexts();
+  const [siteSettings, setSiteSettings] = useState(getCachedSiteSettings);
+
+  useEffect(() => {
+    const unsub = subscribeToSiteSettings((s) => setSiteSettings(s));
+    return () => unsub();
+  }, []);
+
+  const [mainTab, setMainTab] = useState('documentos'); // 'documentos' | 'comunidad' | 'libros'
+  const [libros, setLibros] = useState([]);
+  const [showAllBookPreviews, setShowAllBookPreviews] = useState(true);
+  const [selectedBookCollection, setSelectedBookCollection] = useState(null);
+  useEffect(()=>{ try{ const q=query(collection(db,'libros'), orderBy('orden','asc')); const unsub=onSnapshot(q,(s)=> setLibros(s.docs.map(d=>({id:d.id,...d.data()})))); return ()=>unsub(); }catch{} },[]);
+  
+  const [customOficiales, setCustomOficiales] = useState([]);
+  useEffect(()=>{ try{ const q=query(collection(db,'oficiales'), orderBy('createdAt','desc')); const unsub=onSnapshot(q,(s)=> setCustomOficiales(s.docs.map(d=>({id:d.id,...d.data()})))); return ()=>unsub(); }catch{} },[]);
+
+  const [activeDocTab, setActiveDocTab] = useState('tomos'); // 'tomos' | 'practicas'
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState({ id: null, title: '' });
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
+  const [successContent, setSuccessContent] = useState({ title: '', message: '' });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const location = useLocation();
+
+  const hideLibrosTab = VERSION_CONFIG.disconnectLibros === true || (!isAdmin && siteSettings?.disableAllLibros);
+  useEffect(() => {
+    if (hideLibrosTab && mainTab === 'libros') {
+      setMainTab('documentos');
+    }
+  }, [hideLibrosTab, mainTab]);
+
+  useEffect(() => {
+    if (location.state?.tab === 'comunidad' || location.search.includes('tab=comunidad')) {
+      setMainTab('comunidad');
+    }
+  }, [location]);
+
+  // Preview toggle state: dictionary of id -> boolean
+  const [showAllPreviews, setShowAllPreviews] = useState(true);
+  const [expandedPreviews, setExpandedPreviews] = useState({});
+  const [expandedFileComments, setExpandedFileComments] = useState({});
+
+  const toggleFileComments = (id) => {
+    setExpandedFileComments(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Live community uploads from Firestore
+  const [communityUploads, setCommunityUploads] = useState([]);
+
+  useEffect(() => {
+    try {
+      const q = query(collection(db, 'uploads'), orderBy('createdAt', 'desc'));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(d => ({ ...d.data(), id: d.id, firestoreId: d.id }));
+        // Filter out items with >= 3 reports or marked hidden / oculto
+        const visibleDocs = docs.filter(item => (!item.oculto && !item.hidden && (item.reportsCount || 0) < 3));
+
+        // 🕒 ORDENAMIENTO POR EL MÁS ACTUAL (Cronológico descendente)
+        visibleDocs.sort((a, b) => {
+          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.timestamp || 0);
+          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.timestamp || 0);
+          return timeB - timeA;
+        });
+
+        setCommunityUploads(visibleDocs);
+      }, (err) => {
+        console.warn("Firestore uploads listener error:", err);
+      });
+
+      return () => unsubscribe();
+    } catch (e) {
+      console.warn("Could not subscribe to uploads:", e);
+    }
+  }, []);
+
+  const togglePreview = (id) => {
+    setExpandedPreviews(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  const [noticeModal, setNoticeModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+
+  const handleReportCommunityItem = (itemId, title) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Reportar Material",
+      message: `¿Deseas reportar "${title}"? Al acumular reportes pasará a revisión de moderación.`,
+      confirmText: "Sí, Reportar",
+      onConfirm: async () => {
+        try {
+          const itemRef = doc(db, 'uploads', itemId);
+          await updateDoc(itemRef, {
+            reportsCount: increment(1),
+            enRevision: true
+          });
+
+          setSuccessContent({
+            title: '¡Reporte Enviado!',
+            message: 'Gracias por tu reporte. El material ha pasado a revisión técnica.'
+          });
+          setIsSuccessOpen(true);
+        } catch (e) {
+          setNoticeModal({ isOpen: true, title: "Error", message: "Error al reportar: " + e.message, type: 'error' });
+        }
+      }
+    });
+  };
+
+  const handleDeleteCommunityItem = (item) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "⚠️ Eliminar Publicación",
+      message: `¿Estás seguro de que deseas eliminar permanentemente "${item.title}"? Esta acción no se puede deshacer.`,
+      confirmText: "Sí, Eliminar",
+      onConfirm: async () => {
+        try {
+          await deleteDoc(doc(db, 'uploads', item.id));
+          setNoticeModal({ isOpen: true, title: "Eliminado", message: "La publicación ha sido eliminada correctamente de la biblioteca y de tu perfil.", type: 'success' });
+        } catch (e) {
+          setNoticeModal({ isOpen: true, title: "Error", message: "No se pudo eliminar: " + e.message, type: 'error' });
+        }
+      }
+    });
+  };
+
+  // Convert Drive link or Folder link to embed preview link if possible
+  const getPreviewUrl = (url) => {
+    if (!url) return null;
+
+    // 1. Google Drive Single File Preview (PDF, Docs, Sheets, etc.)
+    const driveFileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveFileMatch && driveFileMatch[1]) {
+      return `https://drive.google.com/file/d/${driveFileMatch[1]}/preview`;
+    }
+
+    // 2. Google Drive Folder Embedded View (List view of folder contents for full text readability)
+    const folderMatch = url.match(/(?:\/folders\/|folderview\?id=|open\?id=)([a-zA-Z0-9_-]+)/);
+    if (folderMatch && folderMatch[1]) {
+      return `https://drive.google.com/embeddedfolderview?id=${folderMatch[1]}#list`;
+    }
+
+    // 3. Direct PDF url fallback
+    if (url.match(/\.pdf$/i)) {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+      }
+      return url;
+    }
+
+    return url;
+  };
+
+  const filteredCommunity = communityUploads.filter(item => {
+    return searchMatches([item.title, item.author, item.desc, item.category], searchQuery);
+  });
+
+  const customTomosFormatted = customOficiales
+    .filter(c => (c.type || 'tomo') === 'tomo')
+    .map(c => [c.titulo, c.descripcion || c.link, c.link, true, c.id]);
+
+  const customPracticasFormatted = customOficiales
+    .filter(c => c.type === 'practica')
+    .map(c => ({
+      titulo: c.titulo,
+      descripcion: c.descripcion || c.link,
+      carpeta: c.link,
+      isCustom: true,
+      id: c.id
+    }));
+
+  const filteredTomos = [
+    ...customTomosFormatted,
+    ...TOMOS
+  ].filter((tomo, idx) => {
+    const title = tomo[0];
+    const tomoId = tomo[4] || `official-tomo-${(title || '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || idx}`;
+    if (isDefaultItemHidden(tomoId, siteSettings) || isDefaultItemHidden(`default_tomo_${idx}`, siteSettings)) {
+      return false;
+    }
+    return searchMatches([tomo[0], tomo[1]], searchQuery);
+  });
+
+  const filteredPracticas = [
+    ...customPracticasFormatted,
+    ...PRACTICAS
+  ].filter((practica, idx) => {
+    const title = practica.titulo || practica[0];
+    const practicaId = practica.id || `official-practica-${(title || '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || idx}`;
+    if (isDefaultItemHidden(practicaId, siteSettings) || isDefaultItemHidden(`default_practica_${idx}`, siteSettings)) {
+      return false;
+    }
+    return searchMatches([practica.titulo || practica[0], practica.descripcion || practica[1]], searchQuery);
+  });
+
+  return (
+    <div className="page-container" style={{ paddingBottom: '120px' }}>
+      {/* Frase / Versículo del Día */}
+      <InspirationalDailyBanner />
+
+      {/* Hero Header */}
+      <header className="library-hero" style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
+          {getText('biblio_title', 'Biblioteca Digital RASTRO')}
+        </h1>
+        <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '640px', margin: '0 auto' }}>
+          {getText('biblio_subtitle', 'Tomos, prácticas y bancos de preguntas oficiales compartidos por estudiantes y docentes.')}
+        </p>
+
+        {/* Navegación Horizontal Lineal de Botones Principales */}
+        <div 
+          style={{ 
+            display: 'grid', 
+            gridTemplateColumns: hideLibrosTab ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', 
+            gap: '8px', 
+            maxWidth: '680px', 
+            margin: '20px auto 0',
+            width: '100%'
+          }}
+        >
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setMainTab('documentos')}
+            style={{ 
+              padding: '10px 8px', 
+              borderRadius: '16px', 
+              fontWeight: 800, 
+              fontSize: 'clamp(0.74rem, 2.2vw, 0.86rem)',
+              border: mainTab === 'documentos' ? 'none' : '1.5px solid var(--card-border)',
+              background: mainTab === 'documentos' ? 'linear-gradient(135deg, #007AFF 0%, #34C759 100%)' : 'var(--card-bg)',
+              color: mainTab === 'documentos' ? '#FFFFFF' : 'var(--text-main)',
+              cursor: 'pointer',
+              boxShadow: mainTab === 'documentos' ? '0 6px 18px rgba(0, 122, 255, 0.35)' : 'none',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              lineHeight: '1.2'
+            }}
+          >
+            <span>📜 Material Oficial</span>
+            <span style={{ fontSize: '0.68rem', opacity: 0.85, fontWeight: 600 }}>({filteredTomos.length + filteredPracticas.length})</span>
+          </motion.button>
+
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setMainTab('comunidad')}
+            style={{ 
+              padding: '10px 8px', 
+              borderRadius: '16px', 
+              fontWeight: 800, 
+              fontSize: 'clamp(0.74rem, 2.2vw, 0.86rem)',
+              border: mainTab === 'comunidad' ? 'none' : '1.5px solid var(--card-border)',
+              background: mainTab === 'comunidad' ? 'linear-gradient(135deg, #F59E0B 0%, #EC4899 100%)' : 'var(--card-bg)',
+              color: mainTab === 'comunidad' ? '#FFFFFF' : 'var(--text-main)',
+              cursor: 'pointer',
+              boxShadow: mainTab === 'comunidad' ? '0 6px 18px rgba(245, 158, 11, 0.35)' : 'none',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              lineHeight: '1.2'
+            }}
+          >
+            <span>🤝 Aportes</span>
+            <span style={{ fontSize: '0.68rem', opacity: 0.85, fontWeight: 600 }}>({filteredCommunity.length})</span>
+          </motion.button>
+
+          {!hideLibrosTab && (
+            <motion.button 
+              whileHover={{ scale: 1.02 }} 
+              whileTap={{ scale: 0.98 }} 
+              onClick={() => setMainTab('libros')} 
+              style={{ 
+                padding: '10px 8px', 
+                borderRadius: '16px', 
+                fontWeight: 800, 
+                fontSize: 'clamp(0.74rem, 2.2vw, 0.86rem)', 
+                border: mainTab === 'libros' ? 'none' : '1.5px solid var(--card-border)', 
+                background: mainTab === 'libros' ? 'linear-gradient(135deg, #A855F7, #6366F1)' : 'var(--card-bg)', 
+                color: mainTab === 'libros' ? '#fff' : 'var(--text-main)', 
+                cursor: 'pointer', 
+                boxShadow: mainTab === 'libros' ? '0 6px 18px rgba(168,85,247,0.35)' : 'none',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                lineHeight: '1.2'
+              }}
+            >
+              <span>📚 Libros</span>
+              <span style={{ fontSize: '0.68rem', opacity: 0.85, fontWeight: 600 }}>({libros.reduce((acc, l) => acc + (l.recursos?.length || 0), 0)})</span>
+            </motion.button>
+          )}
+        </div>
+
+        {/* Global Accent-Insensitive Search Bar */}
+        <div style={{ position: 'relative', maxWidth: '640px', margin: '20px auto 0' }}>
+          <Search size={18} style={{ position: 'absolute', left: '18px', top: '50%', transform: 'translateY(-50%)', color: 'var(--accent-color)' }} />
+          <input
+            type="text"
+            placeholder="🔍 Buscar tomo, libro, práctica o tema..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '14px 44px 14px 48px',
+              borderRadius: '20px',
+              border: '1.5px solid var(--card-border)',
+              background: 'var(--card-bg)',
+              color: 'var(--text-main)',
+              fontSize: '0.92rem',
+              outline: 'none',
+              boxSizing: 'border-box',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.04)'
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              style={{
+                position: 'absolute',
+                right: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(120,120,128,0.15)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                fontWeight: 700
+              }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ──────────────── SECTION 1: MATERIAL OFICIAL ──────────────── */}
+      {mainTab === 'documentos' && (
+        <>
+          {/* Interruptor maestro (Admin): oculta/restaura TODA la sección oficial de golpe */}
+          {isAdmin && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={async () => { await setOficialesHiddenAll(!siteSettings?.disableAllOficiales); }}
+                title={siteSettings?.disableAllOficiales ? 'Restaurar toda la sección oficial' : 'Ocultar toda la sección oficial para todos'}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 16px', borderRadius: '14px', cursor: 'pointer',
+                  border: '1.5px solid var(--card-border)', background: 'var(--card-bg)',
+                  color: 'var(--text-main)', fontWeight: 800, fontSize: '0.82rem'
+                }}
+              >
+                {siteSettings?.disableAllOficiales ? <Eye size={15} /> : <EyeOff size={15} />}
+                {siteSettings?.disableAllOficiales ? 'Mostrar sección oficial' : 'Ocultar toda la sección'}
+              </button>
+            </div>
+          )}
+          <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: '22px' }}>
+            <AnimatePresence mode="popLayout">
+              {(() => {
+                const allOfficialItems = siteSettings?.disableAllOficiales ? [] : [
+                  ...filteredTomos.map(t => ({ ...t, officialType: 'tomo' })),
+                  ...filteredPracticas.map(p => ({ ...p, officialType: 'practica' }))
+                ];
+
+                if (allOfficialItems.length === 0) {
+                  return (
+                    <div className="glass-card" style={{ padding: '40px', textAlign: 'center', borderRadius: '24px', gridColumn: '1 / -1' }}>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '1rem', margin: 0 }}>
+                        {siteSettings?.disableAllOficiales
+                          ? '🔒 La sección de Material Oficial está oculta temporalmente por el administrador.'
+                          : `No se encontró material oficial para "${searchQuery}".`}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return allOfficialItems.map((item, idx) => {
+                  const isTomo = item.officialType === 'tomo';
+                  const title = isTomo ? item[0] : (item.titulo || item[0]);
+                  const itemId = isTomo 
+                    ? `official-tomo-${(title || '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || idx}`
+                    : `official-practica-${(title || '').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || idx}`;
+                  const desc = isTomo ? item[1] : (item.descripcion || item[1]);
+                  const link = isTomo ? item[2] : (item.carpeta || item[2]);
+                  const previewUrl = getPreviewUrl(link);
+                  const isPreviewOpen = !!expandedPreviews[itemId];
+                  const accentThemeColor = isTomo ? '#FF3B30' : '#34C759';
+
+                  return (
+                    <motion.div 
+                      key={itemId} 
+                      initial={{ opacity: 0, y: 15 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      className="glass-card" 
+                      style={{ 
+                        padding: '22px', 
+                        borderRadius: '24px', 
+                        position: 'relative', 
+                        display: 'flex', 
+                        flexDirection: 'column',
+                        border: `1.5px solid ${isTomo ? 'rgba(255, 59, 48, 0.25)' : 'rgba(52, 199, 89, 0.25)'}`,
+                        boxShadow: `0 10px 26px ${isTomo ? 'rgba(255, 59, 48, 0.08)' : 'rgba(52, 199, 89, 0.08)'}`,
+                        gridColumn: isPreviewOpen ? '1 / -1' : 'auto'
+                      }}
+                    >
+                      {/* Encabezado e Info */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: `${accentThemeColor}1F`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <FileText color={accentThemeColor} size={22} />
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: accentThemeColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                            👑 Material Oficial CEPRE / UNSA
+                          </span>
+                          <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>{title}</h3>
+                        </div>
+                      </div>
+
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '14px', lineHeight: 1.5, flex: 1 }}>{desc}</p>
+
+                      {/* Banner Recuadro de Vista Previa */}
+                      <div 
+                        onClick={() => togglePreview(itemId)}
+                        style={{
+                          width: '100%',
+                          height: '140px',
+                          borderRadius: '16px',
+                          border: isPreviewOpen ? `2px solid ${accentThemeColor}` : '1.5px solid var(--card-border)',
+                          background: 'rgba(15, 23, 42, 0.05)',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          marginBottom: '14px',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '6px'
+                        }}
+                        title="Toca para ver / ocultar vista previa"
+                      >
+                        {getDriveFileId(link) ? (
+                          <img
+                            src={getDriveThumbnailUrl(link, 'w600')}
+                            alt={title}
+                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
+                            draggable={false}
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = `https://drive.google.com/thumbnail?id=${getDriveFileId(link)}&sz=w400`;
+                            }}
+                            style={{
+                              maxHeight: '100%',
+                              maxWidth: '100%',
+                              width: 'auto',
+                              height: 'auto',
+                              objectFit: 'contain',
+                              display: 'block',
+                              margin: '0 auto',
+                              borderRadius: '6px',
+                              background: '#FFFFFF',
+                              boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                              touchAction: 'pan-y'
+                            }}
+                          />
+                        ) : previewUrl ? (
+                          <iframe
+                            src={previewUrl}
+                            title={title}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              border: 'none',
+                              pointerEvents: 'none',
+                              background: '#ffffff',
+                              opacity: 0.9
+                            }}
+                          />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: accentThemeColor }}>
+                            <FileText size={36} />
+                          </div>
+                        )}
+                        <div style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.65) 100%)',
+                          display: 'flex',
+                          alignItems: 'flex-end',
+                          justifyContent: 'center',
+                          padding: '10px',
+                          pointerEvents: 'none'
+                        }}>
+                          <span style={{
+                            background: isPreviewOpen ? accentThemeColor : 'rgba(0,0,0,0.85)',
+                            color: '#ffffff',
+                            padding: '5px 14px',
+                            borderRadius: '12px',
+                            fontSize: '0.78rem',
+                            fontWeight: 800,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                            backdropFilter: 'blur(8px)'
+                          }}>
+                            {isPreviewOpen ? '✕ Cerrar Vista Previa' : 'Ver Vista Previa'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Botones de acción */}
+                      <div style={{ display: 'flex', gap: '8px', width: '100%', alignItems: 'center' }}>
+                        {link && link.match(/\.pdf$/i) ? (
+                          <a 
+                            href={link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ 
+                              flex: 1,
+                              padding: '12px 18px', 
+                              background: 'linear-gradient(135deg, #FF3B30, #FF6B6B)', 
+                              color: '#FFFFFF', 
+                              border: 'none', 
+                              borderRadius: '14px', 
+                              fontWeight: 800, 
+                              fontSize: '0.88rem', 
+                              display: 'flex', 
+                              justifyContent: 'center', 
+                              alignItems: 'center', 
+                              gap: '8px', 
+                              cursor: 'pointer',
+                              textDecoration: 'none',
+                              boxShadow: '0 4px 14px rgba(255, 59, 48, 0.3)'
+                            }}
+                          >
+                            <FileText size={16} /> Ver Temario y Matriz (PDF)
+                          </a>
+                        ) : (
+                          <button 
+                            onClick={() => window.open(link, '_blank')}
+                            style={{ 
+                              flex: 1,
+                              padding: '12px 18px', 
+                              background: `linear-gradient(135deg, ${accentThemeColor}, ${isTomo ? '#FF6B6B' : '#30D158'})`, 
+                              color: '#FFFFFF', 
+                              border: 'none', 
+                              borderRadius: '14px', 
+                              fontWeight: 800, 
+                              fontSize: '0.88rem', 
+                              display: 'flex', 
+                              justifyContent: 'center', 
+                              alignItems: 'center', 
+                              gap: '8px', 
+                              cursor: 'pointer',
+                              boxShadow: `0 4px 14px ${isTomo ? 'rgba(255, 59, 48, 0.3)' : 'rgba(52, 199, 89, 0.3)'}`
+                            }}
+                          >
+                            <ExternalLink size={16} /> Abrir en Drive
+                          </button>
+                        )}
+                        <BookmarkButton
+                          item={{
+                            id: itemId,
+                            title: title,
+                            desc: desc,
+                            driveUrl: link,
+                            category: isTomo ? 'tomos' : 'practicas',
+                            author: 'CEPRE / UNSA'
+                          }}
+                          size="normal"
+                          showText={false}
+                        />
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: "¿Ocultar Material Oficial?",
+                                message: `¿Deseas ocultar "${title}" de la Biblioteca para todos los estudiantes?`,
+                                confirmText: "Sí, Ocultar",
+                                variant: "danger",
+                                onConfirm: async () => {
+                                  await toggleHideDefaultItem(itemId);
+                                  setNoticeModal({ isOpen: true, title: "Material Ocultado", message: "El material oficial ha sido ocultado correctamente.", type: "success" });
+                                }
+                              });
+                            }}
+                            title="Ocultar para todos (Admin)"
+                            style={{
+                              padding: '10px 12px',
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              border: 'none',
+                              color: '#EF4444',
+                              borderRadius: '14px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Barra de Reacciones */}
+                      <div style={{
+                        marginTop: '12px',
+                        paddingTop: '10px',
+                        borderTop: `1px solid ${isTomo ? 'rgba(255, 59, 48, 0.15)' : 'rgba(52, 199, 89, 0.15)'}`,
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <ReactionsBar
+                          targetId={itemId}
+                          targetType={isTomo ? 'tomo' : 'practica'}
+                          size="small"
+                        />
+                      </div>
+
+                      {/* Vista Previa Expandible */}
+                      <AnimatePresence>
+                        {isPreviewOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            style={{ overflow: 'hidden', marginTop: '16px' }}
+                          >
+                            <div style={{
+                              borderRadius: '18px',
+                              overflow: 'hidden',
+                              border: `2px solid ${accentThemeColor}`,
+                              minHeight: '340px',
+                              maxHeight: '520px',
+                              background: 'rgba(15, 23, 42, 0.04)',
+                              boxShadow: '0 12px 32px rgba(0,0,0,0.14)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: '16px 8px',
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                              WebkitUserSelect: 'none',
+                              touchAction: 'pan-y'
+                            }}>
+                              {getDriveFileId(link) ? (
+                                <img
+                                  src={getDriveThumbnailUrl(link, 'w1200')}
+                                  alt={title}
+                                  referrerPolicy="no-referrer"
+                                  crossOrigin="anonymous"
+                                  draggable={false}
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = `https://drive.google.com/thumbnail?id=${getDriveFileId(link)}&sz=w800`;
+                                  }}
+                                  style={{
+                                    maxHeight: '480px',
+                                    width: 'auto',
+                                    maxWidth: '100%',
+                                    objectFit: 'contain',
+                                    display: 'block',
+                                    margin: '0 auto',
+                                    borderRadius: '6px',
+                                    background: '#FFFFFF',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)',
+                                    pointerEvents: 'none',
+                                    userSelect: 'none',
+                                    touchAction: 'pan-y'
+                                  }}
+                                />
+                              ) : previewUrl ? (
+                                <iframe
+                                  src={previewUrl}
+                                  title={title}
+                                  style={{ width: '100%', height: '460px', border: 'none', pointerEvents: 'none', background: '#FFFFFF' }}
+                                />
+                              ) : (
+                                <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>
+                                  Vista previa no disponible directamente. Usa "Abrir en Drive".
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  );
+                });
+              })()}
+            </AnimatePresence>
+          </section>
+        </>
+      )}
+
+      {/* ──────────────── SECTION 2: APORTES DE LA COMUNIDAD ──────────────── */}
+      {mainTab === 'comunidad' && (
+        <section style={{ maxWidth: '900px', margin: '0 auto' }}>
+          {/* Top action banner con Toggle General de Vista Previa */}
+          <div className="glass-card" style={{ padding: '24px', borderRadius: '24px', marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 4px', color: 'var(--text-main)' }}>
+                Material Compartido por Aliados y Estudiantes 🌟
+              </h2>
+              <p style={{ margin: '0 0 12px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                Revisa los recursos con vista previa interactiva o aporta el tuyo.
+              </p>
+
+              {/* General Toggle Switch: Mostrar vistas previas (Predeterminado: SÍ / ON) */}
+              <div
+                onClick={() => setShowAllPreviews(prev => !prev)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '12px',
+                  background: 'rgba(120, 120, 128, 0.06)',
+                  border: '1px solid var(--card-border)',
+                  transition: 'background 0.2s ease'
+                }}
+              >
+                <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                  Mostrar vistas previas
+                </span>
+                
+                {/* Switch UI Track */}
+                <div style={{
+                  width: '40px',
+                  height: '22px',
+                  borderRadius: '12px',
+                  background: showAllPreviews ? 'var(--accent-color)' : 'rgba(120, 120, 128, 0.3)',
+                  position: 'relative',
+                  transition: 'background 0.25s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '2px'
+                }}>
+                  {/* Switch Handle / Knob */}
+                  <motion.div
+                    animate={{ x: showAllPreviews ? 18 : 0 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    style={{
+                      width: '18px',
+                      height: '18px',
+                      borderRadius: '50%',
+                      background: '#FFFFFF',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setIsUploadOpen(true)}
+              style={{
+                padding: '14px 22px',
+                borderRadius: '16px',
+                border: 'none',
+                background: 'var(--accent-color)',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 8px 20px rgba(0,122,255,0.25)'
+              }}
+            >
+              <UploadCloud size={20} /> Aportar Material
+            </motion.button>
+          </div>
+
+
+          {/* Uploads List */}
+          {filteredCommunity.length === 0 ? (
+            <div className="glass-card" style={{ padding: '50px 20px', textAlign: 'center', borderRadius: '24px' }}>
+              <Sparkles size={40} style={{ color: 'var(--accent-color)', marginBottom: '12px' }} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-main)' }}>
+                Sé el primero en compartir
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '20px' }}>
+                Aún no hay aportes con esa búsqueda. Comparte tus prácticas o notas para ayudar a otros.
+              </p>
+              <button
+                onClick={() => setIsUploadOpen(true)}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '14px',
+                  border: 'none',
+                  background: 'var(--accent-color)',
+                  color: '#fff',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Subir Aporte Ahora
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {filteredCommunity.map((item) => (
+                <CommunityUploadCard
+                  key={item.id}
+                  item={item}
+                  user={user}
+                  isAdmin={isAdmin}
+                  onReport={(id, title) => {
+                    setReportTarget({ id, title });
+                    setIsReportOpen(true);
+                  }}
+                  onDelete={handleDeleteCommunityItem}
+                  getPreviewUrl={getPreviewUrl}
+                  setNoticeModal={setNoticeModal}
+                  setLightboxImage={setLightboxImage}
+                  defaultPreviewOpen={showAllPreviews}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+      {mainTab === 'libros' && (
+        <section style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Header compacto de la sección */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', padding: '0 4px' }}>
+            <div style={{ flex: 1, minWidth: '180px' }}>
+              <h2 style={{ margin: 0, fontSize: 'clamp(1.05rem, 3.5vw, 1.25rem)', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>📚</span>
+                <span>Colecciones de Editoriales</span>
+              </h2>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {/* Switch UI Interactivo Compacto */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', userSelect: 'none', background: 'var(--card-bg)', padding: '4px 10px', borderRadius: '14px', border: '1px solid var(--card-border)' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                  Vista previa
+                </span>
+                <div
+                  onClick={() => setShowAllBookPreviews(prev => !prev)}
+                  style={{
+                    width: '32px',
+                    height: '18px',
+                    borderRadius: '10px',
+                    background: showAllBookPreviews ? 'linear-gradient(135deg, #A855F7, #6366F1)' : 'rgba(148, 163, 184, 0.4)',
+                    padding: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: showAllBookPreviews ? 'flex-end' : 'flex-start',
+                    transition: 'all 0.25s ease'
+                  }}
+                >
+                  <motion.div
+                    layout
+                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    style={{
+                      width: '14px',
+                      height: '14px',
+                      borderRadius: '50%',
+                      background: '#FFFFFF',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                    }}
+                  />
+                </div>
+              </label>
+
+              <button
+                onClick={() => setIsUploadOpen(true)}
+                style={{
+                  padding: '5px 10px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #A855F7, #6366F1)',
+                  color: '#fff',
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <Plus size={13} />
+                <span>Subir</span>
+              </button>
+            </div>
+          </div>
+
+          {!isAdmin && siteSettings?.disableAllLibros ? (
+            <div className="glass-card" style={{ padding: '60px 20px', borderRadius: '24px', textAlign: 'center', background: 'var(--card-bg)', border: '1.5px solid var(--card-border)' }}>
+              <BookOpen size={48} style={{ color: 'var(--text-secondary)', marginBottom: '16px', opacity: 0.6 }} />
+              <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                Biblioteca de Libros Desactivada Temporalmente
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', maxWidth: '400px', marginLeft: 'auto', marginRight: 'auto' }}>
+                El administrador ha desactivado temporalmente la visualización de libros. Por favor vuelve a consultar más tarde.
+              </p>
+            </div>
+          ) : libros.length === 0 ? (
+            <div className="glass-card" style={{ padding: '60px 20px', borderRadius: '24px', textAlign: 'center' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📚</div>
+              <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                Colecciones en Preparación
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto 18px', fontSize: '0.9rem' }}>
+                Próximamente se listarán aquí los tomos de Lumbreras (Libros Rojos), Cuzcano y colecciones completas para tu preparación.
+              </p>
+              {isAdmin && (
+                <button
+                  onClick={() => window.location.href = '/admin'}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    background: 'var(--accent-color)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ⚙️ Gestionar Colecciones en Admin
+                </button>
+              )}
+            </div>
+          ) : (
+            (() => {
+              const queryTrim = searchQuery.trim();
+              const activeLibros = isAdmin ? libros : (siteSettings?.disableAllLibros ? [] : libros.filter(l => !l.oculto && !l.hidden));
+
+              if (queryTrim) {
+                // Modo búsqueda activa: desglosar todos los tomos coincidentes en una hermosa parrilla de tarjetas
+                const searchResults = [];
+                activeLibros.forEach((l) => {
+                  const matchCollection = searchMatches([l.nombre || '', l.editorial || '', l.descripcion || ''], queryTrim);
+                  (l.recursos || []).forEach((r) => {
+                    if (matchCollection || searchMatches([r.nombre || '', r.autor || '', l.editorial || '', l.nombre || ''], queryTrim)) {
+                      searchResults.push({
+                        ...r,
+                        editorialName: l.editorial || 'Editorial',
+                        collectionName: l.nombre || ''
+                      });
+                    }
+                  });
+                });
+
+                if (searchResults.length === 0) {
+                  return (
+                    <div className="glass-card" style={{ padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
+                      <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                        No se encontraron libros con la búsqueda "{searchQuery}".
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                        🔍 {searchResults.length} {searchResults.length === 1 ? 'libro encontrado' : 'libros encontrados'}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(105px, 1fr))',
+                        gap: '12px',
+                        width: '100%'
+                      }}
+                    >
+                      {searchResults.map((recurso, rIdx) => {
+                        const targetUrl = recurso.url || recurso.link || recurso.driveUrl || '';
+                        const driveId = getDriveFileId(targetUrl);
+                        const primaryCover = recurso.portadaUrl || recurso.thumbUrl || (driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w400` : getDirectImageUrl(targetUrl));
+
+                        return (
+                          <motion.a
+                            key={recurso.id || rIdx}
+                            href={targetUrl || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!targetUrl || targetUrl === '#') e.preventDefault();
+                            }}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2, delay: rIdx * 0.03 }}
+                            whileHover={{ y: -6, scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
+                            style={{
+                              textDecoration: 'none',
+                              cursor: targetUrl && targetUrl !== '#' ? 'pointer' : 'default',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px',
+                              width: '100%'
+                            }}
+                          >
+                            <div style={{ width: '100%', aspectRatio: '3 / 4.1', borderRadius: '12px', overflow: 'hidden', position: 'relative', boxShadow: '0 6px 16px rgba(0,0,0,0.18)', border: '1px solid var(--card-border)', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1))' }}>
+                              {primaryCover ? (
+                                <img
+                                  src={primaryCover}
+                                  alt={recurso.nombre}
+                                  loading="lazy"
+                                  decoding="async"
+                                  referrerPolicy="no-referrer"
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'relative', zIndex: 1 }}
+                                  onLoad={(e) => {
+                                    if (e.target.previousSibling) e.target.previousSibling.style.display = 'none';
+                                  }}
+                                  onError={(e) => {
+                                    if (driveId) {
+                                      if (e.target.src.includes('thumbnail')) {
+                                        e.target.src = `https://lh3.googleusercontent.com/d/${driveId}`;
+                                      } else {
+                                        e.target.style.display = 'none';
+                                      }
+                                    } else {
+                                      e.target.style.display = 'none';
+                                    }
+                                  }}
+                                />
+                              ) : null}
+                              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '12px', textAlign: 'center', zIndex: 0 }}>
+                                <BookOpen size={24} style={{ color: '#A855F7', marginBottom: '6px' }} />
+                                <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)' }}>Cargando portada...<br/>(Archivo pesado)</span>
+                              </div>
+                              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', background: 'linear-gradient(to right, rgba(0,0,0,0.25), transparent)', zIndex: 2 }} />
+                              <div style={{ position: 'absolute', top: '6px', left: '6px', zIndex: 3 }}>
+                                <span style={{ fontSize: '0.6rem', padding: '2px 6px', borderRadius: '6px', background: 'rgba(0,0,0,0.65)', color: '#fff', backdropFilter: 'blur(4px)', fontWeight: 600 }}>
+                                  {recurso.collectionName}
+                                </span>
+                              </div>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.62rem', fontWeight: 600, color: '#A855F7', textTransform: 'uppercase', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {recurso.editorialName}
+                              </span>
+                              <h4 style={{ margin: '1px 0 0', fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.25' }}>
+                                {recurso.nombre}
+                              </h4>
+                            </div>
+                          </motion.a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              const filteredLibros = activeLibros;
+
+              if (filteredLibros.length === 0) {
+                return (
+                  <div className="glass-card" style={{ padding: '40px', borderRadius: '20px', textAlign: 'center' }}>
+                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                      No hay colecciones disponibles por el momento.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {filteredLibros.map((libro) => {
+                    const tomosCount = libro.recursos?.length || 0;
+                    const useDoubleRow = tomosCount > 10;
+                    const isOpenState = queryTrim ? true : showAllBookPreviews;
+
+                    return (
+                      <details
+                        key={libro.id}
+                        open={isOpenState}
+                        className="glass-card"
+                        style={{ borderRadius: '20px', overflow: 'hidden', border: '1.5px solid var(--card-border)' }}
+                      >
+                        <summary style={{ listStyle: 'none', cursor: 'pointer', padding: '0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 14px' }}>
+                            {/* Portada mini más delgada */}
+                            <div style={{ width: '30px', height: '40px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative', boxShadow: '0 2px 6px rgba(0,0,0,0.12)', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(99, 102, 241, 0.15))', border: '1px solid var(--card-border)' }}>
+                              {libro.portadaUrl ? (
+                                <img src={libro.portadaUrl} alt={libro.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#A855F7' }}>
+                                  <BookOpen size={16} />
+                                </div>
+                              )}
+                              <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '2px', background: 'linear-gradient(to right, rgba(0,0,0,0.2), transparent)' }} />
+                            </div>
+
+                            {/* Info refinada y sutil */}
+                            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '0.62rem', fontWeight: 600, color: 'var(--text-secondary)', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                  {libro.editorial || 'Editorial'}
+                                </span>
+                              </div>
+                              <h3 style={{ margin: '1px 0 0', fontSize: 'clamp(0.82rem, 2.5vw, 0.95rem)', fontWeight: 600, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: '1.2' }}>
+                                {libro.nombre}
+                              </h3>
+                            </div>
+
+                            {/* Badge elegante + chevron + Borrar si Admin/Owner */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                              {(isAdmin || (user && (user.uid === libro.ownerId || user.uid === libro.uploadedBy?.uid || user.uid === libro.authorUid || user.email === libro.userEmail || user.email === libro.ownerEmail))) && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    setConfirmModal({
+                                      isOpen: true,
+                                      title: "¿Eliminar Colección?",
+                                      message: `¿Estás seguro de que deseas eliminar la colección "${libro.nombre}"? Esta acción no se puede deshacer.`,
+                                      confirmText: "Sí, Eliminar",
+                                      variant: "danger",
+                                      onConfirm: async () => {
+                                        try {
+                                          await deleteDoc(doc(db, 'libros', libro.id));
+                                          setNoticeModal({ isOpen: true, title: "Eliminado", message: "La colección de libros ha sido eliminada.", type: "success" });
+                                        } catch (err) {
+                                          setNoticeModal({ isOpen: true, title: "Error", message: err.message, type: "error" });
+                                        }
+                                      }
+                                    });
+                                  }}
+                                  title="Eliminar colección completa"
+                                  style={{
+                                    background: 'rgba(239, 68, 68, 0.12)',
+                                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                                    color: '#EF4444',
+                                    padding: '3px 8px',
+                                    borderRadius: '8px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 800,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px'
+                                  }}
+                                >
+                                  <Trash2 size={12} /> Borrar
+                                </button>
+                              )}
+                              <span style={{ padding: '2px 8px', borderRadius: '8px', background: 'rgba(168, 85, 247, 0.1)', color: '#A855F7', fontSize: '0.68rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                <BookOpen size={10} /> {tomosCount} <span className="mobile-hide-text">{tomosCount === 1 ? 'tomo' : 'tomos'}</span>
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', opacity: 0.7, transition: 'transform 0.2s' }}>▼</span>
+                            </div>
+                          </div>
+                        </summary>
+
+                        {/* Carrusel / Parrilla dinámica de tomos */}
+                        <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--card-border)' }}>
+                          {tomosCount === 0 ? (
+                            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '20px', fontSize: '0.85rem', margin: 0 }}>
+                              {queryTrim ? 'No se encontraron tomos coincidentes en esta colección.' : 'Esta colección aún no tiene tomos.'}
+                            </p>
+                          ) : (
+                            <div
+                              ref={(el) => {
+                                if (!queryTrim && el && !el.dataset.autoScrollInit) {
+                                  el.dataset.autoScrollInit = 'true';
+                                  let interval = setInterval(() => {
+                                    if (el.matches(':hover') || el.dataset.userInteracting === 'true') return;
+                                    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 10) {
+                                      el.scrollTo({ left: 0, behavior: 'smooth' });
+                                    } else {
+                                      el.scrollBy({ left: 140, behavior: 'smooth' });
+                                    }
+                                  }, 3500);
+                                  el.addEventListener('pointerdown', () => { el.dataset.userInteracting = 'true'; });
+                                  el.addEventListener('pointerup', () => { setTimeout(() => { el.dataset.userInteracting = 'false'; }, 5000); });
+                                }
+                              }}
+                              style={queryTrim || tomosCount <= 4 ? {
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '14px',
+                                paddingTop: '14px',
+                                paddingBottom: '4px'
+                              } : {
+                                display: 'grid',
+                                gridAutoFlow: 'column',
+                                gridTemplateRows: useDoubleRow ? 'repeat(2, auto)' : 'repeat(1, auto)',
+                                gap: '14px',
+                                overflowX: 'auto',
+                                scrollSnapType: 'x mandatory',
+                                paddingTop: '14px',
+                                paddingBottom: '8px',
+                                scrollbarWidth: 'thin',
+                                scrollbarColor: 'var(--accent-color) transparent'
+                              }}
+                            >
+                              {(libro.recursos || []).map((recurso, rIdx) => {
+                                const rawUrl = recurso.url || recurso.link || recurso.driveUrl || '';
+                                const driveId = getDriveFileId(rawUrl);
+                                const targetUrl = getDirectFileViewerUrl(recurso);
+                                // Usar la miniatura ultra liviana de Google Drive (sz=w400) para carga inmediata de la 1ra hoja
+                                const primaryCover = recurso.portadaUrl || recurso.thumbUrl || (driveId ? `https://drive.google.com/thumbnail?id=${driveId}&sz=w400` : getDirectImageUrl(rawUrl));
+                                return (
+                                  <motion.a
+                                    key={recurso.id || rIdx}
+                                    href={targetUrl || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (!targetUrl || targetUrl === '#') {
+                                        e.preventDefault();
+                                      }
+                                    }}
+                                    whileHover={{ y: -4, scale: 1.03 }}
+                                    whileTap={{ scale: 0.97 }}
+                                    style={{
+                                      textDecoration: 'none',
+                                      cursor: targetUrl && targetUrl !== '#' ? 'pointer' : 'default',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '6px',
+                                      minWidth: 'clamp(105px, 28vw, 125px)',
+                                      maxWidth: 'clamp(105px, 28vw, 125px)',
+                                      scrollSnapAlign: 'start',
+                                      flexShrink: 0
+                                    }}
+                                  >
+                                    <div style={{ width: '100%', aspectRatio: '3 / 4.1', borderRadius: '10px', overflow: 'hidden', position: 'relative', boxShadow: '0 4px 14px rgba(0,0,0,0.12)', border: '1px solid var(--card-border)', background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1))' }}>
+                                      {primaryCover ? (
+                                        <img
+                                          src={primaryCover}
+                                          alt={recurso.nombre}
+                                          loading="lazy"
+                                          decoding="async"
+                                          referrerPolicy="no-referrer"
+                                          style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'relative', zIndex: 1 }}
+                                          onLoad={(e) => {
+                                            if (e.target.previousSibling) e.target.previousSibling.style.display = 'none';
+                                          }}
+                                          onError={(e) => {
+                                            if (driveId) {
+                                              if (e.target.src.includes('thumbnail')) {
+                                                e.target.src = `https://lh3.googleusercontent.com/d/${driveId}`;
+                                              } else {
+                                                e.target.style.display = 'none';
+                                              }
+                                            } else {
+                                              e.target.style.display = 'none';
+                                            }
+                                          }}
+                                        />
+                                      ) : null}
+                                      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6px', textAlign: 'center', pointerEvents: 'none', zIndex: 0, background: 'rgba(15, 23, 42, 0.4)' }}>
+                                        <BookOpen size={24} color="#A855F7" style={{ opacity: 0.8 }} />
+                                        <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.7)', fontWeight: 700, marginTop: '4px', lineHeight: 1.1 }}>
+                                          Cargando portada...<br/>(Archivo pesado)
+                                        </span>
+                                      </div>
+                                      <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '5px', background: 'linear-gradient(to right, rgba(0,0,0,0.25), transparent)', zIndex: 2 }} />
+                                      {(isAdmin || (user && (user.uid === libro.ownerId || user.uid === libro.uploadedBy?.uid || user.uid === libro.authorUid || user.uid === recurso.uploadedBy?.uid))) && (
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            setConfirmModal({
+                                              isOpen: true,
+                                              title: "¿Eliminar Tomo?",
+                                              message: `¿Deseas eliminar el tomo "${recurso.nombre}" de esta colección?`,
+                                              confirmText: "Sí, Eliminar",
+                                              variant: "danger",
+                                              onConfirm: async () => {
+                                                try {
+                                                  await updateDoc(doc(db, 'libros', libro.id), {
+                                                    recursos: arrayRemove(recurso)
+                                                  });
+                                                  setNoticeModal({ isOpen: true, title: "Tomo Eliminado", message: `El tomo "${recurso.nombre}" fue eliminado.`, type: "success" });
+                                                } catch (err) {
+                                                  setNoticeModal({ isOpen: true, title: "Error", message: err.message, type: "error" });
+                                                }
+                                              }
+                                            });
+                                          }}
+                                          title="Eliminar este tomo"
+                                          style={{
+                                            position: 'absolute',
+                                            top: '4px',
+                                            right: '4px',
+                                            zIndex: 10,
+                                            background: 'rgba(239, 68, 68, 0.9)',
+                                            color: '#FFFFFF',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            padding: '4px 6px',
+                                            fontSize: '0.65rem',
+                                            fontWeight: 800,
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '2px',
+                                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+                                          }}
+                                        >
+                                          <Trash2 size={11} />
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div style={{ padding: '0 2px' }}>
+                                      <span style={{ display: 'block', fontSize: '0.64rem', fontWeight: 800, color: '#A855F7', textTransform: 'uppercase', letterSpacing: '0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {recurso.autor || libro.editorial || 'Editorial'}
+                                      </span>
+                                      <h5 style={{ margin: '1px 0 0', fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                        {recurso.nombre}
+                                      </h5>
+                                    </div>
+                                  </motion.a>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              );
+            })()
+          )}
+        </section>
+      )}
+
+      {/* Modal interactivo de Contenedor de Colección de Libros */}
+      {selectedBookCollection && (
+        <LibrosCollectionModal
+          isOpen={!!selectedBookCollection}
+          onClose={() => setSelectedBookCollection(null)}
+          collectionItem={selectedBookCollection}
+          onUpdateCollection={(updated) => {
+            setSelectedBookCollection(updated);
+            setLibros(prev => prev.map(item => item.id === updated.id ? updated : item));
+          }}
+          onNotice={(title, msg) => {
+            setIsSuccessOpen(true);
+            setSuccessContent({ title, message: msg });
+          }}
+        />
+      )}
+
+      {/* Modals */}
+      <UploadModal 
+        isOpen={isUploadOpen} 
+        onClose={() => setIsUploadOpen(false)} 
+        onUploadSuccess={() => {
+          setIsSuccessOpen(true);
+          setSuccessContent({
+            title: '¡Aporte Publicado!',
+            message: 'Tu material ya está disponible para toda la comunidad.'
+          });
+        }} 
+      />
+
+      <ReportModal 
+        isOpen={isReportOpen} 
+        onClose={() => setIsReportOpen(false)} 
+        targetId={reportTarget.id}
+        targetTitle={reportTarget.title}
+        targetType="material"
+      />
+
+      <SuccessModal 
+        isOpen={isSuccessOpen} 
+        onClose={() => setIsSuccessOpen(false)} 
+        title={successContent.title} 
+        message={successContent.message} 
+      />
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText || "Aceptar"}
+      />
+
+      <NoticeModal
+        isOpen={noticeModal.isOpen}
+        onClose={() => setNoticeModal({ ...noticeModal, isOpen: false })}
+        title={noticeModal.title}
+        message={noticeModal.message}
+        type={noticeModal.type}
+      />
+
+      {/* Lightbox a pantalla completa para imágenes */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 99999,
+              background: 'rgba(0,0,0,0.92)',
+              backdropFilter: 'blur(10px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '20px'
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ position: 'relative', maxWidth: '92vw', maxHeight: '92vh', textAlign: 'center' }}
+            >
+              <img
+                src={getDirectImageUrl(lightboxImage)}
+                onError={(e) => {
+                  const thumb = getDriveThumbnailUrl(lightboxImage, 'w1600');
+                  if (thumb && e.currentTarget.src !== thumb) e.currentTarget.src = thumb;
+                }}
+                alt="Vista ampliada"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '84vh',
+                  borderRadius: '16px',
+                  objectFit: 'contain',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.7)'
+                }}
+              />
+              <button
+                onClick={() => setLightboxImage(null)}
+                style={{
+                  position: 'absolute',
+                  top: '-16px',
+                  right: '-16px',
+                  background: 'var(--accent-color)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.5)'
+                }}
+              >
+                <X size={20} />
+              </button>
+              <div style={{ marginTop: '10px' }}>
+                <a
+                  href={lightboxImage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#38BDF8',
+                    textDecoration: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <ExternalLink size={14} /> Abrir imagen original en nueva pestaña ↗
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};

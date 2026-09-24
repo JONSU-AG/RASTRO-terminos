@@ -1,0 +1,30 @@
+rules_version = '2';
+// RASTRO · Reglas Storage — avatares y material con tope de tamaño.
+// ⚠️ ANTES DE PUBLICAR: pruébala en Firebase Console > Storage > Reglas > Simulador,
+// luego despliega SOLO reglas con: firebase deploy --only storage --project rumbo-jonsu
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Avatares y fotos de perfil: lectura pública, subida con sesión (máx 5 MB, solo imágenes)
+    match /avatars/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Material de la comunidad (PDFs, imágenes): lectura pública, subida con sesión (máx 25 MB)
+    match /uploads/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 25 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*')
+            || request.resource.contentType.matches('application/pdf'));
+    }
+
+    // Todo lo demás: denegado por defecto
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

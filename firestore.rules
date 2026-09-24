@@ -1,0 +1,161 @@
+rules_version = '2';
+// RASTRO · Reglas Firestore — mínimo privilegio.
+// El administrador se verifica por correo del autor (viene firmado en el token de Auth,
+// no se puede falsificar desde la app).
+// ⚠️ ANTES DE PUBLICAR: pruébala en Firebase Console > Firestore > Reglas > Simulador,
+// luego despliega SOLO reglas con: firebase deploy --only firestore:rules --project rumbo-jonsu
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function author() {
+      return signedIn() && request.auth.token.email in [
+        'aguilar.jonsu@gmail.com',
+        'rumbo.jonsu@gmail.com',
+        'jhojan.aguilar.13.10@gmail.com',
+        'rulua617@gmail.com',
+        '147279812+rulua617@users.noreply.github.com'
+      ];
+    }
+
+    // Campos que NADIE salvo el autor puede crear ni modificar
+    function privKeys() {
+      return ['role', 'isAdmin', 'isCreator', 'isAlly', 'banned',
+              'hasWarning', 'warningDismissed', 'warningMessage', 'banReason'];
+    }
+
+    // Dueño del documento (compatible con los distintos formatos que usa la app)
+    function ownsDoc() {
+      return signedIn() && (
+        resource.data.get('authorUid', '') == request.auth.uid ||
+        resource.data.get('uid', '') == request.auth.uid ||
+        resource.data.get('senderUid', '') == request.auth.uid ||
+        resource.data.get('followerUid', '') == request.auth.uid ||
+        resource.data.get('recipientUid', '') == request.auth.uid ||
+        (resource.data.get('uploadedBy', {}) is map &&
+         resource.data.uploadedBy.get('uid', '') == request.auth.uid)
+      );
+    }
+
+    // —— Perfiles: públicos para leer, cada uno edita solo el suyo sin tocar privilegios ——
+    match /usuarios/{uid} {
+      allow read: if true;
+      allow create: if signedIn() && request.auth.uid == uid
+        && !request.resource.data.keys().hasAny(privKeys());
+      allow update: if signedIn() && request.auth.uid == uid && (
+        author() ||
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(privKeys())
+      );
+      allow delete: if author();
+    }
+
+    // —— Contenido editorial (cursos, academias, oficiales, temarios): lectura pública, escritura del autor ——
+    match /cursos/{d} { allow read: if true; allow write: if author(); }
+    match /academias/{d} { allow read: if true; allow write: if author(); }
+    match /oficiales/{d} { allow read: if true; allow write: if author(); }
+    match /briceno_2027_semanas/{d} { allow read: if true; allow write: if author(); }
+    match /foro_preguntas/{d} { allow read: if true; allow write: if author(); }
+
+    // —— Contenido de la comunidad: lectura pública, crear con sesión, editar/borrar dueño o autor ——
+    match /uploads/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+    match /libros/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+    match /flashcards/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+    match /preguntas_examen/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+    match /perfil_comentarios/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+    match /publicacion_comentarios/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+    match /clase_comentarios/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+
+    // —— Notificaciones: solo el destinatario las lee; el remitente las crea ——
+    match /notificaciones/{d} {
+      allow read: if signedIn() && (
+        resource.data.get('recipientUid', '') == request.auth.uid ||
+        resource.data.get('recipientUid', '') == 'all' || author()
+      );
+      allow create: if signedIn() &&
+        request.resource.data.get('senderUid', '') == request.auth.uid;
+      allow update, delete: if author() || (signedIn() &&
+        resource.data.get('recipientUid', '') == request.auth.uid);
+    }
+
+    // —— Mensajes directos: solo participantes ——
+    match /mensajes_directos_privados/{d} {
+      allow read: if signedIn() && (
+        resource.data.get('senderUid', '') == request.auth.uid ||
+        resource.data.get('recipientUid', '') == request.auth.uid || author()
+      );
+      allow create: if signedIn() &&
+        request.resource.data.get('senderUid', '') == request.auth.uid;
+      allow update, delete: if ownsDoc() || author();
+    }
+
+    // —— Seguidos: lectura pública (se muestra en perfiles), alta/baja del propio seguidor ——
+    match /siguiendo/{d} {
+      allow read: if true;
+      allow create: if signedIn() &&
+        request.resource.data.get('followerUid', '') == request.auth.uid;
+      allow delete: if ownsDoc() || author();
+      allow update: if author();
+    }
+
+    // —— Ranking: lectura pública, cada uno registra su propio puntaje ——
+    match /ranking_simulacros/{d} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update, delete: if ownsDoc() || author();
+    }
+
+    // —— Reportes y solicitudes: crear con sesión, gestionar solo el autor ——
+    match /reportes/{d} {
+      allow create: if signedIn();
+      allow read, update, delete: if author();
+    }
+    match /solicitudes_aliados/{d} {
+      allow create: if signedIn();
+      allow read: if author() || (signedIn() &&
+        resource.data.get('uid', '') == request.auth.uid);
+      allow update, delete: if author();
+    }
+
+    // —— Configuración del sitio (switches, ocultos, banners): lectura pública, escritura del autor ——
+    match /system_config/{d} {
+      allow read: if true;
+      allow write: if author();
+    }
+
+    // —— Todo lo demás: denegado por defecto ——
+    match /{document=**} {
+      allow read, write: if author();
+    }
+  }
+}
