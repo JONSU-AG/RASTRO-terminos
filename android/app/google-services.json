@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "432336496806",
+    "project_id": "rumbo-jonsu",
+    "storage_bucket": "rumbo-jonsu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:432336496806:android:25f3db33c2b14983abac67",
+        "android_client_info": {
+          "package_name": "com.jonsuapps.rastro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "432336496806-fuqrq112korn5aljbso0f9oj8uae8rnm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jonsuapps.rastro",
+            "certificate_hash": "287e63b9a05f83a3550d73a137c22a28de107380"
+          }
+        },
+        {
+          "client_id": "432336496806-7ctjor26otm03pcrm3tbg6qv0kve5ina.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCfLBJgMfco32kRYHJj43v50cViRAEqpCs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "432336496806-7ctjor26otm03pcrm3tbg6qv0kve5ina.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

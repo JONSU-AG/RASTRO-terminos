@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RASTRO · Plataforma PREU & Web App Dinámica</title>
+  <meta name="description" content="Plataforma PREU & Web App Dinámica para preparación preuniversitaria con cursos, biblioteca y simuladores">
+  <meta property="og:title" content="RASTRO · Plataforma PREU & Web App Dinámica">
+  <meta property="og:description" content="Plataforma PREU & Web App Dinámica para preparación preuniversitaria con cursos, biblioteca y simuladores">
+  
+  <!-- Favicon & PWA Theme -->
+  <link rel="icon" type="image/png" href="./applogo.png">
+  <link rel="apple-touch-icon" href="./applogo.png">
+  <meta name="theme-color" content="#F2F2F7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- PWA Early Install Prompt Listener -->
+  <script>
+    window.deferredPWAEvent = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredPWAEvent = e;
+    });
+  </script>
+
+  <!-- Fonts: Nunito, Plus Jakarta Sans, Inter, Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@600;700;800;900&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="root">
+    <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #F2F2F7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+      <style>
+        @keyframes initSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes initDash { 0% { stroke-dasharray: 1px, 200px; stroke-dashoffset: 0; } 50% { stroke-dasharray: 100px, 200px; stroke-dashoffset: -15px; } 100% { stroke-dasharray: 100px, 200px; stroke-dashoffset: -125px; } }
+      </style>
+      <div style="position: relative; width: 56px; height: 56px; margin-bottom: 16px;">
+        <svg width="56" height="56" viewBox="0 0 50 50" style="animation: initSpin 1.4s linear infinite; transform-origin: center;">
+          <defs>
+            <linearGradient id="initGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#007AFF" />
+              <stop offset="50%" stop-color="#A855F7" />
+              <stop offset="100%" stop-color="#EC4899" />
+            </linearGradient>
+          </defs>
+          <circle cx="25" cy="25" r="20" fill="none" stroke="rgba(120, 120, 128, 0.15)" stroke-width="4"></circle>
+          <circle cx="25" cy="25" r="20" fill="none" stroke="url(#initGrad)" stroke-width="4" stroke-linecap="round" style="animation: initDash 1.5s ease-in-out infinite; transform-origin: 25px 25px;"></circle>
+        </svg>
+      </div>
+      <p style="color: #64748B; font-weight: 700; font-size: 0.92rem; margin: 0; letter-spacing: -0.01em;">Cargando RASTRO...</p>
+    </div>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>

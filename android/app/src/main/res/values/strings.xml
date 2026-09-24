@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">RASTRO</string>
+    <string name="title_activity_main">RASTRO</string>
+    <string name="package_name">com.jonsuapps.rastro</string>
+    <string name="custom_url_scheme">com.jonsuapps.rastro</string>
+    <string name="widget_exam_countdown_desc">Cuenta regresiva para tu examen con fecha elegible</string>
+    <string name="widget_weekly_streak_desc">Seguimiento semanal de tus días de estudio en RASTRO</string>
+    <string name="widget_daily_streak_desc">Racha diaria activa y estado de estudio de hoy</string>
+    <string name="widget_study_reminder_desc">Recordatorio diario con objetivos de estudio y motivación</string>
+    <string name="widget_pomodoro_desc">Temporizador Pomodoro para tus sesiones de estudio y enfoque</string>
+    <string name="widget_mini_streak_desc">Acceso rápido a tu racha de estudio en RASTRO</string>
+</resources>

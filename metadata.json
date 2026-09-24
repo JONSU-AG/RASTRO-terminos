@@ -1,0 +1,10 @@
+{
+  "name": "RASTRO",
+  "description": "Plataforma PREU & Web App Dinámica para preparación preuniversitaria con cursos, biblioteca y simuladores",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
