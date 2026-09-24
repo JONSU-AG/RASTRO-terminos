@@ -12,13 +12,13 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        WidgetHelper.refreshAllWidgets(this);
+        // TEMP-DISABLED-WIDGETS: WidgetHelper.refreshAllWidgets(this);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        WidgetHelper.refreshAllWidgets(this);
+        // TEMP-DISABLED-WIDGETS: WidgetHelper.refreshAllWidgets(this);
     }
 
     @Override
