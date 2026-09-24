@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "432336496806-bnjmescb8uuh50a54l6h6ejh9c3korjs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jonsuapps.rastro",
+            "certificate_hash": "cf0d45560fad609e6a6fdfd7157ed34d61f46bdf"
+          }
+        },
+        {
           "client_id": "432336496806-fuqrq112korn5aljbso0f9oj8uae8rnm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.jonsuapps.rastro",
             "certificate_hash": "287e63b9a05f83a3550d73a137c22a28de107380"
+          }
+        },
+        {
+          "client_id": "432336496806-vncaimge98trl4jvag0vmjar9ffnqbua.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jonsuapps.rastro",
+            "certificate_hash": "284498d3d5baf3ace5b919fc6fca38bab82725b4"
           }
         },
         {
