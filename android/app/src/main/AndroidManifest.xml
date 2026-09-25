@@ -23,6 +23,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- App Links: abre enlaces de rumbo-jonsu.web.app directo en la app -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="rumbo-jonsu.web.app" />
+            </intent-filter>
+
         </activity>
 
         <!-- TEMP-DISABLED-WIDGETS: Configuración de Fecha Elegible para el Widget de Examen

@@ -148,7 +148,6 @@ export const SettingsModal = ({ isOpen, onClose, onOpenTerms }) => {
       position: 'fixed',
       inset: 0,
       background: 'rgba(0, 0, 0, 0.72)',
-      backdropFilter: 'blur(10px)',
       zIndex: 99999,
       display: 'flex',
       alignItems: 'center',
@@ -171,7 +170,8 @@ export const SettingsModal = ({ isOpen, onClose, onOpenTerms }) => {
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          willChange: 'transform, opacity'
         }}
       >
         {/* Header */}

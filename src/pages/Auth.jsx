@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Mail, ArrowRight } from 'lucide-react';
-import { auth, db } from '../lib/firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserProfile } from './UserProfile';
@@ -18,7 +15,9 @@ export const Auth = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const { user, loginWithGoogle } = useAuth();
+  const { user, loginWithGoogle, loginWithEmail, registerWithEmail, resetEmailPassword, loginGuest } = useAuth();
+  const [resetSent, setResetSent] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   // If already logged in → show complete social profile & contributions feed directly!
   if (user) {
@@ -29,45 +28,12 @@ export const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setResetSent(false);
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        await loginWithEmail(email, password);
       } else {
-        const cleanName = username.trim();
-        if (!cleanName) {
-          setError('Por favor escribe tu nombre de usuario para registrarte en RASTRO.');
-          setLoading(false);
-          return;
-        }
-        try {
-          sessionStorage.setItem('rastro_preferred_username', cleanName);
-        } catch {}
-
-        const res = await createUserWithEmailAndPassword(auth, email, password);
-        if (res?.user) {
-          try {
-            await updateProfile(res.user, { displayName: cleanName });
-          } catch (upErr) {
-            console.warn("Could not set auth display name", upErr);
-          }
-          try {
-            await setDoc(doc(db, 'usuarios', res.user.uid), {
-              uid: res.user.uid,
-              email: res.user.email,
-              displayName: cleanName,
-              photoURL: res.user.photoURL || '',
-              uploadCount: 0,
-              isAlly: false,
-              isAdmin: false,
-              role: 'estudiante',
-              bio: 'Estudiante enfocado en alcanzar la meta universitaria.',
-              whatsappChannel: '',
-              createdAt: new Date().toISOString()
-            }, { merge: true });
-          } catch (docErr) {
-            console.warn("Could not create firestore doc", docErr);
-          }
-        }
+        await registerWithEmail(username, email, password);
       }
       navigate('/');
     } catch (err) {
@@ -117,7 +83,31 @@ export const Auth = () => {
     }
   };
 
+  const handleGuest = async () => {
+    setGuestLoading(true);
+    setError(null);
+    try {
+      await loginGuest();
+      navigate('/');
+    } catch (err) {
+      console.warn('Guest auth error:', err);
+      setError('No se pudo entrar sin cuenta. Intenta de nuevo.');
+    } finally {
+      setGuestLoading(false);
+    }
+  };
+
   const [showEmailFallback, setShowEmailFallback] = useState(false);
+
+  const handleForgotPassword = async () => {
+    setError(null);
+    try {
+      await resetEmailPassword(email);
+      setResetSent(true);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   return (
     <div className="page-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 80px)', padding: '24px' }}>
@@ -217,6 +207,24 @@ export const Auth = () => {
           {googleLoading ? 'Iniciando con Google...' : 'Iniciar Sesión con Google'}
         </motion.button>
 
+        {/* Entrar sin cuenta */}
+        <motion.button
+          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          onClick={handleGuest}
+          disabled={guestLoading}
+          style={{
+            width: '100%', padding: '14px 20px', borderRadius: '18px',
+            border: '1.5px solid var(--card-border)', background: 'transparent',
+            color: 'var(--text-primary)', fontSize: '0.95rem', fontWeight: 800,
+            cursor: guestLoading ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: '10px', marginBottom: '8px', opacity: guestLoading ? 0.7 : 1,
+            transition: 'all 0.2s ease'
+          }}
+        >
+          {guestLoading ? 'Entrando...' : 'Continuar sin cuenta'}
+        </motion.button>
+
         {/* Discreet Emergency Email Fallback Toggle */}
         <div style={{ marginTop: '16px' }}>
           <button
@@ -231,7 +239,7 @@ export const Auth = () => {
               opacity: 0.75
             }}
           >
-            {showEmailFallback ? 'Ocultar acceso con correo de respaldo' : '¿Problemas con Google? Acceso con correo'}
+            {showEmailFallback ? 'Ocultar acceso con correo' : 'Continuar con correo electrónico'}
           </button>
         </div>
 
@@ -295,6 +303,21 @@ export const Auth = () => {
                   {isLogin ? '¿Crear cuenta con correo?' : '¿Ya tienes cuenta? Inicia sesión'}
                 </button>
               </div>
+
+              {isLogin && (
+                <div style={{ marginTop: '8px', textAlign: 'center' }}>
+                  <button onClick={handleForgotPassword}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.78rem', textDecoration: 'underline' }}
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                  {resetSent && (
+                    <p style={{ fontSize: '0.78rem', color: '#34C759', fontWeight: 600, margin: '6px 0 0' }}>
+                      Te enviamos un enlace de recuperación a tu correo.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '0.74rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                 Al continuar, aceptas nuestras{' '}

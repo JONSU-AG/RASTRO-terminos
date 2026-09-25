@@ -12,15 +12,17 @@ export const AccessGate = ({
   onUnlocked,
   children
 }) => {
-  const { user, loginWithGoogle } = useAuth();
+  const { user, loginWithGoogle, loginGuest } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   const [credUser, setCredUser] = useState('');
   const [credPass, setCredPass] = useState('');
   const [credError, setCredError] = useState('');
   const [credSuccess, setCredSuccess] = useState(false);
 
-  // 1. If not logged in → Google Sign-In Gate
-  if (!user) {
+  // 1. Acceso libre: Cursos y academias abiertos sin sesión (ni Google ni invitado).
+  // Solo Perfil, Chats y Subir piden cuenta. Se conserva el muro de mantenimiento/abajo.
+  if (!user && false) {
     const handleGoogleLogin = async () => {
       setGoogleLoading(true);
       setCredError('');
@@ -32,6 +34,20 @@ export const AccessGate = ({
         setCredError('No se pudo completar el inicio de sesión con Google. Intenta nuevamente.');
       } finally {
         setGoogleLoading(false);
+      }
+    };
+
+    const handleGuestLogin = async () => {
+      setGuestLoading(true);
+      setCredError('');
+      try {
+        await loginGuest();
+        if (onUnlocked) onUnlocked();
+      } catch (err) {
+        console.warn('Guest auth error in gate:', err);
+        setCredError('No se pudo entrar sin cuenta. Intenta nuevamente.');
+      } finally {
+        setGuestLoading(false);
       }
     };
 
@@ -144,6 +160,25 @@ export const AccessGate = ({
               </>
             )}
           </motion.button>
+
+          <button
+            onClick={handleGuestLogin}
+            disabled={guestLoading || googleLoading}
+            style={{
+              width: '100%',
+              marginTop: '12px',
+              padding: '13px 20px',
+              borderRadius: '16px',
+              border: '1.5px solid var(--card-border)',
+              background: 'transparent',
+              color: 'var(--text-main)',
+              fontWeight: 800,
+              fontSize: '0.92rem',
+              cursor: (guestLoading || googleLoading) ? 'wait' : 'pointer'
+            }}
+          >
+            {guestLoading ? 'Entrando...' : 'Continuar sin cuenta'}
+          </button>
         </motion.div>
       </div>
     );

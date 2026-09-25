@@ -4,9 +4,10 @@ import { Shield, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-export const GoogleSignPromptModal = ({ isOpen, onClose, destination = '/cursos' }) => {
-  const { loginWithGoogle } = useAuth();
+export const GoogleSignPromptModal = ({ isOpen, onClose, destination = '/cursos', hideGuest = false }) => {
+  const { loginWithGoogle, loginGuest } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -28,6 +29,23 @@ export const GoogleSignPromptModal = ({ isOpen, onClose, destination = '/cursos'
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGuestSignIn = async () => {
+    setGuestLoading(true);
+    setError('');
+    try {
+      await loginGuest();
+      onClose();
+      if (destination) {
+        navigate(destination);
+      }
+    } catch (err) {
+      console.warn('Guest sign-in error:', err);
+      setError('No se pudo entrar sin cuenta. Intenta de nuevo.');
+    } finally {
+      setGuestLoading(false);
     }
   };
 
@@ -186,6 +204,33 @@ export const GoogleSignPromptModal = ({ isOpen, onClose, destination = '/cursos'
               </>
             )}
           </motion.button>
+
+          {/* Entrar sin cuenta (invitado) — se oculta donde la cuenta es obligatoria */}
+          {!hideGuest && (
+            <>
+              <button
+                onClick={handleGuestSignIn}
+                disabled={guestLoading || loading}
+            style={{
+              width: '100%',
+              marginTop: '12px',
+              padding: '13px 18px',
+              borderRadius: '16px',
+              border: '1.5px solid var(--card-border)',
+              background: 'transparent',
+              color: 'var(--text-main)',
+              fontWeight: 800,
+              fontSize: '0.9rem',
+              cursor: (guestLoading || loading) ? 'wait' : 'pointer'
+            }}
+          >
+            {guestLoading ? 'Entrando...' : 'Continuar sin cuenta'}
+          </button>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', margin: '8px 0 0' }}>
+            Explora sin registrarte. Podrás guardar tu progreso con Google cuando quieras.
+          </p>
+            </>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

@@ -9,6 +9,7 @@ import { CookieBanner } from './components/CookieBanner';
 import { IOSModal } from './components/IOSModal';
 import { TermsModal } from './components/TermsModal';
 import { FloatingWhatsApp } from './components/FloatingWhatsApp';
+import { GuestSaveBanner } from './components/GuestSaveBanner';
 import { WarningBanner } from './components/WarningBanner';
 import { ChooseUsernameModal } from './components/ChooseUsernameModal';
 import { DeviceNotificationsListener } from './components/DeviceNotificationsListener';
@@ -19,6 +20,8 @@ import { AppLoadingSpinner } from './components/AppLoadingSpinner';
 import { preloadAllMainRoutes } from './utils/routePreloader';
 import { App as CapApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { useAuth } from './context/AuthContext';
+import { GoogleSignPromptModal } from './components/GoogleSignPromptModal';
 
 // Helper de retry con backoff para dynamic imports de React.lazy
 const retryDynamicImport = async (importFn, retries = 3, delay = 300) => {
@@ -113,6 +116,26 @@ function ScrollPositionRestorer() {
   return null;
 }
 
+// El Perfil propio exige cuenta (Google o correo): los invitados ven el muro de acceso
+function RequireAccount({ children }) {
+  const { user, isGuest, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (!user || isGuest) {
+    return (
+      <GoogleSignPromptModal
+        isOpen={true}
+        hideGuest={true}
+        destination="/perfil"
+        onClose={() => {
+          if (window.history.length > 1) window.history.back();
+          else window.location.hash = '#/';
+        }}
+      />
+    );
+  }
+  return children;
+}
+
 export function App() {
   const [isTermsOpen, setIsTermsOpen] = useState(false);
 
@@ -163,10 +186,10 @@ export function App() {
                       <Route path="/simulador" element={<Simulador />} />
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/admin" element={<Admin />} />
-                      <Route path="/chats" element={<Chats />} />
+                      <Route path="/chats" element={<RequireAccount><Chats /></RequireAccount>} />
                       <Route path="/orstty" element={<OrsttyPage />} />
                       <Route path="/usuario/:uid" element={<UserProfile />} />
-                      <Route path="/perfil" element={<UserProfile />} />
+                      <Route path="/perfil" element={<RequireAccount><UserProfile /></RequireAccount>} />
                       <Route path="/politicas" element={<PoliticasPage />} />
                       <Route path="/privacidad" element={<PoliticasPage />} />
                       <Route path="/privacy" element={<PoliticasPage />} />
@@ -191,6 +214,9 @@ export function App() {
 
                 {/* Mandatory Choose Username Flow for Users */}
                 <ChooseUsernameModal />
+
+                {/* Guest session: save progress banner */}
+                <GuestSaveBanner />
 
                 {/* In-App On-Screen Notice Banner (Llamado de atención de moderación) */}
                 <WarningBanner />

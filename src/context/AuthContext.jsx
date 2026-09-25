@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, googleProvider, db, saveDriveToken, getStoredDriveToken, clearDriveToken } from '../lib/firebase';
-import { signOut, onAuthStateChanged, GoogleAuthProvider, updateProfile } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { signOut, onAuthStateChanged, GoogleAuthProvider, updateProfile, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import { executeGoogleAuth, isNativePlatform } from '../lib/googleAuth';
 
 // Correos autorizados del autor / creador del proyecto Firebase (rumbo-jonsu)
@@ -215,10 +215,135 @@ export const AuthProvider = ({ children }) => {
     return userCredential;
   };
 
+  // Entrar sin cuenta (invitado): sesión anónima con uid temporal.
+  // Todo funciona igual; el progreso vive en ese uid hasta vincularlo con Google.
+  const loginGuest = async () => {
+    try {
+      await signOut(auth);
+    } catch {}
+    const cred = await signInAnonymously(auth);
+    return cred;
+  };
+
+  const isGuest = Boolean(user?.isAnonymous);
+
+  // Espera a que exista el documento del uid (lo crea el efecto de sesión al registrarse)
+  const waitForUserDoc = async (uid, tries = 12) => {
+    for (let i = 0; i < tries; i++) {
+      try {
+        const s = await getDoc(doc(db, 'usuarios', uid));
+        if (s.exists()) return s.data();
+      } catch {}
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return null;
+  };
+
+  // Fusiona el progreso de invitado en la cuenta Google (auto o forzando invitado)
+  const mergeGuestIntoGoogle = async (googleUid, googleUser, snap, preferGuest = false) => {
+    const { guestData, guestProg, googleData, googleProg } = snap || {};
+    const userFields = preferGuest ? {
+      displayName: guestData?.displayName || googleUser?.displayName || 'Estudiante RASTRO',
+      photoURL: guestData?.photoURL || googleUser?.photoURL || '',
+      hasChosenUsername: Boolean(guestData?.hasChosenUsername),
+      uploadCount: Number(guestData?.uploadCount) || 0
+    } : {
+      displayName: guestData?.displayName || googleData?.displayName || googleUser?.displayName || 'Estudiante RASTRO',
+      photoURL: googleUser?.photoURL || guestData?.photoURL || googleData?.photoURL || '',
+      hasChosenUsername: Boolean(guestData?.hasChosenUsername || googleData?.hasChosenUsername),
+      uploadCount: Math.max(Number(guestData?.uploadCount) || 0, Number(googleData?.uploadCount) || 0)
+    };
+    const progFields = preferGuest ? {
+      xp: Number(guestProg?.xp) || 0,
+      streak: Number(guestProg?.streak) || 0,
+      lastActiveDate: guestProg?.lastActiveDate || null,
+      completedLessons: { ...(guestProg?.completedLessons || {}) },
+      unlockedNodes: (guestProg?.unlockedNodes?.length ? guestProg.unlockedNodes : ['node_0'])
+    } : {
+      xp: Math.max(Number(guestProg?.xp) || 0, Number(googleProg?.xp) || 0),
+      streak: Math.max(Number(guestProg?.streak) || 0, Number(googleProg?.streak) || 0),
+      lastActiveDate: (guestProg?.lastActiveDate || '') > (googleProg?.lastActiveDate || '')
+        ? guestProg.lastActiveDate : (googleProg?.lastActiveDate || guestProg?.lastActiveDate || null),
+      completedLessons: { ...(googleProg?.completedLessons || {}), ...(guestProg?.completedLessons || {}) },
+      unlockedNodes: Array.from(new Set([...(googleProg?.unlockedNodes || []), ...(guestProg?.unlockedNodes || []), 'node_0']))
+    };
+    await setDoc(doc(db, 'usuarios', googleUid), userFields, { merge: true });
+    await setDoc(doc(db, 'usuarios', googleUid, 'gamificacion', 'rastro_progress'), progFields, { merge: true });
+    if (userFields.hasChosenUsername) markUsernameChosenLocally(googleUid);
+    setUserData(prev => ({ ...(prev || {}), ...userFields }));
+  };
+
+  // Pasar el progreso de invitado a una cuenta Google.
+  // - Google sin progreso previo: fusión automática, nada se pierde.
+  // - Google CON progreso previo: lanza { code:'guest-conflict', ... } para que la UI pregunte.
+  const saveGuestProgressWithGoogle = async () => {
+    const anonUser = auth.currentUser;
+    if (!anonUser?.isAnonymous) throw new Error('No hay sesión de invitado activa.');
+    const anonUid = anonUser.uid;
+
+    // 1. Foto del progreso invitado (en memoria, antes de cambiar de sesión)
+    let guestData = null;
+    let guestProg = null;
+    try {
+      const gs = await getDoc(doc(db, 'usuarios', anonUid));
+      if (gs.exists()) guestData = gs.data();
+    } catch {}
+    try {
+      const gp = await getDoc(doc(db, 'usuarios', anonUid, 'gamificacion', 'rastro_progress'));
+      if (gp.exists()) guestProg = gp.data();
+    } catch {}
+    // 2. Limpieza permitida como invitado (su propia gamificación sí se puede borrar)
+    try {
+      await deleteDoc(doc(db, 'usuarios', anonUid, 'gamificacion', 'rastro_progress'));
+    } catch {}
+
+    // 3. Entrar con Google (la sesión pasa a ser la de Google)
+    const { userCredential, driveToken } = await executeGoogleAuth();
+    if (driveToken) setDriveToken(driveToken);
+    const googleUser = userCredential.user;
+    const googleUid = googleUser.uid;
+
+    // 4. Esperar el registro y decidir: fusión automática o conflicto
+    const googleData = await waitForUserDoc(googleUid);
+    let googleProg = null;
+    try {
+      const gp = await getDoc(doc(db, 'usuarios', googleUid, 'gamificacion', 'rastro_progress'));
+      if (gp.exists()) googleProg = gp.data();
+    } catch {}
+    const googleHadProgress = Boolean(
+      googleData && (googleData.hasChosenUsername || (googleData.uploadCount || 0) > 0)
+    ) || Boolean(googleProg && ((googleProg.xp || 0) > 0 || (googleProg.streak || 0) > 1));
+
+    const snap = { guestData, guestProg, googleData, googleProg, googleUid };
+    if (!googleHadProgress) {
+      await mergeGuestIntoGoogle(googleUid, googleUser, snap, false);
+      return { status: 'merged' };
+    }
+    const err = new Error('guest-conflict');
+    err.code = 'guest-conflict';
+    Object.assign(err, snap);
+    throw err;
+  };
+
+  // Resolver conflicto de progreso (invitado vs Google existente)
+  const resolveGuestConflict = async (choice, snap) => {
+    if (!snap?.googleUid) throw new Error('Sin datos para resolver.');
+    if (choice === 'guest') {
+      await mergeGuestIntoGoogle(snap.googleUid, auth.currentUser, snap, true);
+    }
+    // 'google': se conserva lo de Google; lo invitado se descarta.
+    markUsernameChosenLocally(snap.googleUid);
+    return { status: choice === 'guest' ? 'merged' : 'kept-google' };
+  };
+
   // Solicita/renueva token Drive del usuario actual (re-auth popup en web o nativo en app)
   const ensureDriveToken = async () => {
     const stored = getStoredDriveToken();
     if (stored) return stored;
+    // Los invitados no tienen Drive: no lanzar login sorpresivo, pedir vincular primero
+    if (auth.currentUser?.isAnonymous) {
+      throw new Error('Subir archivos a Drive requiere una cuenta Google. Guarda tu progreso con Google para activar esta función.');
+    }
     const { driveToken } = await executeGoogleAuth();
     if (driveToken) {
       setDriveToken(driveToken);
@@ -269,6 +394,29 @@ export const AuthProvider = ({ children }) => {
     return signOut(auth);
   };
 
+  // Correo + contraseña (requiere el proveedor Email/Password activo en Firebase Console)
+  const loginWithEmail = async (email, password) => {
+    try { await signOut(auth); } catch {}
+    return signInWithEmailAndPassword(auth, (email || '').trim(), password);
+  };
+
+  const registerWithEmail = async (displayName, email, password) => {
+    const cleanName = (displayName || '').trim();
+    if (!cleanName) throw new Error('Por favor escribe tu nombre de usuario para registrarte en RASTRO.');
+    try { sessionStorage.setItem('rastro_preferred_username', cleanName); } catch {}
+    try { await signOut(auth); } catch {}
+    const res = await createUserWithEmailAndPassword(auth, (email || '').trim(), password);
+    if (res?.user) {
+      try { await updateProfile(res.user, { displayName: cleanName }); } catch {}
+    }
+    return res;
+  };
+
+  const resetEmailPassword = async (email) => {
+    if (!(email || '').trim()) throw new Error('Escribe tu correo para enviarte el enlace de recuperación.');
+    return sendPasswordResetEmail(auth, email.trim());
+  };
+
   const needsUsername = Boolean(!loading && user && userData && userData.hasChosenUsername !== true);
 
   return (
@@ -286,6 +434,13 @@ export const AuthProvider = ({ children }) => {
       dismissWarning,
       loading, 
       loginWithGoogle, 
+      loginGuest,
+      isGuest,
+      saveGuestProgressWithGoogle,
+      resolveGuestConflict,
+      loginWithEmail,
+      registerWithEmail,
+      resetEmailPassword,
       ensureDriveToken,
       driveToken,
       needsUsername,

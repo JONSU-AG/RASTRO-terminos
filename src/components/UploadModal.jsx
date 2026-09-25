@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { uploadFileToUserDrive, uploadMultipleFilesToDrive, getDriveFileId } from '../lib/storageHelper';
 import { getCachedSiteSettings } from '../lib/siteSettings';
 import { OrsttyMascot } from './Mascots';
+import { GoogleSignPromptModal } from './GoogleSignPromptModal';
 
 const CATEGORIES = [
   { id: 'tomos', label: 'Tomos y Materiales', icon: BookOpen },
@@ -97,6 +98,18 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess, initialSourceMod
 
   if (!isOpen) return null;
 
+  // Subir material exige cuenta (Google o correo): los invitados ven el muro de acceso
+  if (user?.isAnonymous) {
+    return (
+      <GoogleSignPromptModal
+        isOpen={true}
+        hideGuest={true}
+        destination={null}
+        onClose={onClose}
+      />
+    );
+  }
+
   const resetForm = () => {
     setTitle('');
     setAuthor('');
@@ -162,6 +175,10 @@ export const UploadModal = ({ isOpen, onClose, onUploadSuccess, initialSourceMod
     try {
       if (!user) {
         throw new Error('Debes iniciar sesión con Google para subir materiales a TU Google Drive.');
+      }
+      // Invitados: solo enlaces (los archivos del dispositivo van a su Drive personal)
+      if (user?.isAnonymous && sourceMode === 'file') {
+        throw new Error('Subir archivos desde el dispositivo requiere una cuenta Google. Puedes compartir enlaces o guardar tu progreso con Google.');
       }
       const validDriveLinks = driveLinks.map(l => l.trim()).filter(Boolean);
       let finalUrl = validDriveLinks[0] || url.trim();

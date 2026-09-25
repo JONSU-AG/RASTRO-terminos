@@ -10,6 +10,35 @@ const GamificationContext = createContext(null);
 
 const STORAGE_KEY = 'rastro_gamification_v1';
 
+// Fecha local del dispositivo (YYYY-MM-DD). NO usar toISOString (UTC): en Perú
+// (UTC-5) las sesiones de 7pm-12am se registraban como el día siguiente y la racha fallaba.
+const getLocalDayString = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+// Avance de racha por actividad diaria. Devuelve null si hoy ya contó.
+const advanceStreak = (prev, today) => {
+  let newStreak = prev.streak || 0;
+  if (!prev.lastActiveDate) {
+    return { streak: 1, lastActiveDate: today };
+  }
+  if (prev.lastActiveDate === today) return null;
+  const diffDays = Math.round((new Date(today) - new Date(prev.lastActiveDate)) / (1000 * 60 * 60 * 24));
+  if (diffDays === 1) {
+    newStreak += 1;
+  } else if (diffDays > 1) {
+    if (prev.streakFreeze > 0) {
+      newStreak = prev.streak;
+    } else {
+      newStreak = 1;
+    }
+  }
+  return { streak: newStreak, lastActiveDate: today };
+};
+
 // Sintetizador de audio nativo Web Audio API (cero dependencias externas de red, ultra-rápido)
 const playNativeAudioEffect = (type) => {
   if (typeof window === 'undefined') return;
@@ -111,7 +140,7 @@ export const GamificationProvider = ({ children }) => {
     } catch {}
     return {
       streak: 1, // Primer día de bienvenida
-      lastActiveDate: new Date().toISOString().split('T')[0],
+      lastActiveDate: getLocalDayString(),
       streakFreeze: 1,
       xp: 50,
       hearts: initialDefaultLives,
@@ -128,7 +157,7 @@ export const GamificationProvider = ({ children }) => {
 
     // Sincronizar datos nativos para los widgets de escritorio de Android
     const currentStreak = Number(state.streak) || 1;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalDayString();
     const studiedToday = state.lastActiveDate === todayStr;
     const todayIndex = new Date().getDay() === 0 ? 7 : new Date().getDay(); // 1 = Lun ... 7 = Dom
     const weeklyDays = [];
@@ -172,13 +201,30 @@ export const GamificationProvider = ({ children }) => {
     syncWithCloud();
   }, [user?.uid]);
 
+  // Actividad diaria al abrir la app: entrar un día cuenta para la racha
+  // (misma regla de días consecutivos; idempotente si hoy ya contó).
+  useEffect(() => {
+    if (!user?.uid) return;
+    const today = getLocalDayString();
+    setState(prev => {
+      const adv = advanceStreak(prev, today);
+      if (!adv) return prev;
+      const next = { ...prev, streak: adv.streak, lastActiveDate: adv.lastActiveDate };
+      try {
+        const docRef = doc(db, 'usuarios', user.uid, 'gamificacion', 'rastro_progress');
+        setDoc(docRef, next, { merge: true });
+      } catch {}
+      return next;
+    });
+  }, [user?.uid]);
+
   // Cálculo del nivel actual basado en XP ($Nivel = \lfloor XP / 100 \rfloor + 1$)
   const level = Math.floor((state.xp || 0) / 100) + 1;
   const currentLevelProgress = (state.xp || 0) % 100;
 
   // Registrar lección completada con actualización de racha y celebración
   const recordLessonCompletion = useCallback(async (lessonId, gainedXp, stars = 3) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDayString();
 
     // Celebración visual y háptica
     playNativeAudioEffect('victory');
@@ -192,26 +238,9 @@ export const GamificationProvider = ({ children }) => {
     });
 
     setState(prev => {
-      // Cálculo de racha diaria
-      let newStreak = prev.streak || 0;
-      if (!prev.lastActiveDate) {
-        newStreak = 1;
-      } else if (prev.lastActiveDate !== today) {
-        const lastDate = new Date(prev.lastActiveDate);
-        const currentDate = new Date(today);
-        const diffDays = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          newStreak += 1;
-        } else if (diffDays > 1) {
-          // Si tiene congelador de racha, mantenerla
-          if (prev.streakFreeze > 0) {
-            newStreak = prev.streak;
-          } else {
-            newStreak = 1;
-          }
-        }
-      }
+      // Cálculo de racha diaria (misma regla que la actividad diaria)
+      const adv = advanceStreak(prev, today);
+      const newStreak = adv ? adv.streak : (prev.streak || 0);
 
       const updatedCompleted = {
         ...prev.completedLessons,

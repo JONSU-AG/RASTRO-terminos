@@ -253,7 +253,7 @@ export const DeviceNotificationsListener = () => {
       const status = getNotificationStatus();
       if (!status.isEnabled) return;
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = (() => { const d = new Date(); const m = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${d.getFullYear()}-${m}-${day}`; })();
       const lastStreakCheck = localStorage.getItem(`rastro_last_streak_check_${user.uid}`);
 
       if (lastStreakCheck !== todayStr && status.streakReminder) {

@@ -47,16 +47,20 @@ export const prefetchRouteByPath = (path) => {
 };
 
 export const preloadAllMainRoutes = () => {
-  const mainKeys = ['home', 'aprender', 'cursos', 'simulador', 'biblioteca', 'chats', 'userProfile', 'formulario', 'orstty'];
-  
+  const mainKeys = ['home', 'aprender', 'cursos', 'simulador', 'biblioteca', 'chats', 'userProfile', 'formulario', 'orstty'];  
   const runPreload = () => {
+    // Precalentado del temario pesado (7+ MB) PRIMERO: es el parseo más largo y
+    // así queda en caché antes de que el usuario toque Aprender/Cursos.
+    setTimeout(() => {
+      import('../data/learningPathData').catch(() => {});
+    }, 300);
     mainKeys.forEach((key, index) => {
       setTimeout(() => {
         if (!loadedCache.has(key) && routeImports[key]) {
           loadedCache.add(key);
           routeImports[key]().catch(() => loadedCache.delete(key));
         }
-      }, index * 100);
+      }, 600 + index * 100);
     });
   };
 

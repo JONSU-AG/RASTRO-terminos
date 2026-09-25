@@ -123,8 +123,8 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
           inset: 0,
           zIndex: 100050,
           background: 'rgba(2, 6, 23, 0.86)',
-          backdropFilter: 'blur(22px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -248,22 +248,22 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                 whileTap={{ scale: 0.94 }}
                 onClick={minimize}
                 title="Minimizar a píldora flotante en pantalla"
+                aria-label="Minimizar"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  padding: '5px 9px',
-                  borderRadius: '9px',
+                  justifyContent: 'center',
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '10px',
                   background: 'rgba(56, 189, 248, 0.16)',
                   border: '1.5px solid rgba(56, 189, 248, 0.45)',
                   color: '#38BDF8',
-                  fontSize: '0.72rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  flexShrink: 0
                 }}
               >
-                <Minus size={13} strokeWidth={3} />
-                <span>Minimizar</span>
+                <Minus size={15} strokeWidth={3} />
               </motion.button>
 
               {/* BOTÓN 2: CERRAR (APAGAR / SALIR) */}
@@ -272,22 +272,22 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                 whileTap={{ scale: 0.94 }}
                 onClick={closeAndStop}
                 title="Cerrar y detener temporizador"
+                aria-label="Cerrar"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  padding: '5px 9px',
-                  borderRadius: '9px',
+                  justifyContent: 'center',
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '10px',
                   background: 'rgba(239, 68, 68, 0.16)',
                   border: '1.5px solid rgba(239, 68, 68, 0.45)',
                   color: '#F87171',
-                  fontSize: '0.72rem',
-                  fontWeight: 900,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  flexShrink: 0
                 }}
               >
-                <X size={13} strokeWidth={3} />
-                <span>Cerrar</span>
+                <X size={15} strokeWidth={3} />
               </motion.button>
             </div>
           </div>
@@ -328,12 +328,12 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                 cursor: 'pointer'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <HelpCircle size={15} color="#FDE047" />
-                <span>ℹ️ ¿Cómo funciona la Técnica Pomodoro?</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+                <HelpCircle size={15} color="#FDE047" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '0.74rem', lineHeight: 1.3 }}>ℹ️ ¿Cómo funciona la Técnica Pomodoro?</span>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#94A3B8' }}>
-                {showExplanation ? 'Ocultar guía ▲' : 'Ver método ▼'}
+              <span style={{ fontSize: '0.7rem', color: '#94A3B8', flexShrink: 0, marginLeft: '8px' }}>
+                {showExplanation ? 'Ocultar ▲' : 'Ver ▼'}
               </span>
             </motion.button>
 
@@ -473,7 +473,6 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                   strokeLinecap="round"
                   fill="transparent"
                   style={{
-                    filter: `drop-shadow(0 0 8px ${activeMode.color})`,
                     transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s ease'
                   }}
                 />
@@ -490,10 +489,7 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                   textAlign: 'center'
                 }}
               >
-                <motion.span
-                  key={formattedTime}
-                  initial={{ scale: 0.98 }}
-                  animate={{ scale: 1 }}
+                <span
                   style={{
                     fontFamily: 'monospace, system-ui',
                     fontSize: '2.15rem',
@@ -504,7 +500,7 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                   }}
                 >
                   {formattedTime}
-                </motion.span>
+                </span>
                 <span
                   style={{
                     fontSize: '0.7rem',
@@ -550,24 +546,24 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                 <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Guarda automáticamente</span>
               </div>
 
-              {/* GRID CON 4 CAMPOS: ESTUDIO, DESCANSO CORTO, DESCANSO LARGO, BLOQUES */}
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: '10px'
-                }}
-              >
+                {/* GRID EN UNA SOLA COLUMNA: filas simples de una línea (Android) */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr',
+                    gap: '10px'
+                  }}
+                >
                 {/* 1. Tiempo de Estudio */}
-                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#A855F7', fontWeight: 800, marginBottom: '4px' }}>
-                    🧠 Estudio (min)
+                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#A855F7', fontWeight: 800 }}>
+                    🧠 Estudio
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
                     <button
                       type="button"
                       onClick={() => setCustomStudyMinutes(Math.max(1, customStudyMinutes - 5))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >-</button>
                     <input
                       type="number"
@@ -580,21 +576,21 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                     <button
                       type="button"
                       onClick={() => setCustomStudyMinutes(Math.min(180, customStudyMinutes + 5))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >+</button>
                   </div>
                 </div>
 
                 {/* 2. Descanso Corto */}
-                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 800, marginBottom: '4px' }}>
-                    ☕ Descanso Corto (min)
+                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#10B981', fontWeight: 800 }}>
+                    ☕ Descanso corto
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
                     <button
                       type="button"
                       onClick={() => setCustomShortBreakMinutes(Math.max(1, customShortBreakMinutes - 1))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >-</button>
                     <input
                       type="number"
@@ -607,21 +603,21 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                     <button
                       type="button"
                       onClick={() => setCustomShortBreakMinutes(Math.min(60, customShortBreakMinutes + 1))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >+</button>
                   </div>
                 </div>
 
                 {/* 3. Descanso Largo */}
-                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#38BDF8', fontWeight: 800, marginBottom: '4px' }}>
-                    ✨ Descanso Largo (min)
+                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#38BDF8', fontWeight: 800 }}>
+                    ✨ Descanso largo
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
                     <button
                       type="button"
                       onClick={() => setCustomLongBreakMinutes(Math.max(1, customLongBreakMinutes - 5))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >-</button>
                     <input
                       type="number"
@@ -634,21 +630,21 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                     <button
                       type="button"
                       onClick={() => setCustomLongBreakMinutes(Math.min(120, customLongBreakMinutes + 5))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >+</button>
                   </div>
                 </div>
 
                 {/* 4. Bloques antes del Descanso Largo */}
-                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '8px 10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ fontSize: '0.7rem', color: '#F59E0B', fontWeight: 800, marginBottom: '4px' }}>
-                    🔄 Bloques antes del D. Largo
+                <div style={{ background: 'rgba(15, 23, 42, 0.7)', borderRadius: '12px', padding: '10px 12px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div style={{ fontSize: '0.8rem', color: '#F59E0B', fontWeight: 800 }}>
+                    🔄 Bloques
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
                     <button
                       type="button"
                       onClick={() => setCustomCyclesBeforeLongBreak(Math.max(1, customCyclesBeforeLongBreak - 1))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >-</button>
                     <input
                       type="number"
@@ -661,7 +657,7 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                     <button
                       type="button"
                       onClick={() => setCustomCyclesBeforeLongBreak(Math.min(12, customCyclesBeforeLongBreak + 1))}
-                      style={{ width: '26px', height: '26px', borderRadius: '6px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
+                      style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#334155', border: 'none', color: '#FFF', fontWeight: 900, cursor: 'pointer' }}
                     >+</button>
                   </div>
                 </div>
@@ -717,7 +713,7 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
               boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
               <div>
                 <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#F1F5F9', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Music size={14} color="#A855F7" />
@@ -729,6 +725,7 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
               </div>
               <span
                 style={{
+                  alignSelf: 'flex-start',
                   fontSize: '0.65rem',
                   fontWeight: 800,
                   background: 'rgba(255, 255, 255, 0.08)',
@@ -741,12 +738,12 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
               </span>
             </div>
 
-            {/* TABS DE LOS 4 MODOS PARA ASIGNAR SONIDO */}
+            {/* TABS DE LOS 4 MODOS EN 1 COLUMNA (una línea por modo en móvil) */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '6px',
+                gridTemplateColumns: '1fr',
+                gap: '8px',
                 marginBottom: '12px'
               }}
             >
@@ -799,8 +796,9 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: '10px',
                 padding: '10px 12px',
                 borderRadius: '12px',
                 background: 'rgba(2, 6, 23, 0.6)',
@@ -821,27 +819,29 @@ export const PomodoroModal = ({ isOpen: propIsOpen, onClose: propOnClose }) => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <button
                   type="button"
                   onClick={(e) => handlePreviewSound(targetSoundId, e)}
                   style={{
-                    padding: '5px 10px',
-                    borderRadius: '8px',
+                    flex: 1,
+                    padding: '9px 10px',
+                    borderRadius: '10px',
                     border: '1px solid rgba(56, 189, 248, 0.4)',
                     background: 'rgba(56, 189, 248, 0.15)',
                     color: '#38BDF8',
                     fontWeight: 800,
-                    fontSize: '0.74rem',
+                    fontSize: '0.8rem',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    justifyContent: 'center',
+                    gap: '6px',
                     cursor: 'pointer'
                   }}
                 >
-                  <Play size={11} fill="#38BDF8" /> Probar
+                  <Play size={12} fill="#38BDF8" /> Probar sonido
                 </button>
-                {showSoundSelector ? <ChevronUp size={16} color="#94A3B8" /> : <ChevronDown size={16} color="#94A3B8" />}
+                {showSoundSelector ? <ChevronUp size={18} color="#94A3B8" /> : <ChevronDown size={18} color="#94A3B8" />}
               </div>
             </div>
 

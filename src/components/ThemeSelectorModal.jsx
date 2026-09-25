@@ -107,8 +107,6 @@ export const ThemeSelectorModal = ({ isOpen, onClose }) => {
           position: 'fixed',
           inset: 0,
           background: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -123,7 +121,7 @@ export const ThemeSelectorModal = ({ isOpen, onClose }) => {
           initial={{ opacity: 0, scale: 0.94, y: 12 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 12 }}
-          transition={{ type: 'spring', damping: 26, stiffness: 340 }}
+          transition={{ duration: 0.22, ease: 'easeOut' }}
           style={{
             width: '100%',
             maxWidth: '420px',
@@ -137,7 +135,8 @@ export const ThemeSelectorModal = ({ isOpen, onClose }) => {
             boxShadow: '0 20px 48px rgba(0,0,0,0.35)',
             color: 'var(--text-main)',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            willChange: 'transform, opacity'
           }}
           onClick={(e) => e.stopPropagation()}
         >

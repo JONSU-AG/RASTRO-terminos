@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.jonsuapps.rastro",
+      "sha256_cert_fingerprints": [
+        "3D:8B:62:8D:E6:AF:84:1F:FC:1A:53:AD:84:56:09:51:86:7D:97:2C:77:7D:75:28:94:88:E1:99:FD:1E:5A:0E"
+      ]
+    }
+  }
+]

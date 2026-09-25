@@ -147,6 +147,11 @@ service cloud.firestore {
       allow update, delete: if author();
     }
 
+    // —— Progreso de gamificación: cada usuario sincroniza solo el suyo ——
+    match /usuarios/{uid}/gamificacion/{d} {
+      allow read, write: if (signedIn() && request.auth.uid == uid) || author();
+    }
+
     // —— Configuración del sitio (switches, ocultos, banners): lectura pública, escritura del autor ——
     match /system_config/{d} {
       allow read: if true;

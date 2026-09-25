@@ -753,6 +753,37 @@ export const LiquidNavbar = () => {
               Pomodoro
             </span>
           </button>
+
+          {/* Temas (acceso rápido con paleta en la barra superior móvil) */}
+          <button
+            onClick={() => setIsThemeOpen(true)}
+            title="Cambiar Tema"
+            style={{
+              padding: '5px 7px',
+              borderRadius: '10px',
+              border: isThemeOpen ? '1px solid rgba(168, 85, 247, 0.35)' : '1px solid transparent',
+              background: isThemeOpen
+                ? 'rgba(168, 85, 247, 0.15)'
+                : 'rgba(120, 120, 128, 0.08)',
+              color: isThemeOpen ? 'var(--accent-color)' : ((isAprender && !themePalette?.isLight) ? '#E2E8F0' : 'var(--text-secondary)'),
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '2px',
+              fontSize: '0.58rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              minWidth: '38px',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Palette size={15} />
+
+            <span style={{ lineHeight: 1 }}>
+              Tema
+            </span>
+          </button>
         </div>
       </header>
 
@@ -837,12 +868,8 @@ export const LiquidNavbar = () => {
               const isActive =
                 isItemActive(item.path);
 
-              const handleItemClick = (e) => {
-                if (item.path === '/cursos' && !user) {
-                  e.preventDefault();
-                  setShowGooglePrompt(true);
-                  return;
-                }
+              const handleItemClick = () => {
+                // Cursos libre sin sesión: el muro de acceso solo aparece en Perfil/Chats/Subir
               };
 
               return (

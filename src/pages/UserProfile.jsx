@@ -81,6 +81,7 @@ import { RankingSimulacroModal } from '../components/RankingSimulacroModal';
 import { UploadModal } from '../components/UploadModal';
 import { ThemeSelectorModal } from '../components/ThemeSelectorModal';
 import { UserDirectChat } from '../components/UserDirectChat';
+import { GoogleSignPromptModal } from '../components/GoogleSignPromptModal';
 import { SuccessModal } from '../components/SuccessModal';
 import { ReactionsBar } from '../components/ReactionsBar';
 import { ProfileComments } from '../components/ProfileComments';
@@ -252,7 +253,7 @@ const SUGGESTED_ACADEMIES = [
 
 export const UserProfile = () => {
   const { uid: paramUid } = useParams();
-  const { user, userData, isAdmin, isBanned, logout, loading: authLoading } = useAuth();
+  const { user, userData, isAdmin, isBanned, logout, loading: authLoading, isGuest } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -2840,12 +2841,21 @@ export const UserProfile = () => {
               )}
             </div>
           ) : activeTab === 'chat' ? (
+            isGuest ? (
+              <GoogleSignPromptModal
+                isOpen={true}
+                hideGuest={true}
+                destination={null}
+                onClose={() => setActiveTab('muro')}
+              />
+            ) : (
             <UserDirectChat
               profileUid={targetUid}
               profileName={profileUser.displayName || 'este usuario'}
               isOwnProfile={isOwnProfile}
               initialChatWithUid={searchParams.get('with')}
             />
+            )
           ) : (
             <ErrorBoundary>
               <ProfileComments
@@ -2860,7 +2870,15 @@ export const UserProfile = () => {
         </div>
       </div>
 
-      {/* 💬 Modal Flotante para Chat Directo */}
+      {/* 💬 Modal Flotante para Chat Directo (con cuenta; invitados ven el muro) */}
+      {isDirectChatModalOpen && isGuest ? (
+        <GoogleSignPromptModal
+          isOpen={true}
+          hideGuest={true}
+          destination={null}
+          onClose={() => setIsDirectChatModalOpen(false)}
+        />
+      ) : (
       <IOSModal
         isOpen={isDirectChatModalOpen}
         onClose={() => setIsDirectChatModalOpen(false)}
@@ -2873,6 +2891,7 @@ export const UserProfile = () => {
           initialChatWithUid={searchParams.get('with')}
         />
       </IOSModal>
+      )}
 
       <IOSModal
         isOpen={isPersonalizarOpen}

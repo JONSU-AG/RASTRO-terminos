@@ -199,6 +199,10 @@ export function OrsttyChat({
     };
   }, []);
 
+  // Tope de mensajes renderizados: los chats largos no traban el celular.
+  // Se muestran los últimos 40 con botón para cargar anteriores.
+  const [visibleMsgCount, setVisibleMsgCount] = useState(40);
+
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
@@ -785,7 +789,15 @@ export function OrsttyChat({
           boxSizing: 'border-box'
         }}
       >
-        {messages.map((msg) => {
+        {messages.length > visibleMsgCount && (
+          <button
+            onClick={() => setVisibleMsgCount((c) => c + 40)}
+            style={{ alignSelf: 'center', padding: '8px 18px', borderRadius: '12px', border: '1.5px solid var(--card-border)', background: 'var(--card-bg)', color: 'var(--text-main)', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer', marginBottom: '4px' }}
+          >
+            Ver mensajes anteriores ({messages.length - visibleMsgCount} más)
+          </button>
+        )}
+        {messages.slice(-visibleMsgCount).map((msg) => {
           const isOrstty = msg.sender === 'orstty';
           const isThisSpeaking = isSpeaking && currentSpeakingMsgId === msg.id;
 

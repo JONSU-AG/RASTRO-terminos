@@ -1,9 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const channelUrl = "https://whatsapp.com/channel/0029VbDFAEu7YScyVZBNul0X";
 
 export function FloatingWhatsApp() {
+  // Solo en Inicio: en el APK el botón fijo en las demás secciones estorba
+  const { pathname } = useLocation();
+  if (pathname !== '/') return null;
   return (
     <motion.a
       href={channelUrl}

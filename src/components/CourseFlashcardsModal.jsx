@@ -8,13 +8,15 @@ import { OrsttyMascot, ArtyonMascot } from './Mascots';
 import { ReportModal } from './ReportModal';
 import { ConfirmModal } from './ConfirmModal';
 import { DEFAULT_FLASHCARDS } from '../data/simuladorData';
-import { SUBJECT_ROADMAP } from '../data/learningPathData';
 import { db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { uploadFileReliable, getDirectImageUrl, compressImageToDataUrl } from '../lib/storageHelper';
 import { useAuth } from '../context/AuthContext';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
+
+// Caché en módulo del temario pesado (7+ MB) para aperturas instantáneas del modal
+let roadmapCache = null;
 
 // Función para remover menciones residuales de marcas de examen de admisión y hacer el contenido 100% universal
 const cleanUniversalText = (text) => {
@@ -133,11 +135,30 @@ export function CourseFlashcardsModal({ isOpen, onClose, subject }) {
     }
   });
 
+  // Roadmap para esta materia: el temario pesado (7+ MB) se carga solo al abrir
+  // el modal (no al arrancar la app). Caché en módulo para aperturas instantáneas.
+  const [roadmapData, setRoadmapData] = useState(() => roadmapCache);
+  useEffect(() => {
+    if (!isOpen) return;
+    if (roadmapCache) {
+      setRoadmapData(roadmapCache);
+      return;
+    }
+    let alive = true;
+    import('../data/learningPathData')
+      .then((m) => {
+        roadmapCache = m.SUBJECT_ROADMAP || {};
+        if (alive) setRoadmapData(roadmapCache);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [isOpen]);
+
   // Roadmap for this subject (semanas and subtemas)
   const subjectRoadmap = useMemo(() => {
     if (!subject?.name) return [];
-    return SUBJECT_ROADMAP[subject.name] || [];
-  }, [subject?.name]);
+    return (roadmapData || {})[subject.name] || [];
+  }, [subject?.name, roadmapData]);
 
   // Weeks list for the dropdown/pills
   const semanasList = useMemo(() => {
