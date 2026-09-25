@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "432336496806-e8gsr946v0uqaamht6gr2j44bqk9kn8e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jonsuapps.rastro",
+            "certificate_hash": "29c5e891443c1019a3c2c085a1adbd240dab27d9"
+          }
+        },
+        {
           "client_id": "432336496806-fuqrq112korn5aljbso0f9oj8uae8rnm.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

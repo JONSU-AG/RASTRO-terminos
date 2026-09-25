@@ -234,7 +234,7 @@ export function getAssetUrl(relativePath) {
 export async function triggerSystemNotification({
   title = 'Rastro',
   body = 'Tienes una nueva actualización',
-  icon = 'assets/rastro-pwa-icon-192.png',
+  icon = 'applogo.png',
   data = {},
   tag = null
 }) {
@@ -266,8 +266,8 @@ export async function triggerSystemNotification({
   const cleanBody = (typeof body === 'string' && body.trim()) ? body.trim() : 'Tienes una nueva actualización';
   const cleanTitle = (typeof title === 'string' && title.trim()) ? title.trim() : 'RASTRO';
   const finalTag = tag || (data?.notifId ? `rastro-notif-${data.notifId}` : `rastro-alert-${Date.now()}`);
-  const finalIcon = getAssetUrl(icon || 'assets/rastro-pwa-icon-192.png');
-  const finalBadge = getAssetUrl('assets/rastro-pwa-icon-192.png');
+  const finalIcon = getAssetUrl(icon || 'applogo.png');
+  const finalBadge = getAssetUrl('applogo.png');
 
   const notifOptions = {
     body: cleanBody,

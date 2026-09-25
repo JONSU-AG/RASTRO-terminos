@@ -195,7 +195,7 @@ export const DeviceNotificationsListener = () => {
       triggerSystemNotification({
         title,
         body,
-        icon: data.senderPhoto || '/assets/rastro-pwa-icon-192.png',
+        icon: data.senderPhoto || '/applogo.png',
         data: { url: targetUrl, notifId: id },
         tag: `rastro-notif-${id}`
       });
@@ -311,7 +311,7 @@ export const DeviceNotificationsListener = () => {
         triggerSystemNotification({
           title,
           body,
-          icon: 'assets/rastro-pwa-icon-192.png',
+          icon: 'applogo.png',
           data: { url: '/aprender' },
           tag: `rastro-streak-reminder-${todayStr}`
         });
