@@ -4,7 +4,8 @@ import {
   Shield, Book, BookOpen, Award, MessageCircle, Share2, Lock, AlertTriangle, 
   Plus, Settings, Search, Sparkles, Layers, Video, Edit3, Trash2, Terminal, 
   Flag, ArrowRight, Compass, Dna, Zap, FlaskConical, Calculator, HelpCircle, 
-  Landmark, Scale, Globe, Brain, MessageSquare, Puzzle, Binary, FileText, Languages, Atom
+  Landmark, Scale, Globe, Brain, MessageSquare, Puzzle, Binary, FileText, Languages, Atom,
+  Play, ExternalLink, ShieldCheck
 } from 'lucide-react';
 import { PeriodicTableModal } from '../components/PeriodicTableModal';
 import { VocationalTestModal } from '../components/VocationalTestModal';
@@ -74,6 +75,23 @@ export const Cursos = () => {
   const [courseToReport, setCourseToReport] = useState(null);
   const [courseForFlashcards, setCourseForFlashcards] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+  
+  // Pestañas principales: 'aprender' (Rutas Temáticas & Aprender) | 'youtube' (Playlists Personales)
+  const [cursosTab, setCursosTab] = useState('aprender');
+  const [selectedYtCourse, setSelectedYtCourse] = useState(null);
+  const [selectedYtLesson, setSelectedYtLesson] = useState(null);
+
+  // Playlists personalizadas de YouTube creadas por el usuario
+  const [customPlaylists, setCustomPlaylists] = useState(() => {
+    try {
+      const saved = localStorage.getItem('rastro_custom_youtube_playlists');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isCustomPlaylistModalOpen, setIsCustomPlaylistModalOpen] = useState(false);
+  const [playlistToEdit, setPlaylistToEdit] = useState(null);
 
   const handleDeleteAcademy = (acad) => {
     const isOwner = Boolean(
@@ -119,8 +137,12 @@ export const Cursos = () => {
     };
   }, []);
 
-  // Listen to Firestore dynamic courses
+  // Listen to Firestore dynamic courses (desconectado si disconnectFirebaseVideos está activo)
   useEffect(() => {
+    if (VERSION_CONFIG.disconnectFirebaseVideos) {
+      setCustomCursos([]);
+      return;
+    }
     try {
       const q = query(collection(db, 'cursos'), orderBy('orden', 'asc'));
       const unsub = onSnapshot(q, (snap) => {
@@ -133,8 +155,12 @@ export const Cursos = () => {
     }
   }, []);
 
-  // Listen to custom academies created with the Briceño template
+  // Listen to custom academies created with the Briceño template (desconectado si disconnectFirebaseVideos está activo)
   useEffect(() => {
+    if (VERSION_CONFIG.disconnectFirebaseVideos) {
+      setCustomAcademias([]);
+      return;
+    }
     try {
       const q = query(collection(db, 'academias'));
       const unsub = onSnapshot(q, (snap) => {
@@ -210,8 +236,8 @@ export const Cursos = () => {
   ].filter(p => !customIds.has(p.id) && !customAcademias.some(a => a.id === p.id));
 
   // Merge custom academies (Briceño template), custom courses, and static presets
-  // Regla comunitaria: Cursos con 5 o más reportes se ocultan automáticamente para usuarios estándar
-  const allCourses = [...customAcademias, ...activeCustomCursos, ...staticPresets].filter(c => {
+  // Si disconnectFirebaseVideos está activo, se desconectan los cursos privados de Firebase hasta obtener autorización
+  const allCourses = (VERSION_CONFIG.disconnectFirebaseVideos ? [] : [...customAcademias, ...activeCustomCursos, ...staticPresets]).filter(c => {
     if (VERSION_CONFIG.disconnectThirdPartyAcademies) {
       const lowerId = (c.id || '').toLowerCase();
       const lowerName = (c.nombre || c.name || '').toLowerCase();
@@ -234,6 +260,55 @@ export const Cursos = () => {
       (c.badge || '').toLowerCase().includes(q) ||
       (c.descripcion || '').toLowerCase().includes(q) ||
       (c.subtitulo || '').toLowerCase().includes(q)
+    );
+  });
+
+  const handleSaveCustomPlaylist = (newPlaylist) => {
+    setCustomPlaylists((prev) => {
+      const existingIdx = prev.findIndex(p => p.id === newPlaylist.id);
+      let updated;
+      if (existingIdx >= 0) {
+        updated = [...prev];
+        updated[existingIdx] = newPlaylist;
+      } else {
+        updated = [newPlaylist, ...prev];
+      }
+      try {
+        localStorage.setItem('rastro_custom_youtube_playlists', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const handleDeleteCustomPlaylist = (playlistId, e) => {
+    if (e) e.stopPropagation();
+    setConfirmModal({
+      isOpen: true,
+      title: '¿Eliminar Playlist?',
+      message: '¿Estás seguro de que deseas eliminar esta playlist personalizada?',
+      confirmText: 'Sí, Eliminar',
+      variant: 'danger',
+      onConfirm: () => {
+        setCustomPlaylists((prev) => {
+          const updated = prev.filter(p => p.id !== playlistId);
+          try {
+            localStorage.setItem('rastro_custom_youtube_playlists', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    });
+  };
+
+  const allYtPlaylists = [...customPlaylists, ...YOUTUBE_COURSES_CATALOG];
+  const filteredYtCourses = allYtPlaylists.filter(c => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (c.subject || '').toLowerCase().includes(q) ||
+      (c.title || '').toLowerCase().includes(q) ||
+      (c.description || '').toLowerCase().includes(q) ||
+      (c.topics || []).some(t => t.toLowerCase().includes(q))
     );
   });
 
@@ -324,7 +399,7 @@ export const Cursos = () => {
               e.stopPropagation();
               setIsVocationalTestOpen(true);
             }}
-            aria-label="Abrir Test Vocacional UNSA"
+            aria-label="Abrir Test Vocacional Universitario"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -346,7 +421,7 @@ export const Cursos = () => {
             }}
           >
             <Compass size={18} />
-            <span>Test Vocacional UNSA</span>
+            <span>Test Vocacional</span>
           </button>
 
           <button
@@ -380,6 +455,62 @@ export const Cursos = () => {
             <Atom size={18} />
             <span>Tabla Periódica & Valencias</span>
           </button>
+
+          <Link
+            to="/formulario"
+            aria-label="Abrir Fórmulas y Mnemotecnias Pre-U"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              borderRadius: '99px',
+              background: 'linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)',
+              border: 'none',
+              color: '#FFFFFF',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              textDecoration: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              minHeight: '44px',
+              touchAction: 'manipulation',
+              userSelect: 'none'
+            }}
+          >
+            <Calculator size={18} />
+            <span>Fórmulas & Truquitos Pre-U</span>
+          </Link>
+
+          <Link
+            to="/biblioteca?tab=obras"
+            aria-label="Ver resúmenes detallados de obras literarias"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              borderRadius: '99px',
+              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+              border: 'none',
+              color: '#FFFFFF',
+              fontSize: '0.86rem',
+              fontWeight: 800,
+              textDecoration: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
+              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              minHeight: '44px',
+              touchAction: 'manipulation',
+              userSelect: 'none'
+            }}
+          >
+            <BookOpen size={18} />
+            <span>Obras Literarias Pre-U</span>
+          </Link>
         </div>
 
         {/* Herramientas de Administrador si corresponde */}
@@ -438,39 +569,418 @@ export const Cursos = () => {
           </div>
         )}
 
-        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.92rem', maxWidth: '600px' }}>
-          Explora cursos preuniversitarios, clases grabadas, módulos organizados y materiales de estudio.
+        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.92rem', maxWidth: '650px', lineHeight: 1.45 }}>
+          Explora las materias oficiales y rutas temáticas interactivas con fichas de estudio, simuladores y resúmenes para tu ingreso universitario.
         </p>
 
-        {/* Buscador de Cursos si hay más de 2 */}
-        {allCourses.length > 2 && (
-          <div style={{ width: '100%', maxWidth: '420px', position: 'relative', marginTop: '6px' }}>
-            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-            <input
-              type="text"
-              placeholder="Buscar cursos o materias..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 14px 10px 38px',
-                borderRadius: '14px',
-                border: '1.5px solid var(--card-border)',
-                background: 'var(--card-bg)',
-                color: 'var(--text-main)',
-                fontSize: '0.88rem',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-        )}
+        {/* Buscador Universal de Materias y Clases */}
+        <div style={{ width: '100%', maxWidth: '440px', position: 'relative', marginTop: '6px' }}>
+          <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+          <input
+            type="text"
+            placeholder="Buscar por materia, tema o ciclo..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '10px 14px 10px 38px',
+              borderRadius: '14px',
+              border: '1.5px solid var(--card-border)',
+              background: 'var(--card-bg)',
+              color: 'var(--text-main)',
+              fontSize: '0.88rem',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
       </header>
 
-      {/* ================= MUNDOS DE APRENDIZAJE POR NIVELES ================= */}
-      <section style={{ width: '100%', maxWidth: '1200px', margin: '0 auto 36px', boxSizing: 'border-box' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* ================= VIDEOCLASES DESCONECTADAS (EN ESPERA DE VIDEOS OFICIALES) ================= */}
+      {false && (
+        <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto 36px', boxSizing: 'border-box' }}>
+          <section style={{ marginBottom: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '18px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '12px',
+                      background: 'rgba(239, 68, 68, 0.12)',
+                      border: '1.5px solid rgba(239, 68, 68, 0.25)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#EF4444'
+                    }}
+                  >
+                    <Video size={20} />
+                  </div>
+                  <h2 style={{ fontSize: 'clamp(1.15rem, 2vw, 1.35rem)', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                    Ciclos y Playlists Abiertas en YouTube
+                  </h2>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+                  Clases públicas y completas organizadas por materia. Reproducción oficial vía IFrame sin descargas ni piratería.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.74rem', color: '#10B981', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <ShieldCheck size={14} /> 100% Legal • Canales Oficiales
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPlaylistToEdit(null);
+                    setIsCustomPlaylistModalOpen(true);
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '999px',
+                    background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 3px 12px rgba(239, 68, 68, 0.35)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Plus size={15} />
+                  <span>Crear Playlist</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Grid de Playlists de YouTube */}
+            {filteredYtCourses.length === 0 ? (
+              <div className="glass-card" style={{ padding: '40px 24px', borderRadius: '24px', textAlign: 'center', maxWidth: '520px', margin: '0 auto', border: '1px solid var(--card-border)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.12)', color: '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                  <Video size={24} />
+                </div>
+                <h4 style={{ margin: '0 0 8px', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                  Videoclases en preparación
+                </h4>
+                <p style={{ color: 'var(--text-secondary)', margin: '0 0 20px', fontSize: '0.86rem', lineHeight: 1.5 }}>
+                  Las videoclases oficiales se habilitarán una vez sean suministradas y autorizadas. Mientras tanto, puedes estudiar directamente con las Rutas Temáticas oficiales y bancos de preguntas.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCursosTab('aprender')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    borderRadius: '999px',
+                    background: 'linear-gradient(135deg, #0284C7 0%, #007AFF 100%)',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontWeight: 800,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0, 122, 255, 0.3)'
+                  }}
+                >
+                  <Compass size={16} />
+                  <span>Ir a Rutas Temáticas en Aprender</span>
+                </button>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 340px), 1fr))',
+                  gap: '16px'
+                }}
+              >
+                {filteredYtCourses.map((ytC) => (
+                  <motion.div
+                    key={ytC.id}
+                    whileHover={{ y: -3 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => {
+                      if (ytC.isCustom && (!ytC.lessons || ytC.lessons.length === 0)) {
+                        setPlaylistToEdit(ytC);
+                        setIsCustomPlaylistModalOpen(true);
+                        return;
+                      }
+                      setSelectedYtCourse(ytC);
+                      setSelectedYtLesson(ytC.lessons?.[0] || null);
+                    }}
+                    className="glass-card"
+                    style={{
+                      padding: '18px',
+                      borderRadius: '20px',
+                      border: `1.5px solid ${ytC.color}35`,
+                      background: `linear-gradient(180deg, ${ytC.color}0D 0%, var(--card-bg, #FFFFFF) 60%)`,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      gap: '14px',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+                      boxSizing: 'border-box',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            style={{
+                              padding: '3px 10px',
+                              borderRadius: '999px',
+                              fontSize: '0.72rem',
+                              fontWeight: 900,
+                              textTransform: 'uppercase',
+                              color: '#FFFFFF',
+                              background: ytC.color
+                            }}
+                          >
+                            {ytC.subject}
+                          </span>
+                          {ytC.isCustom && (
+                            <span
+                              style={{
+                                padding: '2px 7px',
+                                borderRadius: '6px',
+                                fontSize: '0.66rem',
+                                fontWeight: 900,
+                                textTransform: 'uppercase',
+                                color: '#EF4444',
+                                background: 'rgba(239, 68, 68, 0.12)',
+                                border: '1px solid rgba(239, 68, 68, 0.25)'
+                              }}
+                            >
+                              Tu Playlist
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+                            {ytC.videoCount}
+                          </span>
+                          {ytC.isCustom && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPlaylistToEdit(ytC);
+                                  setIsCustomPlaylistModalOpen(true);
+                                }}
+                                title="Editar playlist y añadir videos"
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: 'var(--text-secondary)',
+                                  cursor: 'pointer',
+                                  padding: '2px'
+                                }}
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteCustomPlaylist(ytC.id, e)}
+                                title="Eliminar playlist"
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#EF4444',
+                                  cursor: 'pointer',
+                                  padding: '2px'
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <h3 style={{ margin: '0 0 6px', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.3 }}>
+                        {ytC.title}
+                      </h3>
+
+                      <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                        {ytC.description}
+                      </p>
+
+                      {/* Chips de Temas Clave */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '4px' }}>
+                        {(ytC.topics || []).map((top, tIdx) => (
+                          <span
+                            key={tIdx}
+                            style={{
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              background: 'rgba(0,0,0,0.04)',
+                              color: 'var(--text-secondary)'
+                            }}
+                          >
+                            {top}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Acciones: Ver Clases en la App vs Abrir en YouTube */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '10px', borderTop: '1px solid var(--card-border, rgba(0,0,0,0.08))' }}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (ytC.isCustom && (!ytC.lessons || ytC.lessons.length === 0)) {
+                            setPlaylistToEdit(ytC);
+                            setIsCustomPlaylistModalOpen(true);
+                            return;
+                          }
+                          setSelectedYtCourse(ytC);
+                          setSelectedYtLesson(ytC.lessons?.[0] || null);
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '9px 12px',
+                          borderRadius: '12px',
+                          border: 'none',
+                          background: ytC.color,
+                          color: '#FFFFFF',
+                          fontWeight: 800,
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          boxShadow: `0 3px 10px ${ytC.color}35`,
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Play size={14} fill="#FFFFFF" />
+                        <span>Ver Clases</span>
+                      </button>
+
+                      <a
+                        href={ytC.playlistUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        title="Abrir lista oficial en YouTube"
+                        style={{
+                          padding: '9px 12px',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(239, 68, 68, 0.3)',
+                          background: 'rgba(239, 68, 68, 0.08)',
+                          color: '#EF4444',
+                          fontWeight: 800,
+                          fontSize: '0.78rem',
+                          textDecoration: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '5px',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Video size={14} />
+                        <span>YouTube</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Subsección: Cursos Dinámicos y Aportes Comunitarios si existen */}
+          {filteredCourses.length > 0 && (
+            <section style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--card-border, rgba(0,0,0,0.08))' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                    Cursos & Módulos de la Comunidad
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    Módulos y carpetas compartidas por docentes y postulantes
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '16px' }}>
+                {filteredCourses.map((c) => {
+                  const theme = c.colorTheme || {};
+                  const primaryColor = theme.primary || '#7C3AED';
+                  const gradient = theme.gradient || 'linear-gradient(135deg, #7C3AED, #A855F7)';
+                  const totalModules = Array.isArray(c.modules) ? c.modules.length : 0;
+                  const displayBadge = (c.badge && c.badge !== 'GENERAL') ? c.badge : 'CURSO';
+
+                  return (
+                    <Link key={c.id} to={`/cursos/${c.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <motion.div
+                        whileHover={{ y: -3 }}
+                        className="glass-card"
+                        style={{
+                          padding: '16px',
+                          borderRadius: '18px',
+                          border: `1.5px solid ${primaryColor}35`,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          height: '100%',
+                          boxSizing: 'border-box'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <span style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '0.7rem', fontWeight: 800, color: '#FFFFFF', background: primaryColor }}>
+                              {displayBadge}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+                              {totalModules} Módulos
+                            </span>
+                          </div>
+
+                          <h4 style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                            {c.nombre}
+                          </h4>
+
+                          <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                            {c.descripcion || 'Material complementario para tu preparación universitaria.'}
+                          </p>
+                        </div>
+
+                        <div style={{ padding: '8px 12px', background: gradient, color: '#FFFFFF', borderRadius: '10px', fontWeight: 800, fontSize: '0.78rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <span>Ingresar al Curso</span>
+                          <ArrowRight size={13} />
+                        </div>
+                      </motion.div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {/* ================= RUTAS TEMÁTICAS Y SECCIÓN APRENDER ================= */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+          <section>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div
                 style={{
                   width: '36px',
@@ -578,9 +1088,62 @@ export const Cursos = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--card-border, rgba(0,0,0,0.06))', fontSize: '0.76rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid var(--card-border, rgba(0,0,0,0.06))', fontSize: '0.76rem', flexWrap: 'wrap', gap: '6px' }}>
                   <span style={{ color: subj.color, fontWeight: 800 }}>Entrar al Mundo</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    {['Física', 'Química', 'Matemática', 'Álgebra', 'Raz. Matemático'].includes(subj.name) ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/formulario?search=${encodeURIComponent(subj.name)}`);
+                        }}
+                        title={`Ver fórmulas y teoremas de ${subj.name}`}
+                        className="duo-btn-3d"
+                        style={{
+                          background: `${subj.color}15`,
+                          border: `1px solid ${subj.color}35`,
+                          borderRadius: '10px',
+                          padding: '4px 8px',
+                          color: subj.color,
+                          fontWeight: 800,
+                          fontSize: '0.70rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <Calculator size={12} color={subj.color} />
+                        <span>Fórmulas</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate('/formulario?tab=mnemotecnias');
+                        }}
+                        title={`Ver trucos mnemotécnicos y claves de ${subj.name}`}
+                        className="duo-btn-3d"
+                        style={{
+                          background: `${subj.color}15`,
+                          border: `1px solid ${subj.color}35`,
+                          borderRadius: '10px',
+                          padding: '4px 8px',
+                          color: subj.color,
+                          fontWeight: 800,
+                          fontSize: '0.70rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <Sparkles size={12} color={subj.color} />
+                        <span>Trucos</span>
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -593,20 +1156,20 @@ export const Cursos = () => {
                         background: `${subj.color}18`,
                         border: `1px solid ${subj.color}40`,
                         borderRadius: '10px',
-                        padding: '4px 10px',
+                        padding: '4px 8px',
                         color: subj.color,
                         fontWeight: 800,
-                        fontSize: '0.72rem',
+                        fontSize: '0.70rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '3px'
                       }}
                     >
-                      <Layers size={13} color={subj.color} />
+                      <Layers size={12} color={subj.color} />
                       <span>Fichas</span>
                     </button>
-                    <ArrowRight size={14} color={subj.color} />
+                    <ArrowRight size={13} color={subj.color} />
                   </div>
                 </div>
               </motion.div>
@@ -693,6 +1256,75 @@ export const Cursos = () => {
             </Link>
           )}
 
+          {/* Card Especial 2: Mnemotecnias & Hacks Preuniversitarios */}
+          {(!searchQuery.trim() || 'mnemotecnias trucos hacks biologia quimica fisica lenguaje historia literatura civica geografia filosofia'.includes(searchQuery.toLowerCase())) && (
+            <Link to="/formulario?tab=mnemotecnias" style={{ textDecoration: 'none', color: 'inherit' }}>
+              <motion.div 
+                whileHover={{ y: -4, scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className="glass-card" 
+                style={{ 
+                  padding: 'clamp(16px, 2.2vw, 20px)', 
+                  borderRadius: '20px', 
+                  border: '1.5px solid rgba(16, 185, 129, 0.35)', 
+                  background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, var(--card-bg) 60%)', 
+                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.12)', 
+                  cursor: 'pointer', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  height: '100%', 
+                  boxSizing: 'border-box', 
+                  transition: 'all 0.2s ease' 
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ 
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', 
+                    color: '#FFFFFF', 
+                    padding: '4px 10px', 
+                    borderRadius: '999px', 
+                    fontWeight: 800, 
+                    fontSize: '0.78rem', 
+                    boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)' 
+                  }}>
+                    MNEMOTECNIAS
+                  </span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontWeight: 700 }}>
+                    Hacks & Trucos
+                  </span>
+                </div>
+
+                <h3 style={{ fontSize: 'clamp(1.18rem, 1.6vw, 1.35rem)', fontWeight: 800, marginBottom: '6px', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                  Mnemotecnias & Hacks Pre-U
+                </h3>
+
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '0.86rem', lineHeight: 1.45, flex: 1 }}>
+                  Reglas nemotécnicas icónicas («Diosito Ve Todo», «Viva la Reina Isabel», «Pavo = Ratón»), acrónimos y claves fijas para memorizar conceptos y fórmulas al instante.
+                </p>
+
+                <div style={{ 
+                  width: '100%', 
+                  textAlign: 'center', 
+                  padding: '10px 14px', 
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', 
+                  color: '#FFFFFF', 
+                  borderRadius: '12px', 
+                  fontWeight: 800, 
+                  fontSize: '0.88rem', 
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  gap: '6px', 
+                  boxSizing: 'border-box' 
+                }}>
+                  <span>Abrir Mnemotecnias</span>
+                  <ArrowRight size={15} />
+                </div>
+              </motion.div>
+            </Link>
+          )}
+
           {filteredCourses.map((c) => {
             const theme = c.colorTheme || {};
             const primaryColor = theme.primary || '#7C3AED';
@@ -714,11 +1346,11 @@ export const Cursos = () => {
 
             const displaySubtitulo = (c.subtitulo && !c.subtitulo.toLowerCase().includes('general •')) 
               ? c.subtitulo 
-              : (totalModules > 0 ? `${totalModules} Módulos` : 'Clases y Materiales');
+              : (totalModules > 0 ? `${totalModules} Módulos` : 'Módulos y Materiales');
 
             const displayDescripcion = (c.descripcion && !c.descripcion.toLowerCase().includes('curso de general')) 
               ? c.descripcion 
-              : 'Clases y material complementario para tu preparación universitaria.';
+              : 'Temarios, fichas y material complementario para tu preparación universitaria.';
 
             return (
               <Link key={c.id} to={`/cursos/${c.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -871,6 +1503,7 @@ export const Cursos = () => {
           })}
         </section>
       )}
+        </div>
 
       {/* Modal de Creación / Edición Comunitaria en Modo Simple */}
       <CommunityAcademyModal
@@ -914,11 +1547,13 @@ export const Cursos = () => {
         onClose={() => setIsPeriodicTableOpen(false)} 
       />
 
-      {/* Modal de Test Vocacional Oficial UNSA */}
+      {/* Modal de Test Vocacional */}
       <VocationalTestModal
         isOpen={isVocationalTestOpen}
         onClose={() => setIsVocationalTestOpen(false)}
       />
+
+
 
       {/* Modal de Confirmación */}
       <ConfirmModal

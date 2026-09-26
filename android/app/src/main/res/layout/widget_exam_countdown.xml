@@ -5,16 +5,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="16dp"
+    android:padding="14dp"
     android:gravity="center_vertical">
 
-    <!-- Header bar -->
+    <!-- Header bar: Tag + Settings gear -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="4dp">
 
         <ImageView
             android:layout_width="16dp"
@@ -28,11 +28,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="CONTADOR DE EXAMEN"
+            android:text="CUENTA REGRESIVA"
             android:textColor="#38BDF8"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:textAllCaps="true"
             android:letterSpacing="0.08" />
 
         <!-- Botón de Configuración de Fecha -->
@@ -52,66 +51,85 @@
         android:id="@+id/widget_exam_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CEPRUNSA I FASE 2027"
+        android:text="EXAMEN DE ADMISIÓN"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:textSize="13sp"
         android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end"
-        android:layout_marginBottom="6dp" />
+        android:layout_marginBottom="4dp" />
 
-    <!-- Big Counter Box -->
+    <!-- Center Content: Big Counter + Mascot Orstty Study -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/widget_exam_days"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="75"
-            android:textColor="#F8FAFC"
-            android:textSize="36sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false" />
-
+        <!-- Left: Days remaining -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="8dp">
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="bottom">
 
             <TextView
+                android:id="@+id/widget_exam_days"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DÍAS"
-                android:textColor="#38BDF8"
-                android:textSize="13sp"
+                android:text="75"
+                android:textColor="#F8FAFC"
+                android:textSize="36sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.05" />
+                android:fontFamily="sans-serif-black"
+                android:includeFontPadding="false" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PARA EL EXAMEN"
-                android:textColor="#94A3B8"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:orientation="vertical"
+                android:layout_marginStart="6dp"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DÍAS"
+                    android:textColor="#38BDF8"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RESTANTES"
+                    android:textColor="#94A3B8"
+                    android:textSize="9sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
+
+        <!-- Right: Mascota Oficial (Artyon / Orstty) -->
+        <ImageView
+            android:id="@+id/widget_exam_mascot"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/mascot_orstty_study"
+            android:contentDescription="Mascota estudiando" />
     </LinearLayout>
 
-    <!-- Action Hint -->
+    <!-- Action Hint Subtitle -->
     <TextView
         android:id="@+id/widget_exam_subtitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Toca para entrenar en RASTRO 🚀 (⚙️ para cambiar fecha)"
+        android:text="Toca para practicar en el Simulador"
         android:textColor="#CBD5E1"
         android:textSize="10sp"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:maxLines="1"
         android:ellipsize="end" />
 

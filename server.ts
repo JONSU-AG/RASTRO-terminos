@@ -88,17 +88,41 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Iniciar Test Vocacional", "Ver Área Biomédicas", "Ver Área Ingenierías", "Ver Área Sociales"],
       originCard: {
         type: 'VOCATIONAL_TEST',
-        title: '🧭 Test Vocacional Oficial UNSA',
+        title: 'Test Vocacional Oficial UNSA',
         badge: 'Orientación & Vocación',
         badgeColor: '#A855F7',
         target: 'VOCATIONAL_TEST',
         description: 'Diagnóstico de 20 preguntas ponderadas para descubrir tu perfil ideal: Biomédicas, Ingenierías o Sociales.',
-        ctaLabel: '✨ Iniciar Test Vocacional Ahora',
+        ctaLabel: 'Iniciar Test Vocacional Ahora',
         previewItems: ['20 Preguntas Oficiales', 'Puntaje Ponderado', 'Diagnóstico de Carrera UNSA']
       },
       actions: [
-        { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: '🧭 Realizar Test Vocacional', badge: 'Test Vocacional' },
-        { type: 'NAVIGATE', target: '/aprender', label: '📖 Explorar Temarios', badge: 'Aprender' }
+        { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: 'Realizar Test Vocacional', badge: 'Test Vocacional' },
+        { type: 'NAVIGATE', target: '/aprender', label: 'Explorar Temarios', badge: 'Aprender' }
+      ]
+    };
+  }
+
+  // Chats / Permiso para compartir / Contactar creadores
+  if (q.includes('chat') || q.includes('permis') || q.includes('contact') || q.includes('creador') || q.includes('pedir permiso')) {
+    return {
+      category: 'chats',
+      text: "En la sección **Chats** puedes comunicarte con otros estudiantes y creadores de contenido de la comunidad para solicitar permisos de difusión de material o coordinar grupos de estudio.",
+      speechSummary: "Accede a la sección Chats para contactar a creadores y coordinar permisos de material.",
+      suggestions: ["Ir a Chats", "Ver Material Compartido", "Ver Temario de Aprender"],
+      originCard: {
+        type: 'CHATS',
+        title: 'Mensajería & Chats de Comunidad',
+        badge: 'Chats & Colaboración',
+        badgeColor: '#0EA5E9',
+        target: '/chats',
+        description: 'Canal directo para coordinar con creadores, solicitar autorización de contenido y formar grupos de estudio.',
+        ctaLabel: 'Abrir Sección de Chats',
+        previewItems: ['Mensajes Directos', 'Permisos de Contenido', 'Grupos de Estudio']
+      },
+      actions: [
+        { type: 'NAVIGATE', target: '/chats', label: 'Abrir Chats', badge: 'Chats' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: 'Ver Biblioteca', badge: 'Biblioteca' }
       ]
     };
   }
@@ -116,18 +140,18 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Ver Semana 1 de Biología", "Explicar Mitosis y Meiosis", "Test Vocacional", "Simulador Biomédicas"],
       originCard: {
         type: 'SUBJECT_PATH',
-        title: '🧬 Biología • Ruta de Aprendizaje (12 Semanas)',
+        title: 'Biología • Ruta de Aprendizaje (12 Semanas)',
         badge: 'Área Biomédicas',
         badgeColor: '#10B981',
         target: '/aprender/biologia',
         description: 'Citología, Genética mendeliana, Bioquímica y Anatomía humana con teoría interactiva y fijas de examen.',
-        ctaLabel: '🚀 Ir al Origen de Biología (Aprender)',
+        ctaLabel: 'Ir al Origen de Biología (Aprender)',
         previewItems: ['12 Semanas de Temario', 'Teoría & Fórmulas', 'Preguntas Tipo Admisión']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/aprender/biologia', label: '🧬 Abrir Origen: Biología', badge: 'Biomédicas' },
-        { type: 'NAVIGATE', target: '/cursos', label: '🎥 Ver Videos de Biología', badge: 'Cursos' },
-        { type: 'NAVIGATE', target: '/biblioteca', label: '📚 Separatas y Tomos PDF', badge: 'Material' }
+        { type: 'NAVIGATE', target: '/aprender/biologia', label: 'Abrir Origen: Biología', badge: 'Biomédicas' },
+        { type: 'NAVIGATE', target: '/cursos', label: 'Ver Videos de Biología', badge: 'Cursos' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: 'Separatas y Tomos PDF', badge: 'Material' }
       ]
     };
   }
@@ -151,18 +175,18 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: [`Semana 1 de ${subjName}`, "Fórmulas de MRUV y Dinámica", "Simulador Ingenierías", "Test Vocacional"],
       originCard: {
         type: 'SUBJECT_PATH',
-        title: `⚡ ${subjName} • Ruta de Aprendizaje (12 Semanas)`,
+        title: `${subjName} • Ruta de Aprendizaje (12 Semanas)`,
         badge: 'Área Ingenierías',
         badgeColor: '#3B82F6',
         target: `/aprender/${targetSubj}`,
         description: `Cinemática, Dinámica, Estática, Polinomios y Vectores con teoría paso a paso y formulario oficial.`,
-        ctaLabel: `🚀 Ir al Origen de ${subjName} (Aprender)`,
+        ctaLabel: `Ir al Origen de ${subjName} (Aprender)`,
         previewItems: ['12 Semanas Oficiales', 'Formularios & DCL', 'Banco de Ejercicios UNSA']
       },
       actions: [
-        { type: 'NAVIGATE', target: `/aprender/${targetSubj}`, label: `⚡ Abrir Origen: ${subjName}`, badge: 'Ingenierías' },
-        { type: 'NAVIGATE', target: '/formulario', label: '📐 Ver Formulario Interactivo', badge: 'Fórmulas' },
-        { type: 'NAVIGATE', target: '/simulador', label: '🎯 Practicar en Simulador', badge: 'Simulador' }
+        { type: 'NAVIGATE', target: `/aprender/${targetSubj}`, label: `Abrir Origen: ${subjName}`, badge: 'Ingenierías' },
+        { type: 'NAVIGATE', target: '/formulario', label: 'Ver Formulario Interactivo', badge: 'Fórmulas' },
+        { type: 'NAVIGATE', target: '/simulador', label: 'Practicar en Simulador', badge: 'Simulador' }
       ]
     };
   }
@@ -190,18 +214,18 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: [`Semana 1 de ${subLabel}`, "Repasar Constitución de 1993", "Simulador Sociales", "Test Vocacional"],
       originCard: {
         type: 'SUBJECT_PATH',
-        title: `🏛️ ${subLabel} • Ruta de Aprendizaje (12 Semanas)`,
+        title: `${subLabel} • Ruta de Aprendizaje (12 Semanas)`,
         badge: 'Área Sociales',
         badgeColor: '#EC4899',
         target: `/aprender/${sub}`,
         description: `Corrientes epistemológicas, historia, normativa gramatical y leyes de la Constitución con fijas de admisión.`,
-        ctaLabel: `🚀 Ir al Origen de ${subLabel} (Aprender)`,
+        ctaLabel: `Ir al Origen de ${subLabel} (Aprender)`,
         previewItems: ['12 Semanas de Temario', 'Fijas de Examen UNSA', 'Resúmenes Clave']
       },
       actions: [
-        { type: 'NAVIGATE', target: `/aprender/${sub}`, label: `🏛️ Abrir Origen: ${subLabel}`, badge: 'Sociales' },
-        { type: 'NAVIGATE', target: '/biblioteca', label: '📚 Tomos y Separatas PDF', badge: 'Material' },
-        { type: 'NAVIGATE', target: '/simulador', label: '🎯 Simulador de Examen', badge: 'Simulador' }
+        { type: 'NAVIGATE', target: `/aprender/${sub}`, label: `Abrir Origen: ${subLabel}`, badge: 'Sociales' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: 'Tomos y Separatas PDF', badge: 'Material' },
+        { type: 'NAVIGATE', target: '/simulador', label: 'Simulador de Examen', badge: 'Simulador' }
       ]
     };
   }
@@ -215,18 +239,18 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Semana 1 de Química", "Tabla Periódica Interactiva", "Leyes de los Gases", "Simulador"],
       originCard: {
         type: 'SUBJECT_PATH',
-        title: '⚗️ Química • Ruta de Aprendizaje (12 Semanas)',
+        title: 'Química • Ruta de Aprendizaje (12 Semanas)',
         badge: 'Ciencias Exactas',
         badgeColor: '#06B6D4',
         target: '/aprender/quimica',
         description: 'Estructura atómica, enlaces, balance redox, estequiometría y química orgánica paso a paso.',
-        ctaLabel: '🚀 Ir al Origen de Química (Aprender)',
+        ctaLabel: 'Ir al Origen de Química (Aprender)',
         previewItems: ['Tabla Periódica', '12 Semanas de Teoría', 'Ejercicios Resueltos']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/aprender/quimica', label: '⚗️ Abrir Origen: Química', badge: 'Química' },
-        { type: 'NAVIGATE', target: '/cursos', label: '🎥 Ver Videos de Química', badge: 'Cursos' },
-        { type: 'NAVIGATE', target: '/formulario', label: '📐 Ver Fórmulas', badge: 'Fórmulas' }
+        { type: 'NAVIGATE', target: '/aprender/quimica', label: 'Abrir Origen: Química', badge: 'Química' },
+        { type: 'NAVIGATE', target: '/cursos', label: 'Ver Videos de Química', badge: 'Cursos' },
+        { type: 'NAVIGATE', target: '/formulario', label: 'Ver Fórmulas', badge: 'Fórmulas' }
       ]
     };
   }
@@ -240,17 +264,17 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Iniciar Simulacro 100 Preguntas", "Simulacro Rápido 20 Preguntas", "Ver Ranking", "Test Vocacional"],
       originCard: {
         type: 'SIMULATOR',
-        title: '🎯 Simulador Oficial de Examen UNSA',
+        title: 'Simulador Oficial de Examen UNSA',
         badge: 'Simulacros & Ranking',
         badgeColor: '#F59E0B',
         target: '/simulador',
         description: 'Cronómetro real de 2 horas, preguntas ponderadas por área (Biomédicas, Ingenierías, Sociales) y ranking.',
-        ctaLabel: '🚀 Abrir Simulador de Examen',
+        ctaLabel: 'Abrir Simulador de Examen',
         previewItems: ['Cronómetro en Vivo', 'Puntaje Ponderado', 'Ranking Nacional']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/simulador', label: '🎯 Ir al Simulador de Examen', badge: 'Simulador' },
-        { type: 'NAVIGATE', target: '/aprender', label: '📖 Repasar Temario', badge: 'Aprender' }
+        { type: 'NAVIGATE', target: '/simulador', label: 'Ir al Simulador de Examen', badge: 'Simulador' },
+        { type: 'NAVIGATE', target: '/aprender', label: 'Repasar Temario', badge: 'Aprender' }
       ]
     };
   }
@@ -264,17 +288,17 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Ver Academia Esparta", "Ver Clases de Biología", "Ver Clases de Física", "Simulador"],
       originCard: {
         type: 'COURSE_VIDEOS',
-        title: '🎥 Clases en Video por Academia (Cursos)',
+        title: 'Clases en Video por Academia (Cursos)',
         badge: 'Cursos & Academias',
         badgeColor: '#38BDF8',
         target: '/cursos',
         description: 'Clases en video de alta calidad, resolución de ejercicios en pizarra y explicaciones audiovisuales.',
-        ctaLabel: '🚀 Ir al Origen de Cursos en Video',
+        ctaLabel: 'Ir al Origen de Cursos en Video',
         previewItems: ['Academias Destacadas', 'Resolución en Pizarra', 'Material de Repaso']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/cursos', label: '🎥 Ir a Cursos en Video', badge: 'Cursos' },
-        { type: 'NAVIGATE', target: '/aprender', label: '📖 Ir a Ruta de Aprendizaje', badge: 'Aprender' }
+        { type: 'NAVIGATE', target: '/cursos', label: 'Ir a Cursos en Video', badge: 'Cursos' },
+        { type: 'NAVIGATE', target: '/aprender', label: 'Ir a Ruta de Aprendizaje', badge: 'Aprender' }
       ]
     };
   }
@@ -288,17 +312,17 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Tomos CEPREUNSA", "Bancos de Preguntas PDF", "Formularios", "Ver Aprender"],
       originCard: {
         type: 'LIBRARY',
-        title: '📚 Material Compartido & Biblioteca PDF',
+        title: 'Material Compartido & Biblioteca PDF',
         badge: 'Material Compartido',
         badgeColor: '#34D399',
         target: '/biblioteca',
         description: 'Tomos oficiales CEPREUNSA, compendios, libros y separatas compartidas por la comunidad.',
-        ctaLabel: '🚀 Abrir Material Compartido',
+        ctaLabel: 'Abrir Material Compartido',
         previewItems: ['Tomos CEPREUNSA', 'Separatas y Resúmenes', 'Bancos en PDF']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/biblioteca', label: '📚 Abrir Material Compartido', badge: 'Material' },
-        { type: 'NAVIGATE', target: '/aprender', label: '📖 Ir a Aprender', badge: 'Aprender' }
+        { type: 'NAVIGATE', target: '/biblioteca', label: 'Abrir Material Compartido', badge: 'Material' },
+        { type: 'NAVIGATE', target: '/aprender', label: 'Ir a Aprender', badge: 'Aprender' }
       ]
     };
   }
@@ -312,17 +336,17 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
       suggestions: ["Fórmulas de MRUV", "Fórmulas de Dinámica", "Fórmulas de Álgebra", "Simulador"],
       originCard: {
         type: 'FORMULARY',
-        title: '📐 Formulario General Preuniversitario',
+        title: 'Formulario General Preuniversitario',
         badge: 'Fórmulas Interactivas',
         badgeColor: '#8B5CF6',
         target: '/formulario',
         description: 'Compendio interactivo con fórmulas, teoremas y leyes de Física, Química y Matemáticas.',
-        ctaLabel: '🚀 Abrir Formulario Interactivo',
+        ctaLabel: 'Abrir Formulario Interactivo',
         previewItems: ['Fórmulas de Física', 'Álgebra y Geometría', 'Química y Constantes']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/formulario', label: '📐 Abrir Formulario', badge: 'Fórmulas' },
-        { type: 'NAVIGATE', target: '/aprender', label: '📖 Ir a Aprender', badge: 'Aprender' }
+        { type: 'NAVIGATE', target: '/formulario', label: 'Abrir Formulario', badge: 'Fórmulas' },
+        { type: 'NAVIGATE', target: '/aprender', label: 'Ir a Aprender', badge: 'Aprender' }
       ]
     };
   }
@@ -330,7 +354,7 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
   // General por defecto con tarjeta de Aprender
   return {
     category: 'general',
-    text: `¡Entendido! He procesado tu consulta sobre **${rawQuery}**. Puedes profundizar en la ruta de 12 semanas de Aprender, ver explicaciones en video en Cursos, o realizar un test vocacional para definir tu carrera:`,
+    text: `He procesado tu consulta sobre **${rawQuery}**. Puedes profundizar en la ruta de 12 semanas de Aprender, ver explicaciones en video en Cursos, o realizar un test vocacional para definir tu carrera:`,
     speechSummary: "Te dejo el acceso directo a los módulos oficiales de RASTRO.",
     suggestions: [
       "Test Vocacional UNSA",
@@ -340,18 +364,18 @@ function detectFuzzyIntentAndOrigin(rawQuery: string) {
     ],
     originCard: {
       type: 'SUBJECT_PATH',
-      title: '📖 Ruta de Aprendizaje RASTRO (12 Semanas)',
+      title: 'Ruta de Aprendizaje RASTRO (12 Semanas)',
       badge: 'Temario Oficial',
       badgeColor: '#A855F7',
       target: '/aprender',
       description: 'Temarios oficiales de las 15 asignaturas preuniversitarias organizadas por semanas con teoría interactiva.',
-      ctaLabel: '🚀 Ir al Origen de Aprender',
+      ctaLabel: 'Ir al Origen de Aprender',
       previewItems: ['15 Materias Oficiales', '12 Semanas de Ruta', 'Fijas de Admisión']
     },
     actions: [
-      { type: 'NAVIGATE', target: '/aprender', label: '📖 Ver en Aprender', badge: 'Aprender' },
-      { type: 'NAVIGATE', target: '/cursos', label: '🎥 Ver Videos en Cursos', badge: 'Cursos' },
-      { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: '🧭 Test Vocacional', badge: 'Vocacional' }
+      { type: 'NAVIGATE', target: '/aprender', label: 'Ver en Aprender', badge: 'Aprender' },
+      { type: 'NAVIGATE', target: '/cursos', label: 'Ver Videos en Cursos', badge: 'Cursos' },
+      { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: 'Test Vocacional', badge: 'Vocacional' }
     ]
   };
 }
@@ -498,21 +522,21 @@ async function startServer() {
           {
             type: "NAVIGATE",
             target: "/aprender",
-            label: "📖 Temario en Aprender",
+            label: "Temario en Aprender",
             badge: "Aprender",
             description: "Ver temario y lecciones de 12 semanas"
           },
           {
             type: "NAVIGATE",
             target: "/cursos",
-            label: "🎥 Clases en Cursos",
+            label: "Clases en Cursos",
             badge: "Cursos",
             description: "Ver videos y clases de academias"
           },
           {
             type: "NAVIGATE",
             target: "/biblioteca",
-            label: "📚 Material Compartido",
+            label: "Material Compartido",
             badge: "Material Compartido",
             description: "Libros, PDFs y separatas descargables"
           }

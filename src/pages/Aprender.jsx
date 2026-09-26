@@ -60,10 +60,11 @@ import { getThemePalette } from '../utils/themeImmersion';
 import { LessonEngine } from '../components/aprender/LessonEngine';
 import { RankingSimulacroModal } from '../components/RankingSimulacroModal';
 import AnimatedCounter from '../components/AnimatedCounter';
-import { OrsttyMascot, ArtyonMascot, MascotDialogue } from '../components/Mascots';
-import { DuolingoFlameIcon } from '../components/DuolingoFlameIcon';
+import { OrsttyMascot, ArtyonMascot, MascotDialogue, DynamicMascot, DualMascotDuo } from '../components/Mascots';
 import { FormulaDisplay } from '../components/FormulaDisplay';
 import { CourseFlashcardsModal } from '../components/CourseFlashcardsModal';
+import { LiteraturaViewerModal } from '../components/LiteraturaViewerModal';
+import { LITERATURA_OBRAS } from '../data/literaturaData';
 
 // Iconos vectoriales nítidos para cada una de las 15 asignaturas sin cortes ni desfases tipográficos
 export const SubjectLucideIcon = ({ id, size = 18, color = 'currentColor' }) => {
@@ -433,6 +434,9 @@ export const Aprender = () => {
   // Modal interactivo de Flashcards activas para el curso actual
   const [showCourseFlashcards, setShowCourseFlashcards] = useState(false);
 
+  // Visor de Resúmenes Detallados de Obras Literarias Preuniversitarias (90% argumento + 10% repaso)
+  const [readingObra, setReadingObra] = useState(null);
+
   // Determinar si el curso actual es de ciencias exactas/fórmulas o de letras/humanidades/biología (Truquitos)
   const isStemCourse = useMemo(() => {
     const raw = (selectedSubject?.name || selectedSubject?.id || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -444,28 +448,33 @@ export const Aprender = () => {
     const list = [];
     (lessons || []).forEach((l) => {
       (l.subtemas || []).forEach((st) => {
-        const hasDirect = st.theory?.formula_data || st.theory?.mecanismos || st.theory?.fijaUnsa || st.theory?.mnemotecnia;
-        if (hasDirect) {
-          list.push({
-            week: l.semana || l.lessonNumber,
-            lessonTitle: l.title,
-            subtemaTitle: st.title || st.shortTitle,
-            subCode: st.subCode || '',
-            formulaData: st.theory?.formula_data,
-            rawMecanismos: st.theory?.mecanismos,
-            fijaUnsa: st.theory?.fijaUnsa || st.theory?.mnemotecnia
-          });
-        } else if (!isStemCourse && (st.theory?.takeaway || st.description || st.theory?.sections?.[0]?.body)) {
-          // Para materias de letras / biología: proveer el truquito y clave mnemotécnica del subtema
-          list.push({
-            week: l.semana || l.lessonNumber,
-            lessonTitle: l.title,
-            subtemaTitle: st.title || st.shortTitle,
-            subCode: st.subCode || '',
-            formulaData: null,
-            rawMecanismos: st.theory?.takeaway || st.theory?.sections?.[0]?.body || st.description,
-            fijaUnsa: st.theory?.takeaway ? `Clave rápida: ${st.theory.takeaway}` : null
-          });
+        if (isStemCourse) {
+          const hasDirect = st.theory?.formula_data || st.theory?.mecanismos;
+          if (hasDirect) {
+            list.push({
+              week: l.semana || l.lessonNumber,
+              lessonTitle: l.title,
+              subtemaTitle: st.title || st.shortTitle,
+              subCode: st.subCode || '',
+              formulaData: st.theory?.formula_data,
+              rawMecanismos: st.theory?.mecanismos,
+              fijaUnsa: st.theory?.fijaUnsa || st.theory?.mnemotecnia
+            });
+          }
+        } else {
+          // Materias de letras, humanidades y ciencias sociales: proveer estrictamente trucos mnemotécnicos y claves fijas SIN fórmulas matemáticas
+          const trick = st.theory?.fijaUnsa || st.theory?.mnemotecnia || st.theory?.takeaway || st.description;
+          if (trick) {
+            list.push({
+              week: l.semana || l.lessonNumber,
+              lessonTitle: l.title,
+              subtemaTitle: st.title || st.shortTitle,
+              subCode: st.subCode || '',
+              formulaData: null,
+              rawMecanismos: trick,
+              fijaUnsa: st.theory?.fijaUnsa ? `Punto Clave: ${st.theory.fijaUnsa}` : (st.theory?.takeaway ? `Concepto: ${st.theory.takeaway}` : null)
+            });
+          }
         }
       });
     });
@@ -599,11 +608,24 @@ export const Aprender = () => {
     return idx === -1 ? lessons.length - 1 : idx;
   }, [lessons, completedLessons]);
 
-  const stepY = 136;
+  const stepY = 170; // 170px de espacio vertical entre nodos: garantiza holgura total para que el tooltip ¡EMPEZAR! nunca colisione con el pill del tema
   const startY = 82; // Centro vertical del primer nodo con espacio suficiente para el tooltip ¡EMPEZAR!
   const totalPathHeight = useMemo(() => {
     return Math.max(startY + (lessons.length - 1) * stepY + 120, 380);
   }, [lessons.length, startY, stepY]);
+
+  // Posición dinámica de la mascota a lo largo del sendero en zigzag
+  const { mascotX, mascotY } = useMemo(() => {
+    const activeX = pathXPercent[currentActiveLessonIndex % pathXPercent.length] || 50;
+    const activeY = startY + currentActiveLessonIndex * stepY;
+    // Si el nodo está a la derecha (>= 50%), colocamos la mascota a la izquierda para no tapar el nodo ni el texto;
+    // si el nodo está a la izquierda (< 50%), la colocamos a la derecha con margen seguro.
+    const mX = activeX >= 50
+      ? Math.max(10, activeX - 28)
+      : Math.min(82, activeX + 24);
+    const mY = activeY - 26;
+    return { mascotX: mX, mascotY: mY };
+  }, [currentActiveLessonIndex, pathXPercent, startY, stepY]);
 
   // Generar el trazado SVG continuo completo (Sendero Base)
   const svgConnectorPath = useMemo(() => {
@@ -765,19 +787,20 @@ export const Aprender = () => {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
-              flex: '0 0 auto',
+              gap: '3px',
+              flex: '1 1 0',
+              minWidth: 0,
               height: '32px',
               background: isLight
                 ? 'linear-gradient(180deg, #FEF2F2 0%, #FEE2E2 100%)'
                 : 'linear-gradient(180deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.35) 100%)',
               border: isLight ? '1.5px solid #FCA5A5' : '1.5px solid #EF4444',
               borderBottom: isLight ? '2.5px solid #DC2626' : '2.5px solid #991B1B',
-              padding: '0 6px',
+              padding: '0 5px',
               borderRadius: '10px',
               color: isLight ? '#B91C1C' : '#FCA5A5',
               fontWeight: 900,
-              fontSize: '0.74rem',
+              fontSize: '0.73rem',
               boxShadow: isLight
                 ? '0 2px 6px rgba(220, 38, 38, 0.12)'
                 : '0 0 10px rgba(239, 68, 68, 0.20)',
@@ -786,8 +809,8 @@ export const Aprender = () => {
               whiteSpace: 'nowrap'
             }}
           >
-            <DuolingoFlameIcon size={16} active={true} animated={true} />
-            <span>
+            <DuolingoFlameIcon size={15} active={true} animated={true} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <AnimatedCounter value={streak || 0} suffix="d" duration={1100} />
             </span>
           </motion.div>
@@ -803,18 +826,19 @@ export const Aprender = () => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '3px',
-              flex: '0 0 auto',
+              flex: '1.2 1 0',
+              minWidth: 0,
               height: '32px',
               background: isLight
                 ? 'linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%)'
                 : 'linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(180, 83, 9, 0.35) 100%)',
               border: isLight ? '1.5px solid #FDE68A' : '1.5px solid #F59E0B',
               borderBottom: isLight ? '2.5px solid #D97706' : '2.5px solid #92400E',
-              padding: '0 6px',
+              padding: '0 5px',
               borderRadius: '10px',
               color: isLight ? '#92400E' : '#FDE68A',
               fontWeight: 900,
-              fontSize: '0.73rem',
+              fontSize: '0.72rem',
               boxShadow: isLight
                 ? '0 2px 6px rgba(217, 119, 6, 0.12)'
                 : '0 0 10px rgba(245, 158, 11, 0.20)',
@@ -835,9 +859,9 @@ export const Aprender = () => {
               }}
               style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
             >
-              <Sparkles size={12} color={isLight ? '#D97706' : '#FDE047'} />
+              <Sparkles size={11} color={isLight ? '#D97706' : '#FDE047'} />
             </motion.div>
-            <span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               Nv.<AnimatedCounter value={level || 1} duration={900} /> (<AnimatedCounter value={xp || 0} suffix="XP" duration={1200} />)
             </span>
           </motion.div>
@@ -852,18 +876,19 @@ export const Aprender = () => {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
-              flex: '0 0 auto',
+              gap: '3px',
+              flex: '0.9 1 0',
+              minWidth: 0,
               height: '32px',
               color: isLight ? '#9F1239' : '#FECDD3',
               fontWeight: 900,
-              fontSize: '0.74rem',
+              fontSize: '0.73rem',
               background: isLight
                 ? 'linear-gradient(180deg, #FFF1F2 0%, #FFE4E6 100%)'
                 : 'linear-gradient(180deg, rgba(244, 63, 94, 0.25) 0%, rgba(159, 18, 57, 0.35) 100%)',
               border: isLight ? '1.5px solid #FECDD3' : '1.5px solid #F43F5E',
               borderBottom: isLight ? '2.5px solid #E11D48' : '2.5px solid #9F1239',
-              padding: '0 6px',
+              padding: '0 5px',
               borderRadius: '10px',
               boxShadow: isLight
                 ? '0 2px 6px rgba(225, 29, 72, 0.12)'
@@ -887,7 +912,7 @@ export const Aprender = () => {
             >
               <Heart size={12} fill="#E11D48" color="#E11D48" />
             </motion.div>
-            <span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <AnimatedCounter value={hearts ?? 5} duration={1000} />
             </span>
           </motion.div>
@@ -907,13 +932,14 @@ export const Aprender = () => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: '3px',
-              flex: '0 0 auto',
+              flex: '1.1 1 0',
+              minWidth: 0,
               height: '32px',
               color: isStemCourse
                 ? (isLight ? '#5B21B6' : '#DDD6FE')
                 : (isLight ? '#065F46' : '#A7F3D0'),
               fontWeight: 900,
-              fontSize: '0.74rem',
+              fontSize: '0.72rem',
               background: isStemCourse
                 ? (isLight
                     ? 'linear-gradient(180deg, #F5F3FF 0%, #EDE9FE 100%)'
@@ -927,7 +953,7 @@ export const Aprender = () => {
               borderBottom: isStemCourse
                 ? (isLight ? '2.5px solid #7C3AED' : '2.5px solid #5B21B6')
                 : (isLight ? '2.5px solid #059669' : '2.5px solid #047857'),
-              padding: '0 6px',
+              padding: '0 5px',
               borderRadius: '10px',
               boxShadow: isStemCourse
                 ? (isLight
@@ -946,12 +972,12 @@ export const Aprender = () => {
               style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}
             >
               {isStemCourse ? (
-                <Sigma size={13} color={isLight ? '#6D28D9' : '#A78BFA'} />
+                <Sigma size={12} color={isLight ? '#6D28D9' : '#A78BFA'} />
               ) : (
-                <Lightbulb size={13} color={isLight ? '#059669' : '#34D399'} />
+                <Lightbulb size={12} color={isLight ? '#059669' : '#34D399'} />
               )}
             </motion.div>
-            <span style={{ fontWeight: 900, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 900 }}>
               {isStemCourse ? 'Fórmulas' : 'Truquitos'}
             </span>
           </motion.button>
@@ -1125,11 +1151,12 @@ export const Aprender = () => {
           />
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', position: 'relative', zIndex: 1, width: '100%' }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+              <DualMascotDuo size={34} orsttyMood="feliz" artyonMood="contento" />
               <h1
                 style={{
                   margin: 0,
-                  fontSize: 'clamp(1.2rem, 3.8vw, 1.5rem)',
+                  fontSize: 'clamp(1.15rem, 3.6vw, 1.45rem)',
                   fontWeight: 900,
                   letterSpacing: '-0.02em',
                   lineHeight: 1.15,
@@ -1504,6 +1531,150 @@ export const Aprender = () => {
           )}
         </AnimatePresence>
 
+        {/* ================= SECCIÓN ESPECIAL: OBRAS LITERARIAS (TEMARIO COMPLETO) ================= */}
+        {(selectedSubject?.name === 'Literatura' || (selectedSubject?.id || '').toLowerCase().includes('literat')) && (
+          <div style={{
+            width: '100%',
+            maxWidth: '520px',
+            margin: '0 auto 20px',
+            padding: '16px',
+            borderRadius: '24px',
+            background: isLight ? 'linear-gradient(135deg, rgba(6, 78, 59, 0.08) 0%, rgba(4, 120, 87, 0.14) 100%)' : 'linear-gradient(135deg, rgba(6, 78, 59, 0.45) 0%, rgba(4, 120, 87, 0.25) 100%)',
+            border: '2px solid rgba(16, 185, 129, 0.35)',
+            boxShadow: '0 6px 20px rgba(16, 185, 129, 0.15)',
+            boxSizing: 'border-box'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 10px rgba(16, 185, 129, 0.35)'
+                }}>
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '0.96rem', fontWeight: 900, color: isLight ? '#064E3B' : '#6EE7B7', letterSpacing: '-0.01em' }}>
+                    Obras Literarias Preuniversitarias
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: isLight ? '#047857' : '#A7F3D0', fontWeight: 600 }}>
+                    90% Argumento narrativo • 10% Apunte de repaso
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/biblioteca?tab=obras"
+                style={{
+                  fontSize: '0.76rem',
+                  fontWeight: 800,
+                  color: '#10B981',
+                  textDecoration: 'none',
+                  padding: '5px 12px',
+                  borderRadius: '10px',
+                  background: isLight ? '#FFFFFF' : 'rgba(16, 185, 129, 0.2)',
+                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>Ver las 20 obras</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            {/* Carrusel de Obras para lectura inmediata */}
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              overflowX: 'auto',
+              paddingBottom: '8px',
+              scrollbarWidth: 'none',
+              WebkitOverflowScrolling: 'touch'
+            }}>
+              {LITERATURA_OBRAS.map((obra) => (
+                <motion.div
+                  key={obra.id}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setReadingObra(obra)}
+                  style={{
+                    flex: '0 0 170px',
+                    cursor: 'pointer',
+                    padding: '12px',
+                    borderRadius: '16px',
+                    background: isLight ? '#FFFFFF' : 'rgba(15, 23, 42, 0.88)',
+                    border: '1.5px solid rgba(16, 185, 129, 0.25)',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.06)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div>
+                    <div style={{
+                      height: '5px',
+                      borderRadius: '99px',
+                      background: obra.portadaGradiente || 'linear-gradient(135deg, #059669, #10B981)',
+                      marginBottom: '8px'
+                    }} />
+                    <h4 style={{
+                      margin: 0,
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      color: isLight ? '#0F172A' : '#FFFFFF',
+                      lineHeight: 1.25,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>
+                      {obra.titulo}
+                    </h4>
+                    <p style={{
+                      margin: '4px 0 0',
+                      fontSize: '0.72rem',
+                      color: isLight ? '#64748B' : '#94A3B8',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}>
+                      {obra.autor}
+                    </p>
+                  </div>
+                  <div style={{
+                    marginTop: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                  }}>
+                    <span style={{
+                      fontSize: '0.66rem',
+                      fontWeight: 700,
+                      color: '#10B981',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      padding: '2px 6px',
+                      borderRadius: '6px'
+                    }}>
+                      {obra.especie || 'Obra'}
+                    </span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#10B981' }}>
+                      Leer →
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ================= TABLERO DE NIVELES CON ESTILO GAMIFICADO ================= */}
         <div
           style={{
@@ -1552,12 +1723,21 @@ export const Aprender = () => {
             <span>Ruta Oficial de Aprendizaje • Nivel 1</span>
           </div>
 
-          {/* MASCOTA OFICIAL ORSTTY AL LADO DEL CAMINO */}
-          <div
+          {/* MASCOTA OFICIAL ORSTTY DINÁMICA QUE SIGUE EL PROGRESO DEL ESTUDIANTE */}
+          <motion.div
+            initial={false}
+            animate={{
+              top: `${mascotY}px`,
+              left: `${mascotX}%`
+            }}
+            transition={{
+              type: 'spring',
+              stiffness: 80,
+              damping: 15
+            }}
             style={{
               position: 'absolute',
-              top: '190px',
-              left: '12px',
+              transform: 'translateX(-50%)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -1569,18 +1749,18 @@ export const Aprender = () => {
               animate={{ y: [0, -6, 0] }}
               transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
             >
-              <OrsttyMascot size={66} mood="cheering" animate={false} />
+              <DynamicMascot size={64} mood="cheering" animate={false} />
             </motion.div>
             <div
               style={{
-                width: '46px',
+                width: '44px',
                 height: '8px',
                 background: isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.4)',
                 borderRadius: '50%',
                 marginTop: '-4px'
               }}
             />
-          </div>
+          </motion.div>
 
           {/* TRAZADO DEL CAMINO SVG RESPONSIVE CON EXACTITUD MILIMÉTRICA */}
           <svg
@@ -1745,7 +1925,7 @@ export const Aprender = () => {
                       }}
                       style={{
                         position: 'absolute',
-                        top: '-46px',
+                        top: '-38px',
                         left: '50%',
                         transform: 'translateX(-50%)',
                         background: '#58CC02',
@@ -1753,8 +1933,8 @@ export const Aprender = () => {
                         border: 'none',
                         borderBottom: '4px solid #46A302',
                         fontWeight: 900,
-                        fontSize: '0.82rem',
-                        padding: '5px 16px',
+                        fontSize: '0.80rem',
+                        padding: '4px 14px',
                         borderRadius: '16px',
                         boxShadow: '0 4px 14px rgba(88, 204, 2, 0.4)',
                         letterSpacing: '0.05em',
@@ -2387,18 +2567,18 @@ export const Aprender = () => {
 
                                 {/* Secciones de Teoría Oficial */}
                                 {st.theory.sections && st.theory.sections.map((sec, secIdx) => (
-                                  <div key={secIdx} style={{ background: 'rgba(30, 41, 59, 0.6)', border: '1px solid rgba(148, 163, 184, 0.2)', borderRadius: '12px', padding: '12px' }}>
-                                    <div style={{ fontSize: '0.75rem', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  <div key={secIdx} style={{ background: isLight ? '#F8FAFC' : 'rgba(30, 41, 59, 0.6)', border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(148, 163, 184, 0.2)', borderRadius: '12px', padding: '12px' }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 900, color: isLight ? '#475569' : '#94A3B8', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                                       <BookOpen size={13} /> {sec.heading}
                                     </div>
-                                    <div style={{ fontSize: '0.84rem', color: '#E2E8F0', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-                                      <FormulaDisplay rawMecanismos={sec.body} />
+                                    <div style={{ fontSize: '0.84rem', color: isLight ? '#334155' : '#E2E8F0', lineHeight: 1.55, whiteSpace: 'pre-line' }}>
+                                      {sec.body}
                                     </div>
                                   </div>
                                 ))}
 
-                                {/* Pizarra de Fórmulas y Teoremas Canónicos con Tipografía KaTeX */}
-                                {(st.theory?.formula_data || st.theory?.mecanismos) && (
+                                {/* Pizarra de Fórmulas y Teoremas Canónicos con Tipografía KaTeX (Exclusivo Cursos STEM) */}
+                                {isStemCourse && (st.theory?.formula_data || st.theory?.mecanismos) && (
                                   <FormulaDisplay
                                     formulaData={st.theory?.formula_data}
                                     rawMecanismos={st.theory?.mecanismos}
@@ -2610,7 +2790,7 @@ export const Aprender = () => {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                   <div style={{ display: 'none', md: 'block' }}>
-                    <OrsttyMascot mood="feliz" size={36} />
+                    <DynamicMascot mood="feliz" size={36} />
                   </div>
                   <button
                     onClick={() => setShowUnitGuide(false)}
@@ -2669,8 +2849,8 @@ export const Aprender = () => {
                   </p>
                 </div>
 
-                {/* Tarjeta 2: Pizarra de Fórmulas y Teoremas Canónicos con Tipografía KaTeX */}
-                {lessons[0]?.subtemas?.[0]?.theory?.formula_data ? (
+                {/* Tarjeta 2: Pizarra de Fórmulas (STEM) o Claves Doctrinales (Humanidades) */}
+                {isStemCourse && lessons[0]?.subtemas?.[0]?.theory?.formula_data ? (
                   <FormulaDisplay
                     formulaData={lessons[0]?.subtemas?.[0]?.theory?.formula_data}
                     rawMecanismos={lessons[0]?.theory?.sections?.[1]?.body}
@@ -2689,11 +2869,11 @@ export const Aprender = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '7px' }}>
                       <Target size={16} color={isLight ? '#7C3AED' : '#C084FC'} />
                       <h4 style={{ margin: 0, color: isLight ? '#6D28D9' : '#C4B5FD', fontWeight: 900, fontSize: '0.92rem', letterSpacing: '-0.01em' }}>
-                        Casos Particulares, Fórmulas y Taxonomía Evaluada
+                        {isStemCourse ? 'Casos Particulares, Fórmulas y Taxonomía Evaluada' : 'Claves Conceptuales, Escuelas y Doctrina Evaluada'}
                       </h4>
                     </div>
                     <p style={{ margin: 0, fontSize: '0.86rem', lineHeight: '1.55', color: isLight ? '#334155' : '#E2E8F0' }}>
-                      {lessons[0]?.theory?.sections?.[1]?.body || 'Revisión exhaustiva de clasificaciones, teoremas y casos operacionales evaluados en el examen de admisión.'}
+                      {lessons[0]?.theory?.sections?.[1]?.body || (isStemCourse ? 'Revisión exhaustiva de clasificaciones, teoremas y casos operacionales evaluados en el examen de admisión.' : 'Revisión rigurosa de autores, corrientes, normas y definiciones clave evaluadas en el prospecto oficial.')}
                     </p>
                   </div>
                 )}
@@ -2734,11 +2914,11 @@ export const Aprender = () => {
                   }}
                 >
                   <div style={{ flexShrink: 0 }}>
-                    <OrsttyMascot mood="contento" size={44} />
+                    <DynamicMascot mood="contento" size={44} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <span style={{ fontSize: '0.72rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: isLight ? '#B45309' : '#FBBF24' }}>
-                      Consejo de Estudio de ORSTTY
+                      Consejo de Estudio RASTRO
                     </span>
                     <p style={{ margin: '2px 0 0', fontSize: '0.84rem', color: isLight ? '#78350F' : '#FEF3C7', lineHeight: '1.45', fontWeight: 600 }}>
                       {SUBJECT_MASCOT_TIPS[selectedSubject.name] || '¡Estudia con constancia y asegura cada punto en el baremo oficial!'}
@@ -2824,7 +3004,7 @@ export const Aprender = () => {
               }}
             >
               <div style={{ marginBottom: '14px', position: 'relative' }}>
-                <OrsttyMascot size={84} mood="cheering" />
+                <DynamicMascot size={84} mood="cheering" />
               </div>
               <h3 style={{ fontSize: '1.55rem', fontWeight: 900, margin: '0 0 8px', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 {chestModal.alreadyClaimed ? (
@@ -3558,6 +3738,15 @@ export const Aprender = () => {
         onClose={() => setShowCourseFlashcards(false)}
         subject={selectedSubject}
       />
+
+      {/* Modal Digital de Lectura de Obras Literarias Pre-U (90% argumento narrativo + 10% apunte de repaso) */}
+      {readingObra && (
+        <LiteraturaViewerModal
+          obra={readingObra}
+          isOpen={Boolean(readingObra)}
+          onClose={() => setReadingObra(null)}
+        />
+      )}
 
       {/* ================= MOTOR DE LECCIÓN EN PANTALLA COMPLETA ================= */}
       {activeLesson && (

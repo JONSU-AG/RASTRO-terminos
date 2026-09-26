@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
@@ -33,17 +33,24 @@ import {
   Flame,
   Edit3,
   Eye,
-  Smartphone
+  Smartphone,
+  Video,
+  Crown,
+  MessageSquare,
+  Compass,
+  Calculator,
+  Binary
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Logo } from '../components/Logo';
 import { StudyWidgetsHub } from '../components/StudyWidgetsHub';
 import { AliadosCarousel, WhatsAppIconSVG, TikTokIconSVG } from '../components/AliadosCarousel';
-import { WhatsAppChannelPopup } from '../components/WhatsAppChannelPopup';
 import { useGamification } from '../context/GamificationContext';
 import { LiveUserAvatar } from '../components/LiveUserAvatar';
+import { DualMascotDuo, DynamicMascot } from '../components/Mascots';
 import { UploadModal } from '../components/UploadModal';
 import { SuccessModal } from '../components/SuccessModal';
+import { VocationalTestModal } from '../components/VocationalTestModal';
 import { db, storage } from '../lib/firebase';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, setDoc, increment, query, where, getDocs } from 'firebase/firestore';
@@ -61,11 +68,58 @@ const formatFileSize = (bytes) => {
 export const Home = () => {
   const { user, userData, isAdmin, ensureDriveToken } = useAuth();
   const { streak: gamificationStreak } = useGamification();
-  const profileDisplayName = userData?.displayName || user?.displayName || 'Estudiante RASTRO';
+  const profileDisplayName = useMemo(() => {
+    // 1. Datos del documento Firestore
+    const rawUserData = userData?.displayName || userData?.name || userData?.username;
+    if (typeof rawUserData === 'string' && rawUserData.trim().length > 0) {
+      const clean = rawUserData.trim();
+      if (clean !== 'Estudiante RASTRO' && clean !== 'Estudiante RUMBO') return clean;
+    }
+
+    // 2. Datos de Firebase Auth
+    const rawAuth = user?.displayName;
+    if (typeof rawAuth === 'string' && rawAuth.trim().length > 0) {
+      const clean = rawAuth.trim();
+      if (clean !== 'Estudiante RASTRO' && clean !== 'Estudiante RUMBO') return clean;
+    }
+
+    // 3. Memoria local o sesión previa
+    try {
+      const prefName = sessionStorage.getItem('rastro_preferred_username') || localStorage.getItem('rastro_preferred_username');
+      if (prefName && prefName.trim().length > 0) return prefName.trim();
+
+      if (user?.uid) {
+        const storedUid = localStorage.getItem(`rastro_username_${user.uid}`) || localStorage.getItem(`rastro_username_chosen_${user.uid}`);
+        if (storedUid && storedUid.trim().length > 0) return storedUid.trim();
+      }
+
+      const storedAlly = localStorage.getItem('rumbo_ally_card');
+      if (storedAlly) {
+        const parsed = JSON.parse(storedAlly);
+        if (parsed?.name && typeof parsed.name === 'string' && parsed.name.trim().length > 0) {
+          return parsed.name.trim();
+        }
+      }
+
+      const generalName = localStorage.getItem('rastro_user_name') || localStorage.getItem('rumbo_user_name') || localStorage.getItem('rastro_username_chosen');
+      if (generalName && generalName.trim().length > 0) return generalName.trim();
+    } catch {}
+
+    // 4. Prefijo del correo si existe
+    if (user?.email && typeof user.email === 'string') {
+      const emailPrefix = user.email.split('@')[0].trim();
+      if (emailPrefix) return emailPrefix;
+    }
+
+    // 5. Fallback seguro garantizado (nunca vacío)
+    const fallback = (userData?.displayName && userData.displayName.trim()) || (user?.displayName && user.displayName.trim()) || 'Estudiante';
+    return fallback.replace(/\s+(RASTRO|RUMBO)$/i, '').trim() || 'Estudiante';
+  }, [userData, user]);
 
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [successContent, setSuccessContent] = useState({ title: '', message: '' });
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isVocationalModalOpen, setIsVocationalModalOpen] = useState(false);
 
   // Tabs: 'material' (Subida de Material) | 'aliado' (Ser Aliado)
   const [formTab, setFormTab] = useState('material');
@@ -132,20 +186,20 @@ export const Home = () => {
     localStorage.setItem('rumbo_user_uploads', JSON.stringify(userUploads));
   }, [userUploads]);
 
-  // Dynamic motto animation: "al conocimiento", "a tu ingreso", "al éxito", "a tu meta", "al futuro"
+  // Dynamic motto animation: Metas clave para la preparación universitaria con colores vibrantes
   const MOTTO_PHRASES = [
-    { text: 'conocimiento.', color: '#007AFF', bg: 'rgba(0, 122, 255, 0.12)' },
-    { text: 'tu ingreso.', color: '#34C759', bg: 'rgba(52, 199, 89, 0.12)' },
-    { text: 'tu éxito.', color: '#FF9500', bg: 'rgba(255, 149, 0, 0.12)' },
-    { text: 'tu meta.', color: '#AF52DE', bg: 'rgba(175, 82, 222, 0.12)' },
-    { text: 'tu futuro.', color: '#FF2D55', bg: 'rgba(255, 45, 85, 0.12)' }
+    { text: 'Tu Vacante Directa', color: '#007AFF', bg: 'rgba(0, 122, 255, 0.12)', border: 'rgba(0, 122, 255, 0.3)' },
+    { text: 'Tu Ingreso Universitario', color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.3)' },
+    { text: 'Máximo Puntaje', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.3)' },
+    { text: 'Tu Carrera Soñada', color: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.12)', border: 'rgba(139, 92, 246, 0.3)' },
+    { text: 'Tu Futuro Cachimbo', color: '#EC4899', bg: 'rgba(236, 72, 153, 0.12)', border: 'rgba(236, 72, 153, 0.3)' }
   ];
   const [mottoIndex, setMottoIndex] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setMottoIndex((prev) => (prev + 1) % MOTTO_PHRASES.length);
-    }, 2800);
+    }, 2400);
     return () => clearInterval(timer);
   }, [MOTTO_PHRASES.length]);
 
@@ -298,7 +352,7 @@ export const Home = () => {
       setTimeout(() => {
         setMatLoading(false);
         setSuccessContent({
-          title: '¡Aporte Publicado con Éxito! 🎉',
+          title: '¡Aporte Publicado con Éxito!',
           message: 'Tu material ha sido subido a la biblioteca comunitaria de RASTRO con su respectiva confirmación y créditos.'
         });
         setIsSuccessOpen(true);
@@ -364,7 +418,7 @@ export const Home = () => {
     // Si NO es Admin/Creador y NO cumple con los 10 aportes, se notifica y NO se bloquea la UI en estado de carga
     if (!isUserAdmin && currentUploadCount < 10) {
       setSuccessContent({
-        title: 'Aún no cumples la meta de +10 Aportes 📚',
+        title: 'Aún no cumples la meta de +10 Aportes',
         message: `Actualmente cuentas con ${currentUploadCount} de 10 materiales compartidos. Para activar y publicar tu Tarjeta de Aliado RASTRO en el carrusel principal, necesitas haber aportado al menos 10 materiales a la comunidad. ¡Sigue compartiendo contenido en la pestaña "Subir Material"!`
       });
       setIsSuccessOpen(true);
@@ -436,7 +490,7 @@ export const Home = () => {
       setAllyLoading(false);
 
       setSuccessContent({
-        title: isUserAdmin ? '¡Perfil de Creador / Aliado Guardado! 👑' : '¡Tarjeta de Aliado Activada! ⭐',
+        title: isUserAdmin ? '¡Perfil de Creador / Aliado Guardado!' : '¡Tarjeta de Aliado Activada!',
         message: isUserAdmin 
           ? 'Como Creador & Administrador de RASTRO, tu perfil de Aliado se ha activado inmediatamente con máxima prioridad en el carrusel de la página.'
           : `¡Felicitaciones! Cumples con la meta de +10 aportes comunitarios (${currentUploadCount} materiales compartidos). Tu tarjeta de Aliado RASTRO ya está activa y visible públicamente en el carrusel.`
@@ -459,7 +513,7 @@ export const Home = () => {
       localStorage.setItem('rumbo_ally_card', JSON.stringify(cardData));
       setAllyLoading(false);
       setSuccessContent({
-        title: '¡Perfil de Creador Activado! 👑',
+        title: '¡Perfil de Creador Activado!',
         message: 'Tu tarjeta de Creador / Aliado RASTRO ha sido guardada y activada con éxito.'
       });
       setIsSuccessOpen(true);
@@ -468,232 +522,632 @@ export const Home = () => {
 
   return (
     <div className="page-container" style={{ paddingBottom: '100px' }}>
-      <header className="hero-section" style={{ padding: '40px 24px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <header className="hero-section" style={{ padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', boxSizing: 'border-box' }}>
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           style={{ width: '100%', maxWidth: '980px', margin: '0 auto' }}
         >
-          {/* Tarjeta de Bienvenida a RASTRO estilo referencia */}
-          <div 
-            className="home-hero-card"
-            style={{
-              background: 'var(--card-bg)',
-              border: '1.5px solid var(--card-border)',
-              borderRadius: '28px',
-              padding: '36px 36px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.25)',
+          {/* Home Hub Estilo iOS + Google Minimalista */}
+          <div style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px'
+          }}>
+            {/* Cabecera Minimalista: Saludo y Estado */}
+            <div style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '32px',
+              justifyContent: 'space-between',
+              padding: '0 4px',
               flexWrap: 'wrap',
-              justifyContent: 'center',
-              position: 'relative',
-              overflow: 'hidden',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)'
-            }}
-          >
-            {/* Gradiente sutil decorativo de fondo */}
-            <div style={{
-              position: 'absolute',
-              top: '-40px',
-              right: '-40px',
-              width: '240px',
-              height: '240px',
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(0, 122, 255, 0.12) 0%, rgba(239, 148, 190, 0.08) 60%, transparent 80%)',
-              pointerEvents: 'none'
-            }} />
+              gap: '12px'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 900,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: 'var(--accent-color, #007AFF)',
+                    background: 'rgba(0, 122, 255, 0.1)',
+                    border: '1px solid rgba(0, 122, 255, 0.25)',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    Especial para Universidades Nacionales
+                  </span>
 
-            {/* Logo RASTRO Oficial 16:9 */}
-            <motion.div 
-              className="hero-mascot-wrapper"
-              whileHover={{ scale: 1.04, y: -2 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-              style={{
-                flexShrink: 0,
-                width: '100%',
-                maxWidth: '340px',
-                height: 'auto',
-                aspectRatio: '16/9',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(255, 255, 255, 0.04)',
-                borderRadius: '24px',
-                padding: '6px'
-              }}
-            >
-              <img 
-                src="./astrologo.png" 
-                alt="RASTRO" 
-                onError={(e) => {
-                  e.currentTarget.src = "./applogo.png";
-                }}
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 12px 24px rgba(0, 122, 255, 0.25))'
-                }} 
-              />
-            </motion.div>
-
-            {/* Contenido Textual */}
-            <div className="hero-content-wrapper" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '14px', width: '100%' }}>
-              
-              {/* Badge superior */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  padding: '5px 16px',
-                  borderRadius: '20px',
-                  border: '1.5px solid rgba(239, 148, 190, 0.4)',
-                  background: 'rgba(239, 148, 190, 0.12)',
-                  color: '#EF94BE',
-                  fontSize: '0.8rem',
-                  fontWeight: 800,
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase'
-                }}>
-                  ¡BIENVENIDO A RASTRO!
-                </span>
-              </div>
-
-              {/* Título Principal con Frases Animadas en Colores Vibrantes */}
-              <h1 style={{
-                fontSize: 'clamp(1.7rem, 4vw, 2.5rem)',
-                fontWeight: 900,
-                color: 'var(--text-main)',
-                margin: 0,
-                letterSpacing: '-0.025em',
-                lineHeight: 1.2,
-                display: 'flex',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}>
-                <span>Tu camino hacia</span>
-                <span style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center',
-                  minHeight: '44px',
-                  overflow: 'hidden'
-                }}>
+                  <span style={{
+                    fontSize: '0.74rem',
+                    fontWeight: 900,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: 'var(--text-secondary, #64748B)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}>
+                    <span>Meta:</span>
+                  </span>
+                  
+                  {/* Píldora de palabra rotativa con color vibrante y animación suave */}
                   <AnimatePresence mode="wait">
                     <motion.span
                       key={mottoIndex}
-                      initial={{ opacity: 0, y: 16, filter: 'blur(6px)' }}
-                      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                      exit={{ opacity: 0, y: -16, filter: 'blur(6px)' }}
-                      transition={{ duration: 0.35, ease: 'easeOut' }}
+                      initial={{ opacity: 0, y: 5, scale: 0.94 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -5, scale: 0.94 }}
+                      transition={{ duration: 0.25, ease: 'easeOut' }}
                       style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.78rem',
+                        fontWeight: 900,
                         color: MOTTO_PHRASES[mottoIndex].color,
                         background: MOTTO_PHRASES[mottoIndex].bg,
-                        padding: '2px 12px',
-                        borderRadius: '12px',
-                        display: 'inline-block'
+                        border: `1px solid ${MOTTO_PHRASES[mottoIndex].border}`,
+                        boxShadow: `0 2px 8px ${MOTTO_PHRASES[mottoIndex].color}22`
                       }}
                     >
                       {MOTTO_PHRASES[mottoIndex].text}
                     </motion.span>
                   </AnimatePresence>
-                </span>
-              </h1>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  <DualMascotDuo size={46} orsttyMood="feliz" artyonMood="contento" />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h1 style={{
+                      margin: 0,
+                      lineHeight: 1.15,
+                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere'
+                    }}>
+                      <span style={{
+                        display: 'block',
+                        fontSize: 'clamp(0.82rem, 2.2vw, 0.94rem)',
+                        fontWeight: 600,
+                        color: 'var(--text-secondary, #64748B)',
+                        letterSpacing: '0.01em',
+                        marginBottom: '2px'
+                      }}>
+                        Hola,
+                      </span>
+                      <span style={{
+                        display: 'block',
+                        fontSize: 'clamp(1.22rem, 4vw, 1.7rem)',
+                        fontWeight: 900,
+                        color: 'var(--text-main, #0F172A)',
+                        letterSpacing: '-0.025em',
+                        lineHeight: 1.2
+                      }}>
+                        {profileDisplayName}
+                      </span>
+                    </h1>
+                  </div>
+                </div>
+              </div>
 
-              {/* Subtítulo descriptivo */}
-              <p style={{
-                margin: 0,
-                fontSize: '0.94rem',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.5,
-                maxWidth: '640px'
-              }}>
-                Plataforma creada para acompañar tu preparación académica preuniversitaria. Organizada y centralizada en un solo lugar.
-              </p>
+              {/* Racha / Progreso estilo Widget iOS */}
+              <Link
+                to="/simulador"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: '999px',
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  color: '#F59E0B',
+                  textDecoration: 'none',
+                  fontSize: '0.78rem',
+                  fontWeight: 800
+                }}
+              >
+                <Flame size={14} fill="#F59E0B" />
+                <span>{gamificationStreak || 1} días activos</span>
+              </Link>
+            </div>
 
-              {/* Tarjeta Unificada de Términos y Aviso Legal */}
-              <div style={{
-                width: '100%',
-                maxWidth: '620px',
-                background: 'var(--card-bg)',
-                border: '1.5px solid var(--card-border)',
-                borderRadius: '20px',
-                padding: '16px 20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                boxSizing: 'border-box',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.05)',
-                backdropFilter: 'blur(12px)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', textAlign: 'left' }}>
+            {/* Banner de Acción Principal: Continuar Preparación (Estilo iOS Fitness) */}
+            <div style={{
+              background: 'var(--card-bg, #FFFFFF)',
+              border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+              borderRadius: '20px',
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.03)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #007AFF 0%, #0056B3 100%)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(0, 122, 255, 0.28)'
+                }}>
+                  <Target size={18} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <h3 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                    Ruta de Preparación Activa
+                  </h3>
+                  <p style={{ margin: '2px 0 0', fontSize: '0.74rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Temarios oficiales y bancos de preguntas clasificados
+                  </p>
+                </div>
+              </div>
+
+              <Link
+                to="/aprender"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '8px 14px',
+                  borderRadius: '999px',
+                  background: 'var(--accent-color, #007AFF)',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.8rem',
+                  textDecoration: 'none',
+                  flexShrink: 0,
+                  boxShadow: '0 3px 10px rgba(0, 122, 255, 0.25)',
+                  transition: 'transform 0.15s ease'
+                }}
+              >
+                <span>Estudiar</span>
+                <ArrowRight size={13} />
+              </Link>
+            </div>
+
+            {/* Baldosas de Herramientas Clave (Google Tiles / iOS Control Center Style) */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
+              gap: '10px'
+            }}>
+              {/* 0. OBRAS LITERARIAS (TEMARIO COMPLETO) */}
+              <motion.div whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                <Link
+                  to="/biblioteca?tab=obras"
+                  style={{
+                    padding: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--card-bg, #FFFFFF)',
+                    border: '1.5px solid rgba(234, 88, 12, 0.25)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 10px rgba(234, 88, 12, 0.06)',
+                    transition: 'all 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                >
                   <div style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '12px',
-                    background: 'rgba(0, 122, 255, 0.1)',
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '11px',
+                    background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.15) 0%, rgba(194, 65, 12, 0.22) 100%)',
+                    color: '#EA580C',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <BookOpen size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Obras Literarias
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#EA580C', fontWeight: 700, marginTop: '2px' }}>
+                      Resúmenes Detallados
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+
+              {/* 1. TEST VOCACIONAL */}
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                type="button"
+                onClick={() => setIsVocationalModalOpen(true)}
+                style={{
+                  padding: '14px',
+                  borderRadius: '18px',
+                  background: 'var(--card-bg, #FFFFFF)',
+                  border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '11px',
+                  background: 'rgba(13, 148, 136, 0.12)',
+                  color: '#0D9488',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <Compass size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                    Test Vocacional
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                    Tu Carrera Ideal
+                  </div>
+                </div>
+              </motion.button>
+
+              {/* 2. FÓRMULAS & TRUQUITOS PRE-U */}
+              <motion.div whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                <Link
+                  to="/formulario"
+                  style={{
+                    padding: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--card-bg, #FFFFFF)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '11px',
+                    background: 'rgba(168, 85, 247, 0.12)',
+                    color: '#A855F7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Calculator size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Fórmulas & Trucos
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Cara A & B Pre-U
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+
+              {/* 3. APRENDER */}
+              <motion.div whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                <Link
+                  to="/aprender"
+                  style={{
+                    padding: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--card-bg, #FFFFFF)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '11px',
+                    background: 'rgba(0, 122, 255, 0.12)',
                     color: '#007AFF',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flexShrink: 0,
-                    marginTop: '2px'
+                    flexShrink: 0
                   }}>
-                    <Shield size={18} />
+                    <BookOpen size={18} />
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ margin: '0 0 2px 0', fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                      Plataforma de Libre Acceso Académico
-                    </h4>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-                      RASTRO recopila recursos académicos de acceso abierto. Los materiales pertenecen a sus respectivos autores.
-                    </p>
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Aprender
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Rutas & Fichas
+                    </div>
                   </div>
-                </div>
+                </Link>
+              </motion.div>
 
+              {/* 4. CURSOS */}
+              <motion.div whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                <Link
+                  to="/cursos"
+                  style={{
+                    padding: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--card-bg, #FFFFFF)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '11px',
+                    background: 'rgba(139, 92, 246, 0.12)',
+                    color: '#8B5CF6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Layers size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Cursos
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Temarios & Módulos
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+
+              {/* 5. BIBLIOTECA */}
+              <motion.div whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                <Link
+                  to="/biblioteca"
+                  style={{
+                    padding: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--card-bg, #FFFFFF)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '11px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#10B981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Library size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Biblioteca
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Obras & Libros
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+
+              {/* 6. SIMULADOR */}
+              <motion.div whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                <Link
+                  to="/simulador"
+                  style={{
+                    padding: '14px',
+                    borderRadius: '18px',
+                    background: 'var(--card-bg, #FFFFFF)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    textDecoration: 'none',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                    transition: 'all 0.15s ease',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '11px',
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    color: '#F59E0B',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    <Trophy size={18} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Simulador
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                      Examen & Ranking
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Recomendación de Comunidad: Canal Oficial de WhatsApp */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              style={{
+                background: 'linear-gradient(135deg, rgba(37, 211, 102, 0.12) 0%, rgba(18, 140, 126, 0.08) 100%)',
+                border: '1px solid rgba(37, 211, 102, 0.3)',
+                borderRadius: '18px',
+                padding: '12px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                boxShadow: '0 4px 16px rgba(37, 211, 102, 0.06)'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
                 <div style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '12px',
+                  background: '#25D366',
+                  color: '#FFFFFF',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '12px',
-                  paddingTop: '10px',
-                  borderTop: '1px solid var(--card-border)',
-                  flexWrap: 'wrap'
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 4px 12px rgba(37, 211, 102, 0.35)'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: '#FF3B30', fontWeight: 800 }}>
-                    <Lock size={14} />
-                    <span>Estrictamente Prohibido Lucrar o Comercializar</span>
+                  <WhatsAppIconSVG size={22} color="#FFFFFF" />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '0.66rem',
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                      color: '#059669',
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      padding: '2px 6px',
+                      borderRadius: '6px'
+                    }}>
+                      Recomendado
+                    </span>
+                    <h3 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-main)', lineHeight: 1.2 }}>
+                      Comunidad Preuniversitaria
+                    </h3>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => window.dispatchEvent(new CustomEvent('rumbo_open_terms'))}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '6px 14px',
-                      borderRadius: '12px',
-                      border: '1px solid var(--card-border)',
-                      background: 'rgba(120, 120, 128, 0.08)',
-                      color: 'var(--text-main)',
-                      fontSize: '0.78rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    <FileText size={14} color="var(--accent-color)" />
-                    <span>Términos & Privacidad</span>
-                  </button>
+                  <p style={{ margin: '3px 0 0', fontSize: '0.73rem', color: 'var(--text-secondary)', lineHeight: 1.3 }}>
+                    Material diario, avisos de simulacros y fijas de admisión al instante.
+                  </p>
                 </div>
               </div>
 
+              <a
+                href="https://whatsapp.com/channel/0029VbDFAEu7YScyVZBNul0X"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '8px 14px',
+                  borderRadius: '999px',
+                  background: '#25D366',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.78rem',
+                  textDecoration: 'none',
+                  flexShrink: 0,
+                  boxShadow: '0 3px 10px rgba(37, 211, 102, 0.28)'
+                }}
+              >
+                <span>Unirme</span>
+                <ArrowRight size={13} />
+              </a>
+            </motion.div>
+
+            {/* Sello Discreto de Libre Acceso (Estilo Google Settings / Apple Capsule) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 14px',
+              borderRadius: '14px',
+              background: 'rgba(120, 120, 128, 0.06)',
+              border: '1px solid var(--card-border, rgba(120, 120, 128, 0.12))',
+              fontSize: '0.74rem',
+              color: 'var(--text-secondary)',
+              flexWrap: 'wrap',
+              gap: '8px',
+              boxSizing: 'border-box'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheck size={14} color="#10B981" />
+                <span>Plataforma Académica Libre • Sin fines de lucro</span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Link to="/chats" style={{ color: 'var(--accent-color, #007AFF)', fontWeight: 700, textDecoration: 'none' }}>
+                  Chats
+                </Link>
+                <span style={{ opacity: 0.35 }}>•</span>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent('rumbo_open_terms'))}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--text-secondary)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontSize: 'inherit'
+                  }}
+                >
+                  Términos
+                </button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -714,11 +1168,11 @@ export const Home = () => {
           transition={{ duration: 0.6 }}
           className="glass-card"
           style={{
-            background: 'var(--card-bg)',
-            border: '1.5px solid var(--card-border)',
-            borderRadius: '28px',
-            padding: 'clamp(20px, 4vw, 32px)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
+            background: 'var(--card-bg, #FFFFFF)',
+            border: '1px solid var(--card-border, rgba(120, 120, 128, 0.16))',
+            borderRadius: '22px',
+            padding: 'clamp(18px, 4vw, 28px)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
             boxSizing: 'border-box'
@@ -740,7 +1194,17 @@ export const Home = () => {
                     color: (isAdmin || isAuthorOfFirebase(user?.email)) ? '#FF9500' : '#34C759',
                     border: (isAdmin || isAuthorOfFirebase(user?.email)) ? '1px solid rgba(255, 149, 0, 0.3)' : '1px solid rgba(52, 199, 89, 0.3)'
                   }}>
-                    {(isAdmin || isAuthorOfFirebase(user?.email)) ? '👑 Creador / Admin' : `📊 ${userUploads.length}/10 Aportes`}
+                    {(isAdmin || isAuthorOfFirebase(user?.email)) ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Crown size={12} />
+                        <span>Creador / Admin</span>
+                      </span>
+                    ) : (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Layers size={12} />
+                        <span>{userUploads.length}/10 Aportes</span>
+                      </span>
+                    )}
                   </span>
                 </div>
                 <p style={{ margin: '6px 0 0', fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
@@ -1059,7 +1523,6 @@ export const Home = () => {
                 )}
               </button>
             </form>
-          )}
         </motion.div>
       </section>
 
@@ -1180,7 +1643,11 @@ export const Home = () => {
         message={successContent.message} 
       />
 
-      <WhatsAppChannelPopup />
+      {/* Modal del Test Vocacional */}
+      <VocationalTestModal
+        isOpen={isVocationalModalOpen}
+        onClose={() => setIsVocationalModalOpen(false)}
+      />
     </div>
   );
 };

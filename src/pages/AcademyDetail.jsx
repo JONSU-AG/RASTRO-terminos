@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, PlayCircle, Book, Layers, Shield, Flag, HardDrive, Calendar, Sparkles, MessageSquare, ExternalLink, FileText, Video, Settings, CheckCircle } from 'lucide-react';
+import { ArrowLeft, PlayCircle, Book, Layers, Shield, Flag, HardDrive, Calendar, Sparkles, MessageSquare, ExternalLink, FileText, Video, Settings, CheckCircle, AlertCircle } from 'lucide-react';
 import { ReportModal } from '../components/ReportModal';
 import { SuccessModal } from '../components/SuccessModal';
 import { InspirationalDailyBanner } from '../components/InspirationalDailyBanner';
@@ -16,6 +16,7 @@ import { AccessGate } from '../components/AccessGate';
 import { AcademyBookmarkButton } from '../components/AcademyBookmarkButton';
 import { getDirectFileViewerUrl } from '../lib/storageHelper';
 import { VERSION_CONFIG } from '../config/appVersionConfig';
+import { isBlockedSource, isPublicYouTube } from '../utils/videoValidation';
 
 const getCourseSvgData = (courseName) => {
   const defaultIcon = {
@@ -121,6 +122,10 @@ export const AcademyDetail = () => {
   }, [id]);
 
   useEffect(() => {
+    if (VERSION_CONFIG.disconnectFirebaseVideos) {
+      setData(null);
+      return;
+    }
     // Determine which data to load based on the academy id
     if (id === 'esparta') {
       // COURSES is an object { biologia: { name, lessons: [] }, ... }
@@ -329,16 +334,19 @@ export const AcademyDetail = () => {
     return list;
   }, [data, briceno2027Data, bricenoAreasData]);
 
-  if (VERSION_CONFIG.disconnectThirdPartyAcademies && ['esparta', 'kelsen', 'briceno', 'briceño'].includes((id || '').toLowerCase())) {
+  if (VERSION_CONFIG.disconnectFirebaseVideos || (VERSION_CONFIG.disconnectThirdPartyAcademies && ['esparta', 'kelsen', 'briceno', 'briceño'].includes((id || '').toLowerCase()))) {
     return (
       <div className="page-container" style={{ padding: '60px 24px', textAlign: 'center', maxWidth: '600px', margin: '0 auto' }}>
         <div className="ios-glass-card" style={{ padding: '36px 24px', borderRadius: '24px', background: 'var(--card-bg)', border: '1.5px solid var(--card-border)' }}>
-          <h2 style={{ color: 'var(--text-main)', margin: '0 0 12px', fontSize: '1.4rem', fontWeight: 800 }}>Contenido no disponible</h2>
+          <div style={{ display: 'inline-flex', padding: '16px', background: 'rgba(255, 149, 0, 0.1)', borderRadius: '50%', marginBottom: '16px', color: '#FF9500' }}>
+            <AlertCircle size={36} />
+          </div>
+          <h2 style={{ color: 'var(--text-main)', margin: '0 0 12px', fontSize: '1.4rem', fontWeight: 800 }}>Contenido en Trámite de Autorización</h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.6, margin: '0 0 24px' }}>
-            Este módulo se encuentra desconectado en esta versión de la aplicación.
+            Los videos y cursos privados de servidores externos se encuentran temporalmente desconectados mientras se tramitan las autorizaciones y licencias correspondientes. Puedes explorar todos los cursos y ciclos 100% públicos en nuestra sección de Cursos.
           </p>
           <Link to="/cursos" style={{ padding: '12px 24px', borderRadius: '16px', textDecoration: 'none', display: 'inline-flex', fontWeight: 800, background: 'var(--accent-color)', color: '#FFFFFF' }}>
-            Volver a Cursos
+            Ver Cursos Públicos de YouTube
           </Link>
         </div>
       </div>
@@ -1603,9 +1611,15 @@ export const AcademyDetail = () => {
                                                 {vid.nombre}
                                               </h4>
                                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                <a href={vid.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#FF0000', fontWeight: 700, fontSize: '0.84rem', textDecoration: 'none' }}>
-                                                  <PlayCircle size={18} /> Ver ↗
-                                                </a>
+                                                {isBlockedSource(vid.url) ? (
+                                                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>
+                                                    <Shield size={14} style={{ color: '#F59E0B' }} /> En trámite de permisos
+                                                  </span>
+                                                ) : (
+                                                  <a href={vid.url} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#FF0000', fontWeight: 700, fontSize: '0.84rem', textDecoration: 'none' }}>
+                                                    <PlayCircle size={18} /> Ver ↗
+                                                  </a>
+                                                )}
                                                 <AcademyBookmarkButton
                                                   item={{
                                                   id: `briceno-video-${weekItem.num}-${subCat.nombre}-${vIdx + 1}`,
@@ -1783,9 +1797,15 @@ export const AcademyDetail = () => {
                                 Clase Intensiva {vIdx + 1} - {category.nombre}
                               </h4>
                               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <a href={vidUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#FF0000', fontWeight: 700, fontSize: '0.84rem', textDecoration: 'none' }}>
-                                  <PlayCircle size={18} /> Ver ↗
-                                </a>
+                                {isBlockedSource(vidUrl) ? (
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)', fontSize: '0.8rem', fontWeight: 600 }}>
+                                    <Shield size={14} style={{ color: '#F59E0B' }} /> En trámite de permisos
+                                  </span>
+                                ) : (
+                                  <a href={vidUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#FF0000', fontWeight: 700, fontSize: '0.84rem', textDecoration: 'none' }}>
+                                    <PlayCircle size={18} /> Ver ↗
+                                  </a>
+                                )}
                                 <AcademyBookmarkButton
                                   item={{
                                   id: `briceno-2026-video-${category.nombre}-${vIdx + 1}`,
@@ -1949,28 +1969,34 @@ export const AcademyDetail = () => {
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid rgba(120,120,128,0.1)' }}>
                               {item.url && (
-                                <a
-                                  href={item.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '6px',
-                                    padding: '8px 12px',
-                                    borderRadius: '10px',
-                                    background: theme.gradient || 'linear-gradient(135deg, #FF3B30, #FF5252)',
-                                    color: '#fff',
-                                    fontWeight: 800,
-                                    fontSize: '0.8rem',
-                                    textDecoration: 'none',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                                  }}
-                                >
-                                  <PlayCircle size={15} />
-                                  <span>Ver Clase ↗</span>
-                                </a>
+                                isBlockedSource(item.url) ? (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px 12px', borderRadius: '10px', background: 'rgba(120,120,128,0.1)', color: 'var(--text-secondary)', fontSize: '0.78rem', fontWeight: 600 }}>
+                                    <Shield size={14} style={{ color: '#F59E0B' }} /> Video en trámite de permisos
+                                  </div>
+                                ) : (
+                                  <a
+                                    href={item.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '6px',
+                                      padding: '8px 12px',
+                                      borderRadius: '10px',
+                                      background: theme.gradient || 'linear-gradient(135deg, #FF3B30, #FF5252)',
+                                      color: '#fff',
+                                      fontWeight: 800,
+                                      fontSize: '0.8rem',
+                                      textDecoration: 'none',
+                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                    }}
+                                  >
+                                    <PlayCircle size={15} />
+                                    <span>Ver Clase ↗</span>
+                                  </a>
+                                )
                               )}
 
                               {item.docUrl && (

@@ -51,6 +51,8 @@ import { AdminAcademiasManager } from '../components/AdminAcademiasManager';
 import { AdminDefaultContentManager } from '../components/AdminDefaultContentManager';
 import { AdminAdmissionScheduleManager } from '../components/AdminAdmissionScheduleManager';
 import { LibrosCollectionModal } from '../components/LibrosCollectionModal';
+import { LiteraturaEditModal } from '../components/LiteraturaEditModal';
+import { getAllObrasAdmin, toggleOcultarObra, deleteObra } from '../lib/literaturaService';
 import { subscribeToSiteSettings, saveSiteSettings, getCachedSiteSettings } from '../lib/siteSettings';
 import { 
   collection, 
@@ -1155,6 +1157,62 @@ export const Admin = () => {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null, confirmText: 'Confirmar' });
   const [noticeModal, setNoticeModal] = useState({ isOpen: false, title: '', message: '' });
 
+  // State for Obras Literarias & Apuntes de Repaso
+  const [obrasList, setObrasList] = useState([]);
+  const [loadingObras, setLoadingObras] = useState(false);
+  const [isObraEditOpen, setIsObraEditOpen] = useState(false);
+  const [editingObra, setEditingObra] = useState(null);
+  const [obrasSearchQuery, setObrasSearchQuery] = useState('');
+
+  const loadAdminObras = async () => {
+    setLoadingObras(true);
+    try {
+      const list = await getAllObrasAdmin();
+      setObrasList(list);
+    } catch (e) {
+      console.warn("Error cargando obras en Admin:", e);
+    } finally {
+      setLoadingObras(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAdminObras();
+  }, []);
+
+  const handleToggleHideObra = async (obraId) => {
+    try {
+      const isNowHidden = await toggleOcultarObra(obraId);
+      await loadAdminObras();
+      showNotice(
+        isNowHidden ? "Obra Ocultada" : "Obra Visible",
+        isNowHidden
+          ? "La obra fue desactivada y ocultada de la Biblioteca para los alumnos."
+          : "La obra fue activada y vuelve a ser visible en la Biblioteca."
+      );
+    } catch (e) {
+      showNotice("Error", "Error al cambiar estado de la obra: " + e.message);
+    }
+  };
+
+  const handleDeleteCustomObra = (obraId, titulo) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "¿Eliminar Obra Personalizada?",
+      message: `¿Estás seguro de eliminar "${titulo}"? Se eliminará de la base de datos de literatura.`,
+      confirmText: "Eliminar",
+      onConfirm: async () => {
+        try {
+          await deleteObra(obraId);
+          await loadAdminObras();
+          showNotice("Obra Eliminada", `La obra "${titulo}" fue eliminada exitosamente.`);
+        } catch (e) {
+          showNotice("Error", "Error al eliminar obra: " + e.message);
+        }
+      }
+    });
+  };
+
   const showNotice = (title, message) => setNoticeModal({ isOpen: true, title, message });
 
   const [siteSettings, setSiteSettings] = useState(getCachedSiteSettings);
@@ -1323,7 +1381,7 @@ export const Admin = () => {
         name: '',
         role: 'Aliado Oficial RASTRO',
         badge: '⭐ Aliado Comunitario',
-        specialty: 'Material Preuniversitario UNSA',
+        specialty: 'Material Preuniversitario',
         desc: '',
         whatsappChannel: '',
         tiktokUrl: '',
@@ -1860,6 +1918,7 @@ export const Admin = () => {
     if (reportFilter === 'curso' && !(rep.targetType === 'curso' || rep.targetType === 'academia')) return false;
     if (reportFilter === 'perfil' && !(rep.targetType === 'perfil' || rep.targetType === 'user')) return false;
     if (reportFilter === 'material' && rep.targetType !== 'material') return false;
+    if (reportFilter === 'preguntas_flashcards' && !(rep.targetType === 'flashcard' || rep.targetType === 'examen' || rep.targetType === 'pregunta_rapida')) return false;
     if (reportFilter === 'pendiente' && (rep.status === 'revisado' || rep.status === 'desestimado' || rep.status === 'aviso_enviado' || rep.status === 'curso_ocultado')) return false;
 
     if (searchQuery) {
@@ -2284,6 +2343,7 @@ export const Admin = () => {
               { id: 'academias', label: '🏛️ Academias Personalizadas' },
               { id: 'briceno', label: '🎓 Briceño 2027' },
               { id: 'librosAdmin', label: '📚 Libros y Biblioteca' },
+              { id: 'obrasAdmin', label: `📖 Obras y Apuntes (${obrasList.length})` },
               { id: 'defaultContent', label: '🗂️ Contenido del Sistema' },
             ]
           },
@@ -2435,6 +2495,7 @@ export const Admin = () => {
               {[
                 { id: 'todos', label: `Todos (${reportsList.length})` },
                 { id: 'pendiente', label: `⏳ Pendientes (${pendingReportsCount})` },
+                { id: 'preguntas_flashcards', label: `🎯 Preguntas y Flashcards (${reportsList.filter(r => r.targetType === 'flashcard' || r.targetType === 'examen' || r.targetType === 'pregunta_rapida').length})` },
                 { id: 'curso', label: `🎓 Cursos (${reportsList.filter(r => r.targetType === 'curso' || r.targetType === 'academia').length})` },
                 { id: 'material', label: `📚 Materiales (${reportsList.filter(r => r.targetType === 'material').length})` },
                 { id: 'perfil', label: `👤 Perfiles (${reportsList.filter(r => r.targetType === 'perfil' || r.targetType === 'user').length})` }
@@ -2471,6 +2532,7 @@ export const Admin = () => {
             filteredReports.map((rep) => {
               const isProfileReport = rep.targetType === 'perfil' || rep.targetType === 'user';
               const isCourseReport = rep.targetType === 'curso' || rep.targetType === 'academia';
+              const isStudyReport = rep.targetType === 'flashcard' || rep.targetType === 'examen' || rep.targetType === 'pregunta_rapida';
               const targetUserUid = rep.reportedUser?.uid || (isProfileReport ? rep.targetId : null);
               const targetUserName = rep.reportedUser?.displayName || rep.targetTitle || 'Usuario';
               const targetUserEmail = rep.reportedUser?.email || '';
@@ -2491,6 +2553,8 @@ export const Admin = () => {
                       ? '1.5px solid rgba(245, 158, 11, 0.4)' 
                       : rep.status === 'desestimado'
                       ? '1px solid var(--card-border)'
+                      : isStudyReport
+                      ? '1.5px solid rgba(236, 72, 153, 0.4)'
                       : '1.5px solid rgba(239, 68, 68, 0.35)',
                     background: 'var(--card-bg)'
                   }}
@@ -2503,18 +2567,28 @@ export const Admin = () => {
                         borderRadius: '10px',
                         fontSize: '0.76rem',
                         fontWeight: 800,
-                        background: isCourseReport 
+                        background: isStudyReport
+                          ? 'rgba(236, 72, 153, 0.16)'
+                          : isCourseReport 
                           ? 'rgba(124, 58, 237, 0.15)' 
                           : isProfileReport 
                           ? 'rgba(168, 85, 247, 0.15)' 
                           : 'rgba(0, 122, 255, 0.15)',
-                        color: isCourseReport 
+                        color: isStudyReport
+                          ? '#EC4899'
+                          : isCourseReport 
                           ? '#7C3AED' 
                           : isProfileReport 
                           ? '#9333EA' 
                           : 'var(--accent-color)'
                       }}>
-                        {isCourseReport ? '🎓 REPORTE DE CURSO' : isProfileReport ? '👤 REPORTE DE PERFIL' : `📚 REPORTE (${rep.targetType?.toUpperCase() || 'CONTENIDO'})`}
+                        {isStudyReport
+                          ? `🎯 REPORTE DE ${rep.targetType === 'flashcard' ? 'FLASHCARD' : 'PREGUNTA'}`
+                          : isCourseReport 
+                          ? '🎓 REPORTE DE CURSO' 
+                          : isProfileReport 
+                          ? '👤 REPORTE DE PERFIL' 
+                          : `📚 REPORTE (${rep.targetType?.toUpperCase() || 'CONTENIDO'})`}
                       </span>
 
                       <span style={{
@@ -2561,7 +2635,7 @@ export const Admin = () => {
                   {/* Target & Reason Info */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ fontSize: '1.02rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      Elemento Reportado: <span style={{ color: 'var(--accent-color)' }}>{rep.targetTitle || targetUserName}</span>
+                      Elemento Reportado: <span style={{ color: isStudyReport ? '#EC4899' : 'var(--accent-color)' }}>{rep.targetTitle || targetUserName}</span>
                       {targetUserUid && (
                         <Link
                           to={`/usuario/${targetUserUid}`}
@@ -2584,6 +2658,29 @@ export const Admin = () => {
                       )}
                     </div>
 
+                    {/* Vista Previa Destacada si es Pregunta o Flashcard */}
+                    {isStudyReport && (
+                      <div style={{
+                        padding: '12px 16px',
+                        borderRadius: '14px',
+                        background: 'rgba(236, 72, 153, 0.08)',
+                        border: '1.5px solid rgba(236, 72, 153, 0.25)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px'
+                      }}>
+                        <div style={{ fontSize: '0.74rem', fontWeight: 900, color: '#EC4899', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                          Contenido de la {rep.targetType === 'flashcard' ? 'Tarjeta Flashcard' : 'Pregunta'}:
+                        </div>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-main)', lineHeight: 1.45 }}>
+                          "{rep.targetTitle}"
+                        </div>
+                        <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)' }}>
+                          ID de Referencia: <code>{rep.targetId}</code> {rep.autoHideApplied ? '• (Ocultada automáticamente por moderación comunitaria)' : ''}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Reason Box */}
                     <div style={{
                       padding: '10px 14px',
@@ -2597,9 +2694,13 @@ export const Admin = () => {
                       <div style={{ fontSize: '0.84rem', fontWeight: 800, color: '#DC2626' }}>
                         Motivo del Reporte: {rep.reasonLabel || rep.reason || 'No especificado'}
                       </div>
-                      {rep.details && (
+                      {rep.details ? (
                         <div style={{ fontSize: '0.82rem', color: 'var(--text-main)', fontStyle: 'italic' }}>
-                          "{rep.details}"
+                          Explicación del Estudiante: "{rep.details}"
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                          El estudiante no añadió comentario adicional.
                         </div>
                       )}
                     </div>
@@ -2835,6 +2936,357 @@ export const Admin = () => {
       {activeTab === 'librosAdmin' && (
         <div style={{ maxWidth:'900px', width:'100%', margin:'0 auto', boxSizing:'border-box', padding:'0 12px' }} className="glass-card" >
           <LibrosAdminPanel onNotice={showNotice} siteSettings={siteSettings} onToggleAllLibros={handleToggleAllLibros} />
+        </div>
+      )}
+
+      {/* ──────────────── TAB: GESTOR DE OBRAS LITERARIAS Y APUNTES ──────────────── */}
+      {activeTab === 'obrasAdmin' && (
+        <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          {/* Cabecera y Controles Principales */}
+          <div
+            className="glass-card"
+            style={{
+              padding: '24px',
+              borderRadius: '24px',
+              border: '1.5px solid var(--card-border)',
+              background: 'var(--card-bg)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.04)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '16px',
+                    background: 'rgba(124, 58, 237, 0.14)',
+                    color: '#7C3AED',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  <BookOpen size={24} />
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                    Gestor de Obras Literarias y Apuntes
+                  </h3>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                    Administra los resúmenes detallados y apuntes de síntesis disponibles en la Biblioteca.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={loadAdminObras}
+                  disabled={loadingObras}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: '14px',
+                    border: '1px solid var(--card-border)',
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-main)',
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                  title="Recargar catálogo de obras"
+                >
+                  <RefreshCw size={15} className={loadingObras ? 'animate-spin' : ''} />
+                  <span>Actualizar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingObra(null);
+                    setIsObraEditOpen(true);
+                  }}
+                  style={{
+                    padding: '10px 18px',
+                    borderRadius: '14px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, #7C3AED 0%, #6366F1 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '0.86rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(124, 58, 237, 0.35)'
+                  }}
+                >
+                  <Plus size={16} strokeWidth={2.5} />
+                  <span>+ Nueva Obra Literaria</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Badges de Resumen y Estadísticas */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingTop: '4px', borderTop: '1px solid var(--card-border)' }}>
+              <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'rgba(124, 58, 237, 0.12)', color: '#7C3AED', fontSize: '0.78rem', fontWeight: 800 }}>
+                Total: {obrasList.length} obras
+              </span>
+              <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#059669', fontSize: '0.78rem', fontWeight: 800 }}>
+                Visibles: {obrasList.filter(o => !o.oculto && !o.hidden).length}
+              </span>
+              <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.12)', color: '#DC2626', fontSize: '0.78rem', fontWeight: 800 }}>
+                Ocultadas: {obrasList.filter(o => o.oculto || o.hidden).length}
+              </span>
+              <span style={{ padding: '6px 12px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.12)', color: '#2563EB', fontSize: '0.78rem', fontWeight: 800 }}>
+                En la Nube (Firestore): {obrasList.filter(o => o._custom).length}
+              </span>
+            </div>
+
+            {/* Barra de Búsqueda de Obras */}
+            <div style={{ position: 'relative' }}>
+              <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+              <input
+                type="text"
+                value={obrasSearchQuery}
+                onChange={e => setObrasSearchQuery(e.target.value)}
+                placeholder="Buscar obra por título, autor, género o categoría..."
+                style={{
+                  width: '100%',
+                  padding: '11px 40px 11px 40px',
+                  borderRadius: '14px',
+                  border: '1px solid var(--card-border)',
+                  background: 'var(--card-bg)',
+                  color: 'var(--text-main)',
+                  fontSize: '0.88rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {obrasSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setObrasSearchQuery('')}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Listado de Obras */}
+          {(() => {
+            const filteredObras = obrasList.filter(o => {
+              if (!obrasSearchQuery.trim()) return true;
+              return searchMatches([o.titulo, o.autor, o.categoria, o.genero, o.corriente], obrasSearchQuery);
+            });
+
+            if (filteredObras.length === 0) {
+              return (
+                <div className="glass-card" style={{ padding: '48px 24px', textAlign: 'center', borderRadius: '24px', border: '1.5px solid var(--card-border)', background: 'var(--card-bg)' }}>
+                  <p style={{ color: 'var(--text-secondary)', margin: 0, fontWeight: 700 }}>
+                    {obrasSearchQuery ? `No se encontraron obras que coincidan con "${obrasSearchQuery}".` : 'No hay obras literarias registradas.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {filteredObras.map(obra => {
+                  const isHidden = obra.oculto || obra.hidden;
+                  const chaptersCount = obra.resumenDetallado?.capitulos?.length || 0;
+                  const charactersCount = obra.resumenDetallado?.personajes?.length || 0;
+                  const faqsCount = obra.apunteRepaso?.preguntasClave?.length || 0;
+
+                  return (
+                    <div
+                      key={obra.id}
+                      className="glass-card"
+                      style={{
+                        padding: '16px 20px',
+                        borderRadius: '20px',
+                        border: isHidden ? '1.5px solid rgba(239, 68, 68, 0.35)' : '1.5px solid var(--card-border)',
+                        background: 'var(--card-bg)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '14px',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.02)'
+                      }}
+                    >
+                      {/* Portada & Datos Principales */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: '1 1 300px', minWidth: 0 }}>
+                        <div
+                          style={{
+                            width: '46px',
+                            height: '62px',
+                            borderRadius: '8px',
+                            background: obra.portadaGradiente || 'linear-gradient(145deg, #1e293b, #0f172a)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#FFFFFF',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+                            flexShrink: 0,
+                            padding: '4px',
+                            boxSizing: 'border-box',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <BookOpen size={16} />
+                          <span style={{ fontSize: '0.52rem', fontWeight: 900, textTransform: 'uppercase', marginTop: '2px', lineHeight: 1.1 }}>
+                            {obra.año || 'OBRA'}
+                          </span>
+                        </div>
+
+                        <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <strong style={{ fontSize: '0.98rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                              {obra.titulo}
+                            </strong>
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 800,
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                background: isHidden ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                color: isHidden ? '#DC2626' : '#059669'
+                              }}
+                            >
+                              {isHidden ? '🔴 Oculto' : '🟢 Visible'}
+                            </span>
+                            {obra._custom && (
+                              <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.15)', color: '#2563EB' }}>
+                                ☁️ Nube
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                            {obra.autor} {obra.año ? `(${obra.año})` : ''} • {obra.categoria}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '10px', fontSize: '0.74rem', color: 'var(--text-secondary)', flexWrap: 'wrap', marginTop: '2px' }}>
+                            <span>📖 {chaptersCount} capítulos/actos</span>
+                            <span>👤 {charactersCount} personajes</span>
+                            <span>🎯 {faqsCount} preguntas de repaso</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Botones de Acción */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleHideObra(obra.id)}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '12px',
+                            border: '1px solid var(--card-border)',
+                            background: isHidden ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.1)',
+                            color: isHidden ? '#059669' : '#DC2626',
+                            fontWeight: 700,
+                            fontSize: '0.8rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                          title={isHidden ? 'Activar visibilidad en Biblioteca' : 'Ocultar de la Biblioteca'}
+                        >
+                          {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                          <span>{isHidden ? 'Mostrar' : 'Ocultar'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingObra(obra);
+                            setIsObraEditOpen(true);
+                          }}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'rgba(124, 58, 237, 0.14)',
+                            color: '#7C3AED',
+                            fontWeight: 800,
+                            fontSize: '0.82rem',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}
+                        >
+                          <Edit3 size={14} />
+                          <span>Editar</span>
+                        </button>
+
+                        {obra._custom && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCustomObra(obra.id, obra.titulo)}
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: 'rgba(239, 68, 68, 0.12)',
+                              color: '#EF4444',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="Eliminar obra de la base de datos"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
+          {/* Modal Editor de Obras Literarias */}
+          {isObraEditOpen && (
+            <LiteraturaEditModal
+              isOpen={isObraEditOpen}
+              obra={editingObra}
+              onClose={() => {
+                setIsObraEditOpen(false);
+                setEditingObra(null);
+              }}
+              onSaved={() => {
+                loadAdminObras();
+                showNotice('Obra Guardada', 'La obra literaria se guardó y sincronizó exitosamente.');
+              }}
+            />
+          )}
         </div>
       )}
       {['pendientes', 'reportados', 'triples', 'aprobados'].includes(activeTab) && (

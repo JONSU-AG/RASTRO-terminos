@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="shortcut_dont_leave"
+        android:enabled="true"
+        android:icon="@drawable/mascot_orstty_sad"
+        android:shortcutShortLabel="@string/shortcut_dont_leave_short"
+        android:shortcutLongLabel="@string/shortcut_dont_leave_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.jonsuapps.rastro"
+            android:targetClass="com.rumbo.app.MainActivity">
+            <extra android:name="widget_destination" android:value="aprender" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_streak"
+        android:enabled="true"
+        android:icon="@drawable/mascot_orstty_happy"
+        android:shortcutShortLabel="@string/shortcut_streak_short"
+        android:shortcutLongLabel="@string/shortcut_streak_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.jonsuapps.rastro"
+            android:targetClass="com.rumbo.app.MainActivity">
+            <extra android:name="widget_destination" android:value="aprender" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_pomodoro"
+        android:enabled="true"
+        android:icon="@drawable/mascot_artyon_content"
+        android:shortcutShortLabel="@string/shortcut_pomodoro_short"
+        android:shortcutLongLabel="@string/shortcut_pomodoro_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.jonsuapps.rastro"
+            android:targetClass="com.rumbo.app.MainActivity">
+            <extra android:name="widget_destination" android:value="pomodoro" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="shortcut_simulador"
+        android:enabled="true"
+        android:icon="@drawable/mascot_orstty_study"
+        android:shortcutShortLabel="@string/shortcut_simulador_short"
+        android:shortcutLongLabel="@string/shortcut_simulador_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.jonsuapps.rastro"
+            android:targetClass="com.rumbo.app.MainActivity">
+            <extra android:name="widget_destination" android:value="simulador" />
+        </intent>
+    </shortcut>
+</shortcuts>

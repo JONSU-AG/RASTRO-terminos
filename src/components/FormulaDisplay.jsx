@@ -51,12 +51,15 @@ export const FormulaDisplay = ({ formulaData, rawMecanismos, compact = false }) 
   // Si no hay formulaData estructurada, renderizar texto de mecanismos adaptado al tema sin caja negra pesada
   if (!formulaData || !formulaData.formula_latex) {
     if (!rawMecanismos || !rawMecanismos.trim()) return null;
+    const hasMathSymbols = /[=+\-*/\\^_]/.test(rawMecanismos) || rawMecanismos.includes('$$') || rawMecanismos.includes('\\');
     return (
       <div
         style={{
           background: isLight ? '#F8FAFC' : 'rgba(15, 23, 42, 0.75)',
-          border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(245, 158, 11, 0.35)',
-          borderLeft: isLight ? '4px solid #0284C7' : '4px solid #F59E0B',
+          border: isLight ? '1px solid #E2E8F0' : (hasMathSymbols ? '1px solid rgba(245, 158, 11, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)'),
+          borderLeft: isLight
+            ? (hasMathSymbols ? '4px solid #0284C7' : '4px solid #10B981')
+            : (hasMathSymbols ? '4px solid #F59E0B' : '4px solid #34D399'),
           borderRadius: '12px',
           padding: '10px 14px',
           display: 'flex',
@@ -68,7 +71,9 @@ export const FormulaDisplay = ({ formulaData, rawMecanismos, compact = false }) 
           style={{
             fontSize: '0.72rem',
             fontWeight: 900,
-            color: isLight ? '#0369A1' : '#FDE047',
+            color: isLight
+              ? (hasMathSymbols ? '#0369A1' : '#047857')
+              : (hasMathSymbols ? '#FDE047' : '#6EE7B7'),
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
             display: 'flex',
@@ -76,7 +81,15 @@ export const FormulaDisplay = ({ formulaData, rawMecanismos, compact = false }) 
             gap: '6px'
           }}
         >
-          <Sigma size={14} /> Fundamento Operacional y Teoremas
+          {hasMathSymbols ? (
+            <>
+              <Sigma size={14} /> Fundamento Operacional y Fórmulas
+            </>
+          ) : (
+            <>
+              <Lightbulb size={14} /> Clave y Regla Mnemotécnica
+            </>
+          )}
         </div>
         <div
           style={{

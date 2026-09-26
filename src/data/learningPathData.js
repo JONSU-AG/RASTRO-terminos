@@ -2,6 +2,7 @@
 // Sistema Planetario Duolingo-Style con Anillos de Subtemas (1.1, 1.2, 1.3...)
 // Cada Planeta representa una semana y contiene sus subtemas con teoría profunda y preguntas del banco
 import { CEPREUNSA_OFFICIAL_THEORY } from './cepreunsaOfficialTheory.js';
+import { sanitizeLessonNode } from '../utils/academicSanitizer.js';
 export { CEPREUNSA_OFFICIAL_THEORY };
 
 export function normalizeSubject(name) {
@@ -39753,72 +39754,22 @@ export const SUBJECT_ROADMAP = {
             "marcoteorico": "FUNDAMENTACIÓN TEÓRICA OFICIAL CEPREUNSA (1.1): «Etimología: Pitágoras y el Filósofo como Amante de la Sabiduría».\n\nEn la evaluación oficial de la Universidad Nacional de San Agustín (UNSA), «Etimología: Pitágoras y el Filósofo como Amante de la Sabiduría» constituye un núcleo conceptual evaluado de forma obligatoria en la asignatura de Filosofía.\n\nEl principio científico y epistemológico fundamental que rige este subtema establece que todos los fenómenos, leyes y categorías analíticas asociadas deben comprenderse a partir de sus definiciones operacionales exactas, su marco axiológico y su comportamiento frente a condiciones de contorno específicas.",
             "sections": [
               {
-                "heading": "🏛️ Principio Fundamental y Definición Canónica de Etimología y Pitágoras",
-                "body": "• Concepto Rector: En todo triángulo rectángulo, el cuadrado de la longitud de la hipotenusa es igual a la suma de los cuadrados de las longitudes de los catetos.\n• Teorema / Ley Oficial: Teorema de Pitágoras y Triángulos Notables.\n• Condición de Validez: Aplicable bajo los parámetros estándar del temario oficial de la UNSA."
+                "heading": "🏛️ Origen Etimológico y la Distinción Pitagórica",
+                "body": "• Raíz Griega: Philo (amor, anhelo, búsqueda) y Sophia (sabiduría, saber supremo).\n• Pitágoras de Samos: Según la tradición clásica transmitida por Cicerón y Heráclides Póntico, Pitágoras fue el primero en llamarse a sí mismo 'philosophos'. Rechazó el apelativo de 'sophos' (sabio), considerando que la sabiduría plena corresponde únicamente a los dioses, mientras que el ser humano solo puede aspirar a ser un amante o buscador incansable del saber.\n• Actitud Filosófica Inicial: Surge del asombro y la admiración (*thaumazein*) frente a los enigmas del cosmos y la existencia humana."
               },
               {
-                "heading": "🔬 Desglose de Despejes Operacionales y Variaciones de Examen",
-                "body": "• Despeje de Cateto: a = \\sqrt{c^2 - b^2}, \\quad b = \\sqrt{c^2 - a^2}\n• Triángulo Notable 37° y 53°: \\text{Catetos: } 3k, 4k \\implies \\text{Hipotenusa: } 5k\n• Triángulo Notable 45° y 45°: \\text{Catetos: } k, k \\implies \\text{Hipotenusa: } k\\sqrt{2}\n• Triángulo Notable 30° y 60°: \\text{Catetos: } k, k\\sqrt{3} \\implies \\text{Hipotenusa: } 2k\n• Relaciones Métricas en Triángulo Rectángulo: h^2 = m \\cdot n, \\quad a \\cdot b = c \\cdot h, \\quad a^2 = c \\cdot m"
+                "heading": "📚 El Tránsito Histórico: Del Mito al Logos y Disciplinas Filosóficas",
+                "body": "• Del Mito al Logos: En el siglo VI a.C. en las colonias griegas de Jonia (Mileto), las explicaciones mítico-religiosas (antropomórficas, arbitrarias) fueron reemplazadas por explicaciones racionales (*logos*: orden, argumento y principio natural o *arjé*).\n• Gnoseología: Disciplina que estudia el origen, naturaleza, límites y posibilidad del conocimiento humano general.\n• Epistemología: Disciplina que estudia la estructura, validez, métodos y fundamentación de las teorías científicas.\n• Axiología y Ética: La Axiología investiga la naturaleza de los valores; la Ética reflexiona sobre la moral y los deberes humanos."
               },
               {
                 "heading": "💡 Clave Fija CEPREUNSA y Trampas de Admisión",
-                "body": "En el triángulo 37°-53°, frente a 37° siempre se opone el cateto menor 3k, frente a 53° el cateto 4k, y la hipotenusa 5k. Teorema de Poncelet: a + b = c + 2r (r = inradio)."
+                "body": "Pregunta fija UNSA: Pitágoras rechaza llamarse sabio y acuña 'filósofo'. El asombro es el origen vivencial según Platón y Aristóteles. Nunca confundas Gnoseología (conocimiento general) con Epistemología (conocimiento científico)."
               }
             ],
-            "formula_data": {
-              "teorema_nombre": "Teorema de Pitágoras y Triángulos Notables",
-              "formula_latex": "a^2 + b^2 = c^2",
-              "formula_simple": "a^2 + b^2 = c^2",
-              "descripcion": "En todo triángulo rectángulo, el cuadrado de la longitud de la hipotenusa es igual a la suma de los cuadrados de las longitudes de los catetos.",
-              "despejes": [
-                {
-                  "nombre": "Despeje de Cateto",
-                  "latex": "a = \\sqrt{c^2 - b^2}, \\quad b = \\sqrt{c^2 - a^2}"
-                },
-                {
-                  "nombre": "Triángulo Notable 37° y 53°",
-                  "latex": "\\text{Catetos: } 3k, 4k \\implies \\text{Hipotenusa: } 5k"
-                },
-                {
-                  "nombre": "Triángulo Notable 45° y 45°",
-                  "latex": "\\text{Catetos: } k, k \\implies \\text{Hipotenusa: } k\\sqrt{2}"
-                },
-                {
-                  "nombre": "Triángulo Notable 30° y 60°",
-                  "latex": "\\text{Catetos: } k, k\\sqrt{3} \\implies \\text{Hipotenusa: } 2k"
-                },
-                {
-                  "nombre": "Relaciones Métricas en Triángulo Rectángulo",
-                  "latex": "h^2 = m \\cdot n, \\quad a \\cdot b = c \\cdot h, \\quad a^2 = c \\cdot m"
-                }
-              ],
-              "variables": [
-                {
-                  "simbolo": "a, b",
-                  "nombre": "Catetos del triángulo rectángulo",
-                  "unidad": "Metro [m] o unidades [u]"
-                },
-                {
-                  "simbolo": "c",
-                  "nombre": "Hipotenusa",
-                  "unidad": "Metro [m] o unidades [u]"
-                },
-                {
-                  "simbolo": "h",
-                  "nombre": "Altura relativa a la hipotenusa",
-                  "unidad": "Metro [m]"
-                },
-                {
-                  "simbolo": "m, n",
-                  "nombre": "Proyecciones de los catetos sobre la hipotenusa",
-                  "unidad": "Metro [m]"
-                }
-              ],
-              "fija_unsa": "En el triángulo 37°-53°, frente a 37° siempre se opone el cateto menor 3k, frente a 53° el cateto 4k, y la hipotenusa 5k. Teorema de Poncelet: a + b = c + 2r (r = inradio)."
-            },
-            "mecanismos": "⚡ NIVEL 1 • TEOREMA O FÓRMULA FUNDAMENTAL:\n«Teorema de Pitágoras y Triángulos Notables»\nFórmula: a^2 + b^2 = c^2\nNotación LaTeX: $$a^2 + b^2 = c^2$$\n\nFundamento: En todo triángulo rectángulo, el cuadrado de la longitud de la hipotenusa es igual a la suma de los cuadrados de las longitudes de los catetos.\n\n📐 NIVEL 2 • DESPEJES OPERACIONALES Y VARIACIONES CEPREUNSA:\n• Despeje de Cateto: a = \\sqrt{c^2 - b^2}, \\quad b = \\sqrt{c^2 - a^2}\n• Triángulo Notable 37° y 53°: \\text{Catetos: } 3k, 4k \\implies \\text{Hipotenusa: } 5k\n• Triángulo Notable 45° y 45°: \\text{Catetos: } k, k \\implies \\text{Hipotenusa: } k\\sqrt{2}\n• Triángulo Notable 30° y 60°: \\text{Catetos: } k, k\\sqrt{3} \\implies \\text{Hipotenusa: } 2k\n• Relaciones Métricas en Triángulo Rectángulo: h^2 = m \\cdot n, \\quad a \\cdot b = c \\cdot h, \\quad a^2 = c \\cdot m\n\n🔬 NIVEL 3 • NOMENCLATURA DE VARIABLES (SISTEMA INTERNACIONAL):\n• a, b: Catetos del triángulo rectángulo [Metro [m] o unidades [u]]\n• c: Hipotenusa [Metro [m] o unidades [u]]\n• h: Altura relativa a la hipotenusa [Metro [m]]\n• m, n: Proyecciones de los catetos sobre la hipotenusa [Metro [m]]",
-            "fijaUnsa": "En el triángulo 37°-53°, frente a 37° siempre se opone el cateto menor 3k, frente a 53° el cateto 4k, y la hipotenusa 5k. Teorema de Poncelet: a + b = c + 2r (r = inradio).",
-            "takeaway": "Regla de Oro: Domina el Teorema 'Teorema de Pitágoras y Triángulos Notables' y sus despejes para alcanzar 80+ puntos en la UNSA."
+            "formula_data": null,
+            "mecanismos": null,
+            "fijaUnsa": "Pitágoras acuñó el término 'filósofo' (amante de la sabiduría). En la UNSA no confundas Gnoseología (conocimiento general) con Epistemología (conocimiento científico).",
+            "takeaway": "Filosofía = Philo (amor) + Sophia (sabiduría). Pitágoras acuña el término. Nace del asombro (*thaumazein*) y marca el paso del mito al logos racional."
           },
           "challenges": [
             {
@@ -146505,8 +146456,10 @@ export async function getLessonsForSubject(subjectId, limit = null, uncompressed
     }
   });
 
+  const sanitized = expanded.map((node) => sanitizeLessonNode(node, subjectId));
+
   if (limit !== null) {
-    return expanded.slice(0, limit);
+    return sanitized.slice(0, limit);
   }
-  return expanded;
+  return sanitized;
 }

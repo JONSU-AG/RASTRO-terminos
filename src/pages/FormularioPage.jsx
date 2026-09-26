@@ -6001,115 +6001,105 @@ export const FormularioPage = () => {
 
       <div style={{ maxWidth: '1120px', margin: '0 auto' }}>
         {/* BARRA SUPERIOR */}
+        {/* BARRA SUPERIOR MINIMALISTA (Estilo iOS Glance / Google Clean) */}
         <div
           className="no-print"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 0',
-            borderBottom: themePalette.isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)',
-            marginBottom: '20px',
+            padding: '12px 4px',
+            borderBottom: '1px solid var(--card-border, rgba(120, 120, 128, 0.12))',
+            marginBottom: '16px',
             flexWrap: 'wrap',
-            gap: '12px'
+            gap: '10px'
           }}
         >
+          {/* Botón Volver Limpio */}
           <button
             type="button"
-            onClick={() => navigate('/cursos')}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/');
+              }
+            }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '8px',
-              padding: '9px 18px',
+              gap: '6px',
+              padding: '8px 14px',
               borderRadius: '12px',
-              border: themePalette.isLight ? '1px solid rgba(0, 0, 0, 0.12)' : '1px solid rgba(255, 255, 255, 0.15)',
-              background: themePalette.isLight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.05)',
-              color: themePalette.textPrimary,
+              border: '1px solid var(--card-border, rgba(120, 120, 128, 0.16))',
+              background: 'var(--card-bg, #FFFFFF)',
+              color: 'var(--text-main, #0F172A)',
               fontWeight: 800,
-              fontSize: '0.86rem',
+              fontSize: '0.84rem',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.15s ease'
             }}
           >
-            <ArrowLeft size={16} /> Volver a Cursos
+            <ArrowLeft size={16} />
+            <span>Volver</span>
           </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              type="button"
-              onClick={handlePrint}
-              title="Imprimir compendio oficial para repaso"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '9px 14px',
-                borderRadius: '12px',
-                border: themePalette.isLight ? '1px solid rgba(0, 0, 0, 0.12)' : '1px solid rgba(255, 255, 255, 0.15)',
-                background: themePalette.isLight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.05)',
-                color: themePalette.textPrimary,
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                cursor: 'pointer'
-              }}
-            >
-              <Printer size={15} />
-              <span className="hide-mobile">Imprimir Ficha</span>
-            </button>
-
-            <span
-              style={{
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                color: themePalette.tagText,
-                background: `rgba(${themePalette.accentRgb}, 0.15)`,
-                border: `1px solid ${themePalette.subtleBorder}`,
-                padding: '6px 12px',
-                borderRadius: '10px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px'
-              }}
-            >
-              <Palette size={13} color={themePalette.accent} />
-              <span className="hide-mobile">Tema:</span> {themePalette.name}
-            </span>
-
-            <span
-              style={{
-                fontSize: '0.80rem',
-                fontWeight: 800,
-                color: activePortal === 'formulas' ? currentTheme.primary : '#C084FC',
-                background: activePortal === 'formulas' ? currentTheme.bgBadge : 'rgba(168, 85, 247, 0.15)',
-                border: `1px solid ${activePortal === 'formulas' ? currentTheme.border : 'rgba(168, 85, 247, 0.35)'}`,
-                padding: '6px 12px',
-                borderRadius: '10px'
-              }}
-            >
-              {activePortal === 'formulas'
-                ? `${filteredFormulas.length} de ${FORMULAS_CANONICAS.length} Fórmulas`
-                : `${filteredMnemonics.length} de ${MNEMOTECNIAS_PREU.length} Mnemotecnias`}
+          {/* Título Central Sobrio */}
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{
+              margin: 0,
+              fontSize: '1.05rem',
+              fontWeight: 900,
+              color: 'var(--text-main, #0F172A)',
+              letterSpacing: '-0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span>Fórmulas & Truquitos Pre-U</span>
+            </h2>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #64748B)', fontWeight: 600 }}>
+              {activePortal === 'formulas' 
+                ? `${filteredFormulas.length} fórmulas clasificadas` 
+                : `${filteredMnemonics.length} mnemotecnias activas`}
             </span>
           </div>
+
+          {/* Botón Imprimir Ficha */}
+          <button
+            type="button"
+            onClick={handlePrint}
+            title="Imprimir compendio para repaso"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '8px 12px',
+              borderRadius: '12px',
+              border: '1px solid var(--card-border, rgba(120, 120, 128, 0.16))',
+              background: 'var(--card-bg, #FFFFFF)',
+              color: 'var(--text-main, #0F172A)',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              cursor: 'pointer'
+            }}
+          >
+            <Printer size={14} />
+            <span className="hide-mobile">Imprimir</span>
+          </button>
         </div>
 
-        {/* CONMUTADOR DE DOS CARAS DE LA PÁGINA */}
+        {/* CONMUTADOR DE CARAS (Segmented Control Estilo iOS / Google Tabs) */}
         <div
           className="no-print"
           style={{
             display: 'flex',
-            justifyContent: 'center',
-            margin: '0 auto 20px',
-            maxWidth: '720px',
-            background: themePalette.isLight
-              ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%)'
-              : 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.95) 100%)',
-            padding: '6px',
-            borderRadius: '20px',
-            border: themePalette.isLight ? '1.5px solid rgba(0, 0, 0, 0.1)' : '1.5px solid rgba(255, 255, 255, 0.12)',
-            boxShadow: themePalette.isLight ? '0 6px 20px rgba(0, 0, 0, 0.06)' : '0 10px 30px rgba(0, 0, 0, 0.45)',
-            gap: '8px'
+            maxWidth: '520px',
+            margin: '0 auto 16px',
+            background: 'rgba(120, 120, 128, 0.10)',
+            padding: '4px',
+            borderRadius: '16px',
+            gap: '4px'
           }}
         >
           <button
@@ -6122,45 +6112,24 @@ export const FormularioPage = () => {
             }}
             style={{
               flex: 1,
-              padding: '12px 18px',
-              borderRadius: '16px',
-              border: activePortal === 'formulas' ? '1.5px solid #38BDF8' : '1px solid transparent',
-              background: activePortal === 'formulas'
-                ? 'linear-gradient(135deg, rgba(2, 132, 199, 0.35) 0%, rgba(56, 189, 248, 0.15) 100%)'
-                : 'transparent',
-              color: activePortal === 'formulas' ? '#0284C7' : themePalette.textSecondary,
-              fontWeight: 900,
-              fontSize: '0.88rem',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              border: 'none',
+              background: activePortal === 'formulas' ? 'var(--card-bg, #FFFFFF)' : 'transparent',
+              color: activePortal === 'formulas' ? 'var(--accent-color, #007AFF)' : 'var(--text-secondary, #64748B)',
+              fontWeight: 800,
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '10px',
-              boxShadow: activePortal === 'formulas' ? '0 4px 18px rgba(56, 189, 248, 0.25)' : 'none',
-              transition: 'all 0.2s ease'
+              gap: '7px',
+              boxShadow: activePortal === 'formulas' ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
+              transition: 'all 0.18s ease'
             }}
           >
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                background: activePortal === 'formulas' ? 'rgba(56, 189, 248, 0.25)' : themePalette.isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.06)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Calculator size={18} color={activePortal === 'formulas' ? '#0284C7' : themePalette.textSecondary} />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '0.88rem', lineHeight: 1.2, fontWeight: 900 }}>
-                Cara A: Fórmulas Exactas
-              </div>
-              <div style={{ fontSize: '0.68rem', color: activePortal === 'formulas' ? (themePalette.isLight ? '#0369A1' : '#BAE6FD') : themePalette.textMuted, fontWeight: 600 }}>
-                Ciencias, Despejes & Calculadoras
-              </div>
-            </div>
+            <Calculator size={16} />
+            <span>Cara A: Fórmulas</span>
           </button>
 
           <button
@@ -6173,175 +6142,89 @@ export const FormularioPage = () => {
             }}
             style={{
               flex: 1,
-              padding: '12px 18px',
-              borderRadius: '16px',
-              border: activePortal === 'mnemotecnias' ? '1.5px solid #C084FC' : '1px solid transparent',
-              background: activePortal === 'mnemotecnias'
-                ? 'linear-gradient(135deg, rgba(124, 58, 237, 0.40) 0%, rgba(168, 85, 247, 0.20) 100%)'
-                : 'transparent',
-              color: activePortal === 'mnemotecnias' ? '#9333EA' : themePalette.textSecondary,
-              fontWeight: 900,
-              fontSize: '0.88rem',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              border: 'none',
+              background: activePortal === 'mnemotecnias' ? 'var(--card-bg, #FFFFFF)' : 'transparent',
+              color: activePortal === 'mnemotecnias' ? '#A855F7' : 'var(--text-secondary, #64748B)',
+              fontWeight: 800,
+              fontSize: '0.84rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '10px',
-              boxShadow: activePortal === 'mnemotecnias' ? '0 4px 18px rgba(168, 85, 247, 0.25)' : 'none',
-              transition: 'all 0.2s ease'
+              gap: '7px',
+              boxShadow: activePortal === 'mnemotecnias' ? '0 2px 8px rgba(0, 0, 0, 0.08)' : 'none',
+              transition: 'all 0.18s ease'
             }}
           >
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '10px',
-                background: activePortal === 'mnemotecnias' ? 'rgba(168, 85, 247, 0.25)' : themePalette.isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.06)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <Sparkles size={18} color={activePortal === 'mnemotecnias' ? '#9333EA' : themePalette.textSecondary} />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: '0.88rem', lineHeight: 1.2, fontWeight: 900 }}>
-                Cara B: Bóveda Mnemotecnias
-              </div>
-              <div style={{ fontSize: '0.68rem', color: activePortal === 'mnemotecnias' ? (themePalette.isLight ? '#7E22CE' : '#E9D5FF') : themePalette.textMuted, fontWeight: 600 }}>
-                Frases Gatillo, RAE & Hacks Pre-U
-              </div>
-            </div>
+            <Sparkles size={16} />
+            <span>Cara B: Mnemotecnias</span>
           </button>
         </div>
 
-        {/* HERO BANNER DINÁMICO */}
-        <div
-          style={{
-            textAlign: 'center',
-            marginBottom: '24px',
-            position: 'relative',
-            padding: '26px 20px',
-            borderRadius: '24px',
-            background: themePalette.isLight
-              ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%)'
-              : 'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 19, 43, 0.98) 100%)',
-            border: activePortal === 'formulas'
-              ? `1.5px solid ${themePalette.isLight ? 'rgba(56, 189, 248, 0.35)' : 'rgba(56, 189, 248, 0.25)'}`
-              : `1.5px solid ${themePalette.isLight ? 'rgba(168, 85, 247, 0.35)' : 'rgba(168, 85, 247, 0.35)'}`,
-            boxShadow: themePalette.isLight ? '0 6px 24px rgba(0, 0, 0, 0.05)' : '0 8px 32px rgba(0, 0, 0, 0.4)',
-            overflow: 'hidden'
-          }}
-        >
-          <div
+        {/* BUSCADOR LIMPIO TIPO GOOGLE SEARCH */}
+        <div className="no-print" style={{ position: 'relative', maxWidth: '640px', margin: '0 auto 18px' }}>
+          <Search
+            size={17}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '5px 14px',
-              borderRadius: '999px',
-              background: activePortal === 'formulas' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(168, 85, 247, 0.18)',
-              border: activePortal === 'formulas' ? '1px solid rgba(56, 189, 248, 0.35)' : '1px solid rgba(168, 85, 247, 0.40)',
-              color: activePortal === 'formulas' ? (themePalette.isLight ? '#0369A1' : '#38BDF8') : (themePalette.isLight ? '#7E22CE' : '#C084FC'),
-              fontSize: '0.74rem',
-              fontWeight: 900,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              marginBottom: '10px'
+              position: 'absolute',
+              left: '16px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: 'var(--text-secondary, #94A3B8)'
             }}
-          >
-            <Sparkles size={14} /> {activePortal === 'formulas'
-              ? 'FORMULARIO MAESTRO UNIVERSAL • CIENCIAS & MATEMÁTICAS'
-              : 'BÓVEDA DE MNEMOTECNIAS & HACKS • ALTO RENDIMIENTO UNIVERSITARIO'}
-          </div>
-
-          <h1
+          />
+          <input
+            type="text"
+            placeholder={activePortal === 'formulas'
+              ? "Buscar fórmula o tema (ej: Ohm, Torricelli, MRUV, Gases)..."
+              : "Buscar mnemotecnia (ej: Diosito, Pavo Ratón, Purinas, SEGA)..."}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
             style={{
-              fontSize: 'clamp(1.7rem, 3.5vw, 2.5rem)',
-              fontWeight: 900,
-              margin: '0 0 10px',
-              letterSpacing: '-0.02em',
-              color: themePalette.textPrimary
-            }}
-          >
-            {activePortal === 'formulas'
-              ? 'Formulario Integral de Ciencias & Matemáticas'
-              : 'Bóveda de Mnemotecnias & Gatillos Mentales Pre-U'}
-          </h1>
-
-          <p
-            style={{
+              width: '100%',
+              padding: '12px 42px 12px 44px',
+              borderRadius: '16px',
+              border: '1px solid var(--card-border, rgba(120, 120, 128, 0.18))',
+              background: 'var(--card-bg, #FFFFFF)',
+              color: 'var(--text-main, #0F172A)',
               fontSize: '0.90rem',
-              color: themePalette.textSecondary,
-              maxWidth: '720px',
-              margin: '0 auto 18px',
-              lineHeight: 1.55
+              fontWeight: 600,
+              boxSizing: 'border-box',
+              outline: 'none',
+              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)'
             }}
-          >
-            {activePortal === 'formulas'
-              ? 'Desde relaciones fundamentales y conversiones de unidades hasta fórmulas avanzadas. Incluye casos particulares para cada incógnita, despejes paso a paso, nomenclatura oficial S.I. y simuladores numéricos.'
-              : 'Asociaciones sonoras y fonéticas inolvidables para no dudar jamás en el examen: "Diosito lo ve todo" (d=v·t), "PAVO = RATÓN", "Coca-Cola Hielito" y el rigor lingüístico RAE "¿MUY o MUCHO?".'}
-          </p>
-
-          {/* BUSCADOR CONCURRENTE ULTRA-RÁPIDO */}
-          <div style={{ position: 'relative', maxWidth: '540px', margin: '0 auto' }}>
-            <Search
-              size={18}
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
               style={{
                 position: 'absolute',
-                left: '18px',
+                right: '12px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: activePortal === 'formulas' ? '#38BDF8' : '#C084FC'
+                background: 'rgba(120, 120, 128, 0.15)',
+                border: 'none',
+                color: 'var(--text-secondary, #64748B)',
+                cursor: 'pointer',
+                borderRadius: '50%',
+                width: '22px',
+                height: '22px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.72rem',
+                fontWeight: 800
               }}
-            />
-            <input
-              type="text"
-              placeholder={activePortal === 'formulas'
-                ? "Buscar (ej: Ohm, Torricelli, Cauchy, Lami, Herón, MRUV, Gases)..."
-                : "Buscar mnemotecnia (ej: Diosito, Pavo Ratón, Coca Coca, SEGA, Purinas)..."}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '13px 18px 13px 48px',
-                borderRadius: '16px',
-                border: activePortal === 'formulas'
-                  ? '1.5px solid rgba(56, 189, 248, 0.35)'
-                  : '1.5px solid rgba(168, 85, 247, 0.40)',
-                background: themePalette.isLight ? '#FFFFFF' : 'rgba(2, 6, 23, 0.9)',
-                color: themePalette.textPrimary,
-                fontSize: '0.92rem',
-                fontWeight: 600,
-                boxSizing: 'border-box',
-                outline: 'none',
-                boxShadow: themePalette.isLight ? '0 2px 10px rgba(0, 0, 0, 0.05)' : '0 4px 20px rgba(0, 0, 0, 0.4)'
-              }}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'transparent',
-                  border: 'none',
-                  color: themePalette.textMuted,
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
-                  fontWeight: 800
-                }}
-              >
-                ✕ Limpiar
-              </button>
-            )}
-          </div>
+            >
+              ✕
+            </button>
+          )}
         </div>
 
-        {/* SELECTOR DE MODO DE VISUALIZACIÓN */}
+        {/* SELECTOR DE MODO DE VISUALIZACIÓN COMPACTO (Estilo iOS Segmented) */}
         <div
           className="no-print"
           style={{
@@ -6349,82 +6232,89 @@ export const FormularioPage = () => {
             justifyContent: 'center',
             alignItems: 'center',
             gap: '8px',
-            marginBottom: '16px',
+            marginBottom: '14px',
             flexWrap: 'wrap'
           }}
         >
           <div
             style={{
               display: 'inline-flex',
-              background: themePalette.isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(15, 23, 42, 0.9)',
-              padding: '4px',
-              borderRadius: '16px',
-              border: themePalette.isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.1)'
+              background: 'rgba(120, 120, 128, 0.10)',
+              padding: '3px',
+              borderRadius: '14px',
+              border: '1px solid var(--card-border, rgba(120, 120, 128, 0.14))',
+              gap: '2px'
             }}
           >
             <button
               type="button"
               onClick={() => setViewMode('detallado')}
               style={{
-                padding: '8px 16px',
-                borderRadius: '12px',
+                padding: '6px 14px',
+                borderRadius: '10px',
                 border: 'none',
-                background: viewMode === 'detallado' ? 'linear-gradient(135deg, #0284C7 0%, #38BDF8 100%)' : 'transparent',
-                color: viewMode === 'detallado' ? '#FFFFFF' : themePalette.textSecondary,
+                background: viewMode === 'detallado' ? 'var(--card-bg, #FFFFFF)' : 'transparent',
+                color: viewMode === 'detallado' ? 'var(--accent-color, #0284C7)' : 'var(--text-secondary, #64748B)',
                 fontWeight: 800,
-                fontSize: '0.80rem',
+                fontSize: '0.78rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '5px',
+                boxShadow: viewMode === 'detallado' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
               }}
             >
-              <BookOpen size={14} /> Pizarra Detallada ({activePortal === 'formulas' ? filteredFormulas.length : filteredMnemonics.length})
+              <BookOpen size={13} /> Detallada ({activePortal === 'formulas' ? filteredFormulas.length : filteredMnemonics.length})
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('bolsillo')}
               style={{
-                padding: '8px 16px',
-                borderRadius: '12px',
+                padding: '6px 14px',
+                borderRadius: '10px',
                 border: 'none',
-                background: viewMode === 'bolsillo' ? 'linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)' : 'transparent',
-                color: viewMode === 'bolsillo' ? '#FFFFFF' : themePalette.textSecondary,
+                background: viewMode === 'bolsillo' ? 'var(--card-bg, #FFFFFF)' : 'transparent',
+                color: viewMode === 'bolsillo' ? '#A855F7' : 'var(--text-secondary, #64748B)',
                 fontWeight: 800,
-                fontSize: '0.80rem',
+                fontSize: '0.78rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '5px',
+                boxShadow: viewMode === 'bolsillo' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Grid size={14} /> Ficha de Bolsillo (Rápida)
+              <Grid size={13} /> Bolsillo
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('favoritas')}
               style={{
-                padding: '8px 16px',
-                borderRadius: '12px',
+                padding: '6px 14px',
+                borderRadius: '10px',
                 border: 'none',
-                background: viewMode === 'favoritas' ? 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)' : 'transparent',
-                color: viewMode === 'favoritas' ? '#FFFFFF' : themePalette.textSecondary,
+                background: viewMode === 'favoritas' ? 'var(--card-bg, #FFFFFF)' : 'transparent',
+                color: viewMode === 'favoritas' ? '#D97706' : 'var(--text-secondary, #64748B)',
                 fontWeight: 800,
-                fontSize: '0.80rem',
+                fontSize: '0.78rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px'
+                gap: '5px',
+                boxShadow: viewMode === 'favoritas' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Star size={14} fill={viewMode === 'favoritas' ? '#FFFFFF' : 'none'} /> Mis Guardadas ({favorites.length})
+              <Star size={13} fill={viewMode === 'favoritas' ? '#D97706' : 'none'} /> Guardadas ({favorites.length})
             </button>
           </div>
         </div>
 
-        {/* SELECTOR DE NIVEL / DIFICULTAD (EXCLUSIVO CARA A) */}
+        {/* SELECTOR DE NIVEL / DIFICULTAD COMPACTO (EXCLUSIVO CARA A) */}
         {activePortal === 'formulas' && (
           <div
             className="no-print"
@@ -6432,32 +6322,29 @@ export const FormularioPage = () => {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              gap: '8px',
-              marginBottom: '18px',
+              gap: '6px',
+              marginBottom: '14px',
               flexWrap: 'wrap'
             }}
           >
-            <span style={{ fontSize: '0.74rem', color: themePalette.textMuted, fontWeight: 800, textTransform: 'uppercase' }}>
-              Nivel:
-            </span>
             {[
-              { id: 'Todos', label: 'Todos los niveles' },
-              { id: 'Básica', label: 'Fórmulas Básicas' },
-              { id: 'Operacional', label: 'Fórmulas Aplicadas' },
-              { id: 'Atajo', label: 'Atajos & Reglas Prácticas' }
+              { id: 'Todos', label: 'Todos' },
+              { id: 'Básica', label: 'Básicas' },
+              { id: 'Operacional', label: 'Aplicadas' },
+              { id: 'Atajo', label: 'Atajos Pre-U' }
             ].map(lvl => (
               <button
                 key={lvl.id}
                 type="button"
                 onClick={() => setSelectedLevel(lvl.id)}
                 style={{
-                  padding: '5px 12px',
-                  borderRadius: '10px',
-                  border: selectedLevel === lvl.id ? '1px solid #38BDF8' : themePalette.isLight ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.08)',
-                  background: selectedLevel === lvl.id ? 'rgba(56, 189, 248, 0.15)' : themePalette.isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
-                  color: selectedLevel === lvl.id ? (themePalette.isLight ? '#0284C7' : '#38BDF8') : themePalette.textSecondary,
-                  fontWeight: 800,
-                  fontSize: '0.74rem',
+                  padding: '4px 11px',
+                  borderRadius: '999px',
+                  border: selectedLevel === lvl.id ? '1px solid var(--accent-color, #0284C7)' : '1px solid var(--card-border, rgba(120, 120, 128, 0.16))',
+                  background: selectedLevel === lvl.id ? 'rgba(2, 132, 199, 0.12)' : 'var(--card-bg, #FFFFFF)',
+                  color: selectedLevel === lvl.id ? 'var(--accent-color, #0284C7)' : 'var(--text-secondary, #64748B)',
+                  fontWeight: 700,
+                  fontSize: '0.72rem',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}

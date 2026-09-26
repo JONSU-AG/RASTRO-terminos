@@ -114,7 +114,7 @@ export const MnemotecniasVaultView = ({
         </h3>
         <p style={{ color: isLight ? (themePalette?.textSecondary || '#475569') : '#94A3B8', fontSize: '0.86rem', margin: '0 0 16px', lineHeight: 1.5 }}>
           {viewMode === 'favoritas'
-            ? 'Presiona la estrella ⭐ en cualquier mnemotecnia o hack preuniversitario para agregarla a tu colección de repaso rápido.'
+            ? 'Presiona el botón de guardar en cualquier mnemotecnia o fórmula para agregarla a tu colección de repaso rápido.'
             : 'Prueba cambiando los filtros de materia o borrando el texto de búsqueda.'}
         </p>
         {onGoToFormulas && (
@@ -213,7 +213,7 @@ export const MnemotecniasVaultView = ({
                     >
                       {mne.subject}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: '#94A3B8', fontWeight: 700 }}>
+                    <span style={{ fontSize: '0.78rem', color: isLight ? (themePalette?.textSecondary || '#475569') : '#94A3B8', fontWeight: 700 }}>
                       • {mne.topic}
                     </span>
                     <span
@@ -221,20 +221,24 @@ export const MnemotecniasVaultView = ({
                         fontSize: '0.70rem',
                         padding: '2px 8px',
                         borderRadius: '6px',
-                        background: 'rgba(245, 158, 11, 0.18)',
-                        color: '#FBBF24',
-                        fontWeight: 800
+                        background: isLight ? 'rgba(217, 119, 6, 0.12)' : 'rgba(245, 158, 11, 0.18)',
+                        color: isLight ? '#B45309' : '#FBBF24',
+                        fontWeight: 800,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
                       }}
                     >
-                      ⭐ {mne.importance}
+                      <Star size={11} fill="currentColor" />
+                      <span>{mne.importance}</span>
                     </span>
                     <span
                       style={{
                         fontSize: '0.68rem',
                         padding: '2px 8px',
                         borderRadius: '6px',
-                        background: 'rgba(56, 189, 248, 0.15)',
-                        color: '#38BDF8',
+                        background: isLight ? 'rgba(2, 132, 199, 0.10)' : 'rgba(56, 189, 248, 0.15)',
+                        color: isLight ? '#0284C7' : '#38BDF8',
                         fontWeight: 800
                       }}
                     >
@@ -242,20 +246,20 @@ export const MnemotecniasVaultView = ({
                     </span>
                   </div>
 
-                  {/* FRASE MNEMOTÉCNICA EN ORO / NEÓN */}
+                  {/* FRASE MNEMOTÉCNICA EN ORO / ALTO CONTRASTE */}
                   <h2
                     style={{
                       margin: '4px 0 3px',
                       fontSize: 'clamp(1.2rem, 3vw, 1.55rem)',
                       fontWeight: 900,
-                      color: '#FDE047',
+                      color: isLight ? '#92400E' : '#FDE047',
                       letterSpacing: '-0.01em',
-                      textShadow: '0 0 24px rgba(253, 224, 71, 0.35)'
+                      textShadow: isLight ? 'none' : '0 0 24px rgba(253, 224, 71, 0.35)'
                     }}
                   >
-                    ✨ "{mne.phrase}"
+                    "{mne.phrase}"
                   </h2>
-                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#CBD5E1', lineHeight: 1.4 }}>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: isLight ? (themePalette?.textSecondary || '#334155') : '#CBD5E1', lineHeight: 1.4 }}>
                     {mne.summary}
                   </p>
                 </div>
@@ -267,11 +271,17 @@ export const MnemotecniasVaultView = ({
                     onClick={() => toggleFavorite(mne.id)}
                     title={isFav ? 'Quitar de guardadas' : 'Guardar mnemotecnia'}
                     style={{
-                      background: isFav ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                      border: isFav ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.15)',
+                      background: isFav
+                        ? (isLight ? 'rgba(217, 119, 6, 0.15)' : 'rgba(245, 158, 11, 0.2)')
+                        : (isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.06)'),
+                      border: isFav
+                        ? '1px solid #D97706'
+                        : (isLight ? '1px solid rgba(0, 0, 0, 0.12)' : '1px solid rgba(255, 255, 255, 0.15)'),
                       borderRadius: '10px',
                       padding: '7px 10px',
-                      color: isFav ? '#FBBF24' : '#94A3B8',
+                      color: isFav
+                        ? (isLight ? '#B45309' : '#FBBF24')
+                        : (isLight ? '#475569' : '#94A3B8'),
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -280,7 +290,7 @@ export const MnemotecniasVaultView = ({
                       fontWeight: 700
                     }}
                   >
-                    <Star size={14} fill={isFav ? '#FBBF24' : 'none'} />
+                    <Star size={14} fill={isFav ? (isLight ? '#B45309' : '#FBBF24') : 'none'} />
                     <span className="hide-mobile">{isFav ? 'Guardada' : 'Guardar'}</span>
                   </button>
 
@@ -289,11 +299,17 @@ export const MnemotecniasVaultView = ({
                     onClick={() => handleCopy(mne.id, `${mne.phrase}: ${mne.shortFormula}`)}
                     title="Copiar fórmula y mnemotecnia"
                     style={{
-                      background: copiedId === mne.id ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-                      border: copiedId === mne.id ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.15)',
+                      background: copiedId === mne.id
+                        ? (isLight ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.2)')
+                        : (isLight ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.06)'),
+                      border: copiedId === mne.id
+                        ? '1px solid #10B981'
+                        : (isLight ? '1px solid rgba(0, 0, 0, 0.12)' : '1px solid rgba(255, 255, 255, 0.15)'),
                       borderRadius: '10px',
                       padding: '7px 10px',
-                      color: copiedId === mne.id ? '#34D399' : '#94A3B8',
+                      color: copiedId === mne.id
+                        ? (isLight ? '#059669' : '#34D399')
+                        : (isLight ? '#475569' : '#94A3B8'),
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -302,7 +318,7 @@ export const MnemotecniasVaultView = ({
                       fontWeight: 700
                     }}
                   >
-                    {copiedId === mne.id ? <Check size={14} color="#34D399" /> : <Copy size={14} />}
+                    {copiedId === mne.id ? <Check size={14} color={isLight ? '#059669' : '#34D399'} /> : <Copy size={14} />}
                     <span>{copiedId === mne.id ? '¡Copiada!' : 'Copiar'}</span>
                   </button>
                 </div>
@@ -334,7 +350,7 @@ export const MnemotecniasVaultView = ({
                     style={{
                       fontSize: '0.68rem',
                       fontWeight: 900,
-                      color: '#38BDF8',
+                      color: isLight ? '#0369A1' : '#38BDF8',
                       textTransform: 'uppercase',
                       letterSpacing: '0.06em',
                       marginBottom: '8px',
@@ -343,7 +359,7 @@ export const MnemotecniasVaultView = ({
                       gap: '5px'
                     }}
                   >
-                    <Sparkles size={13} color="#38BDF8" />
+                    <Sparkles size={13} color={isLight ? '#0369A1' : '#38BDF8'} />
                     <span>DESGLOSE FONÉTICO Y CORRESPONDENCIA DE VARIABLES</span>
                   </div>
 
@@ -358,8 +374,8 @@ export const MnemotecniasVaultView = ({
                       <div
                         key={bIdx}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.09)',
+                          background: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                          border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.09)',
                           borderRadius: '12px',
                           padding: '9px 12px',
                           display: 'flex',
@@ -371,9 +387,9 @@ export const MnemotecniasVaultView = ({
                           style={{
                             fontSize: '0.92rem',
                             fontWeight: 900,
-                            color: '#FDE047',
-                            background: 'rgba(245, 158, 11, 0.2)',
-                            border: '1px solid rgba(245, 158, 11, 0.4)',
+                            color: isLight ? '#92400E' : '#FDE047',
+                            background: isLight ? 'rgba(217, 119, 6, 0.15)' : 'rgba(245, 158, 11, 0.2)',
+                            border: isLight ? '1px solid rgba(217, 119, 6, 0.35)' : '1px solid rgba(245, 158, 11, 0.4)',
                             padding: '4px 10px',
                             borderRadius: '8px',
                             minWidth: '24px',
@@ -383,11 +399,11 @@ export const MnemotecniasVaultView = ({
                           {bItem.letter}
                         </span>
                         <div>
-                          <div style={{ fontSize: '0.78rem', color: '#FFFFFF', fontWeight: 800 }}>
+                          <div style={{ fontSize: '0.78rem', color: isLight ? (themePalette?.textPrimary || '#0F172A') : '#FFFFFF', fontWeight: 800 }}>
                             {bItem.word}
                           </div>
-                          <div style={{ fontSize: '0.70rem', color: '#94A3B8' }}>
-                            {bItem.concept} • <span style={{ color: '#38BDF8', fontWeight: 700 }}>{bItem.unit}</span>
+                          <div style={{ fontSize: '0.70rem', color: isLight ? (themePalette?.textSecondary || '#475569') : '#94A3B8' }}>
+                            {bItem.concept} • <span style={{ color: isLight ? '#0284C7' : '#38BDF8', fontWeight: 700 }}>{bItem.unit}</span>
                           </div>
                         </div>
                       </div>
@@ -400,173 +416,219 @@ export const MnemotecniasVaultView = ({
               {/* WIDGET INTERACTIVO 1: TRIÁNGULO DE DIOSITO (MRU)        */}
               {/* ======================================================== */}
               {mne.id === 'mne_fis_mru_diosito' && (
-                <div
-                  className="no-print"
-                  style={{
-                    background: 'rgba(2, 6, 23, 0.9)',
-                    border: '1.5px dashed #38BDF8',
-                    borderRadius: '16px',
-                    padding: '16px',
-                    position: 'relative',
-                    zIndex: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '10px'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 900, color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Lightbulb size={15} color="#38BDF8" />
-                      <span>TRIÁNGULO INTERACTIVO DE DIOSITO (Tapa con tu dedo la incógnita):</span>
-                    </div>
-                    <span style={{ fontSize: '0.68rem', color: '#94A3B8' }}>Tapa lo que quieres despejar</span>
-                  </div>
-
-                  {/* BOTONES PARA TAPAR CON EL DEDO */}
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={() => setDiositoTapped('d')}
-                      style={{
-                        padding: '7px 16px',
-                        borderRadius: '10px',
-                        border: diositoTapped === 'd' ? '2px solid #FDE047' : '1px solid #38BDF8',
-                        background: diositoTapped === 'd' ? 'linear-gradient(135deg, #F59E0B, #FDE047)' : 'rgba(56, 189, 248, 0.12)',
-                        color: diositoTapped === 'd' ? '#0F172A' : '#38BDF8',
-                        fontWeight: 900,
-                        fontSize: '0.80rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span>👆 Tapar D (Distancia)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDiositoTapped('v')}
-                      style={{
-                        padding: '7px 16px',
-                        borderRadius: '10px',
-                        border: diositoTapped === 'v' ? '2px solid #FDE047' : '1px solid #38BDF8',
-                        background: diositoTapped === 'v' ? 'linear-gradient(135deg, #F59E0B, #FDE047)' : 'rgba(56, 189, 248, 0.12)',
-                        color: diositoTapped === 'v' ? '#0F172A' : '#38BDF8',
-                        fontWeight: 900,
-                        fontSize: '0.80rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span>👆 Tapar V (Velocidad)</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setDiositoTapped('t')}
-                      style={{
-                        padding: '7px 16px',
-                        borderRadius: '10px',
-                        border: diositoTapped === 't' ? '2px solid #FDE047' : '1px solid #38BDF8',
-                        background: diositoTapped === 't' ? 'linear-gradient(135deg, #F59E0B, #FDE047)' : 'rgba(56, 189, 248, 0.12)',
-                        color: diositoTapped === 't' ? '#0F172A' : '#38BDF8',
-                        fontWeight: 900,
-                        fontSize: '0.80rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <span>👆 Tapar T (Tiempo)</span>
-                    </button>
-                  </div>
-
-                  {/* RESULTADO DEL DESPEJE VISUAL */}
                   <div
+                    className="no-print"
                     style={{
-                      background: 'rgba(56, 189, 248, 0.10)',
-                      border: '1px solid rgba(56, 189, 248, 0.3)',
-                      borderRadius: '12px',
-                      padding: '12px 16px',
-                      fontSize: '0.86rem',
-                      color: '#E0F2FE',
+                      background: isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(2, 6, 23, 0.9)',
+                      border: isLight ? '1.5px dashed #0284C7' : '1.5px dashed #38BDF8',
+                      borderRadius: '16px',
+                      padding: '16px',
+                      position: 'relative',
+                      zIndex: 2,
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px'
+                      flexDirection: 'column',
+                      gap: '10px'
                     }}
                   >
-                    <span style={{ fontSize: '1.4rem' }}>🔺</span>
-                    <div>
-                      {diositoTapped === 'd' && (
-                        <span>
-                          Al tapar <strong style={{ color: '#FDE047' }}>D (arriba)</strong>, abajo te queda V y T juntos:
-                          {' '}
-                          <strong style={{ color: '#38BDF8', fontSize: '1.05rem' }}>d = v · t</strong>
-                          {' '}(Distancia = Velocidad × Tiempo)
-                        </span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ fontSize: '0.76rem', fontWeight: 900, color: isLight ? '#0369A1' : '#38BDF8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Lightbulb size={15} color={isLight ? '#0369A1' : '#38BDF8'} />
+                        <span>TRIÁNGULO INTERACTIVO DE DIOSITO (Tapa con tu dedo la incógnita):</span>
+                      </div>
+                      <span style={{ fontSize: '0.68rem', color: isLight ? '#64748B' : '#94A3B8' }}>Tapa lo que quieres despejar</span>
+                    </div>
+
+                    {/* BOTONES PARA TAPAR CON EL DEDO */}
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setDiositoTapped('d')}
+                        style={{
+                          padding: '7px 16px',
+                          borderRadius: '10px',
+                          border: diositoTapped === 'd'
+                            ? (isLight ? '2px solid #D97706' : '2px solid #FDE047')
+                            : (isLight ? '1px solid #0284C7' : '1px solid #38BDF8'),
+                          background: diositoTapped === 'd'
+                            ? (isLight ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'linear-gradient(135deg, #F59E0B, #FDE047)')
+                            : (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(56, 189, 248, 0.12)'),
+                          color: diositoTapped === 'd' ? (isLight ? '#FFFFFF' : '#0F172A') : (isLight ? '#0284C7' : '#38BDF8'),
+                          fontWeight: 900,
+                          fontSize: '0.80rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>Tapar D (Distancia)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDiositoTapped('v')}
+                        style={{
+                          padding: '7px 16px',
+                          borderRadius: '10px',
+                          border: diositoTapped === 'v'
+                            ? (isLight ? '2px solid #D97706' : '2px solid #FDE047')
+                            : (isLight ? '1px solid #0284C7' : '1px solid #38BDF8'),
+                          background: diositoTapped === 'v'
+                            ? (isLight ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'linear-gradient(135deg, #F59E0B, #FDE047)')
+                            : (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(56, 189, 248, 0.12)'),
+                          color: diositoTapped === 'v' ? (isLight ? '#FFFFFF' : '#0F172A') : (isLight ? '#0284C7' : '#38BDF8'),
+                          fontWeight: 900,
+                          fontSize: '0.80rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>Tapar V (Velocidad)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDiositoTapped('t')}
+                        style={{
+                          padding: '7px 16px',
+                          borderRadius: '10px',
+                          border: diositoTapped === 't'
+                            ? (isLight ? '2px solid #D97706' : '2px solid #FDE047')
+                            : (isLight ? '1px solid #0284C7' : '1px solid #38BDF8'),
+                          background: diositoTapped === 't'
+                            ? (isLight ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'linear-gradient(135deg, #F59E0B, #FDE047)')
+                            : (isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(56, 189, 248, 0.12)'),
+                          color: diositoTapped === 't' ? (isLight ? '#FFFFFF' : '#0F172A') : (isLight ? '#0284C7' : '#38BDF8'),
+                          fontWeight: 900,
+                          fontSize: '0.80rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <span>Tapar T (Tiempo)</span>
+                      </button>
+                    </div>
+
+                    {/* RESULTADO DEL DESPEJE VISUAL */}
+                    <div
+                      style={{
+                        background: isLight ? 'rgba(2, 132, 199, 0.08)' : 'rgba(56, 189, 248, 0.10)',
+                        border: isLight ? '1px solid rgba(2, 132, 199, 0.25)' : '1px solid rgba(56, 189, 248, 0.3)',
+                        borderRadius: '12px',
+                        padding: '12px 16px',
+                        fontSize: '0.86rem',
+                        color: isLight ? '#0F172A' : '#E0F2FE',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                    >
+                      <Compass size={22} color={isLight ? '#0284C7' : '#38BDF8'} />
+                      <div>
+                        {diositoTapped === 'd' && (
+                          <span>
+                            Al tapar <strong style={{ color: isLight ? '#92400E' : '#FDE047' }}>D (arriba)</strong>, abajo te queda V y T juntos:
+                            {' '}
+                            <strong style={{ color: isLight ? '#0284C7' : '#38BDF8', fontSize: '1.05rem' }}>d = v · t</strong>
+                            {' '}(Distancia = Velocidad × Tiempo)
+                          </span>
+                        )}
+                        {diositoTapped === 'v' && (
+                          <span>
+                            Al tapar <strong style={{ color: isLight ? '#92400E' : '#FDE047' }}>V (abajo izquierda)</strong>, arriba queda D y abajo T:
+                            {' '}
+                            <strong style={{ color: isLight ? '#0284C7' : '#38BDF8', fontSize: '1.05rem' }}>v = d / t</strong>
+                            {' '}(Velocidad = Distancia ÷ Tiempo)
+                          </span>
+                        )}
+                        {diositoTapped === 't' && (
+                          <span>
+                            Al tapar <strong style={{ color: isLight ? '#92400E' : '#FDE047' }}>T (abajo derecha)</strong>, arriba queda D y abajo V:
+                            {' '}
+                            <strong style={{ color: isLight ? '#0284C7' : '#38BDF8', fontSize: '1.05rem' }}>t = d / v</strong>
+                            {' '}(Tiempo = Distancia ÷ Velocidad)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CALCULADORA RÁPIDA DE DIOSITO */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px' }}>
+                      <span style={{ fontSize: '0.72rem', color: isLight ? '#64748B' : '#94A3B8', fontWeight: 800 }}>Valores de prueba:</span>
+                      {diositoTapped !== 'd' && (
+                        <input
+                          type="number"
+                          placeholder="Distancia (m)"
+                          value={diositoCalc.d}
+                          onChange={e => setDiositoCalc({ ...diositoCalc, d: e.target.value })}
+                          style={{
+                            width: '110px',
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            background: isLight ? '#FFFFFF' : 'rgba(15, 23, 42, 0.9)',
+                            border: isLight ? '1px solid #CBD5E1' : '1px solid #38BDF8',
+                            color: isLight ? '#0F172A' : '#FFF',
+                            fontSize: '0.78rem'
+                          }}
+                        />
                       )}
-                      {diositoTapped === 'v' && (
-                        <span>
-                          Al tapar <strong style={{ color: '#FDE047' }}>V (abajo izquierda)</strong>, arriba queda D y abajo T:
-                          {' '}
-                          <strong style={{ color: '#38BDF8', fontSize: '1.05rem' }}>v = d / t</strong>
-                          {' '}(Velocidad = Distancia ÷ Tiempo)
-                        </span>
+                      {diositoTapped !== 'v' && (
+                        <input
+                          type="number"
+                          placeholder="Velocidad (m/s)"
+                          value={diositoCalc.v}
+                          onChange={e => setDiositoCalc({ ...diositoCalc, v: e.target.value })}
+                          style={{
+                            width: '110px',
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            background: isLight ? '#FFFFFF' : 'rgba(15, 23, 42, 0.9)',
+                            border: isLight ? '1px solid #CBD5E1' : '1px solid #38BDF8',
+                            color: isLight ? '#0F172A' : '#FFF',
+                            fontSize: '0.78rem'
+                          }}
+                        />
                       )}
-                      {diositoTapped === 't' && (
-                        <span>
-                          Al tapar <strong style={{ color: '#FDE047' }}>T (abajo derecha)</strong>, arriba queda D y abajo V:
-                          {' '}
-                          <strong style={{ color: '#38BDF8', fontSize: '1.05rem' }}>t = d / v</strong>
-                          {' '}(Tiempo = Distancia ÷ Velocidad)
-                        </span>
+                      {diositoTapped !== 't' && (
+                        <input
+                          type="number"
+                          placeholder="Tiempo (s)"
+                          value={diositoCalc.t}
+                          onChange={e => setDiositoCalc({ ...diositoCalc, t: e.target.value })}
+                          style={{
+                            width: '110px',
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            background: isLight ? '#FFFFFF' : 'rgba(15, 23, 42, 0.9)',
+                            border: isLight ? '1px solid #CBD5E1' : '1px solid #38BDF8',
+                            color: isLight ? '#0F172A' : '#FFF',
+                            fontSize: '0.78rem'
+                          }}
+                        />
+                      )}
+
+                      {diositoRes && (
+                        <div
+                          style={{
+                            background: isLight ? 'rgba(217, 119, 6, 0.12)' : 'rgba(253, 224, 71, 0.15)',
+                            border: isLight ? '1px solid #D97706' : '1px solid #FBBF24',
+                            padding: '4px 12px',
+                            borderRadius: '8px',
+                            color: isLight ? '#92400E' : '#FDE047',
+                            fontWeight: 900,
+                            fontSize: '0.80rem'
+                          }}
+                        >
+                          {diositoRes.label} = {diositoRes.val} {diositoRes.unit}
+                        </div>
                       )}
                     </div>
                   </div>
-
-                  {/* CALCULADORA RÁPIDA DE DIOSITO */}
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '4px' }}>
-                    <span style={{ fontSize: '0.72rem', color: '#94A3B8', fontWeight: 800 }}>Valores de prueba:</span>
-                    {diositoTapped !== 'd' && (
-                      <input
-                        type="number"
-                        placeholder="Distancia (m)"
-                        value={diositoCalc.d}
-                        onChange={e => setDiositoCalc({ ...diositoCalc, d: e.target.value })}
-                        style={{ width: '110px', padding: '6px 10px', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid #38BDF8', color: '#FFF', fontSize: '0.78rem' }}
-                      />
-                    )}
-                    {diositoTapped !== 'v' && (
-                      <input
-                        type="number"
-                        placeholder="Velocidad (m/s)"
-                        value={diositoCalc.v}
-                        onChange={e => setDiositoCalc({ ...diositoCalc, v: e.target.value })}
-                        style={{ width: '110px', padding: '6px 10px', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid #38BDF8', color: '#FFF', fontSize: '0.78rem' }}
-                      />
-                    )}
-                    {diositoTapped !== 't' && (
-                      <input
-                        type="number"
-                        placeholder="Tiempo (s)"
-                        value={diositoCalc.t}
-                        onChange={e => setDiositoCalc({ ...diositoCalc, t: e.target.value })}
-                        style={{ width: '110px', padding: '6px 10px', borderRadius: '8px', background: 'rgba(15, 23, 42, 0.9)', border: '1px solid #38BDF8', color: '#FFF', fontSize: '0.78rem' }}
-                      />
-                    )}
-
-                    {diositoRes && (
-                      <div style={{ background: 'rgba(253, 224, 71, 0.15)', border: '1px solid #FBBF24', padding: '4px 12px', borderRadius: '8px', color: '#FDE047', fontWeight: 900, fontSize: '0.80rem' }}>
-                        {diositoRes.label} = {diositoRes.val} {diositoRes.unit}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
+                )}
 
               {/* ======================================================== */}
               {/* WIDGET INTERACTIVO 2: PROBADOR RAE ¿MUY O MUCHO? (LENGUAJE) */}
@@ -575,8 +637,8 @@ export const MnemotecniasVaultView = ({
                 <div
                   className="no-print"
                   style={{
-                    background: 'rgba(2, 6, 23, 0.9)',
-                    border: '1.5px dashed #EC4899',
+                    background: isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(2, 6, 23, 0.9)',
+                    border: isLight ? '1.5px dashed #BE185D' : '1.5px dashed #EC4899',
                     borderRadius: '16px',
                     padding: '16px',
                     position: 'relative',
@@ -587,11 +649,11 @@ export const MnemotecniasVaultView = ({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                    <div style={{ fontSize: '0.76rem', fontWeight: 900, color: '#EC4899', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <BookOpen size={15} color="#EC4899" />
+                    <div style={{ fontSize: '0.76rem', fontWeight: 900, color: isLight ? '#BE185D' : '#EC4899', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <BookOpen size={15} color={isLight ? '#BE185D' : '#EC4899'} />
                       <span>PROBADOR RAE EN VIVO: ¿MUY O MUCHO? (Prueba Sustantivo vs Adjetivo):</span>
                     </div>
-                    <span style={{ fontSize: '0.68rem', color: '#F472B6' }}>Prueba palabras de admisión</span>
+                    <span style={{ fontSize: '0.68rem', color: isLight ? '#9D174D' : '#F472B6' }}>Prueba palabras de admisión</span>
                   </div>
 
                   {/* CHIPS RÁPIDOS */}
@@ -607,9 +669,15 @@ export const MnemotecniasVaultView = ({
                         style={{
                           padding: '5px 12px',
                           borderRadius: '8px',
-                          border: (!customWordInput && muyMuchoWord === w) ? '1.5px solid #EC4899' : '1px solid rgba(255, 255, 255, 0.1)',
-                          background: (!customWordInput && muyMuchoWord === w) ? '#EC4899' : 'rgba(236, 72, 153, 0.12)',
-                          color: (!customWordInput && muyMuchoWord === w) ? '#FFFFFF' : '#F472B6',
+                          border: (!customWordInput && muyMuchoWord === w)
+                            ? (isLight ? '1.5px solid #9D174D' : '1.5px solid #EC4899')
+                            : (isLight ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.1)'),
+                          background: (!customWordInput && muyMuchoWord === w)
+                            ? (isLight ? '#BE185D' : '#EC4899')
+                            : (isLight ? 'rgba(190, 24, 93, 0.08)' : 'rgba(236, 72, 153, 0.12)'),
+                          color: (!customWordInput && muyMuchoWord === w)
+                            ? '#FFFFFF'
+                            : (isLight ? '#BE185D' : '#F472B6'),
                           fontWeight: 800,
                           fontSize: '0.76rem',
                           cursor: 'pointer'
@@ -631,9 +699,9 @@ export const MnemotecniasVaultView = ({
                         flex: 1,
                         padding: '8px 12px',
                         borderRadius: '10px',
-                        border: '1px solid rgba(236, 72, 153, 0.4)',
-                        background: 'rgba(15, 23, 42, 0.9)',
-                        color: '#FFFFFF',
+                        border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(236, 72, 153, 0.4)',
+                        background: isLight ? '#FFFFFF' : 'rgba(15, 23, 42, 0.9)',
+                        color: isLight ? '#0F172A' : '#FFFFFF',
                         fontSize: '0.80rem'
                       }}
                     />
@@ -642,48 +710,48 @@ export const MnemotecniasVaultView = ({
                   {/* RESULTADO Y EXPLICACIÓN DE LA PRUEBA RAE */}
                   <div
                     style={{
-                      background: 'rgba(236, 72, 153, 0.1)',
-                      border: '1px solid rgba(236, 72, 153, 0.3)',
+                      background: isLight ? 'rgba(190, 24, 93, 0.06)' : 'rgba(236, 72, 153, 0.1)',
+                      border: isLight ? '1px solid rgba(190, 24, 93, 0.2)' : '1px solid rgba(236, 72, 153, 0.3)',
                       borderRadius: '12px',
                       padding: '12px 16px',
                       fontSize: '0.84rem',
-                      color: '#FDF2F8'
+                      color: isLight ? '#0F172A' : '#FDF2F8'
                     }}
                   >
                     {isLikelyNoun ? (
                       <div>
-                        <div style={{ color: '#F472B6', fontWeight: 900, marginBottom: '4px' }}>
-                          🔬 Análisis lingüístico para: "{testWord}"
+                        <div style={{ color: isLight ? '#9D174D' : '#F472B6', fontWeight: 900, marginBottom: '4px' }}>
+                          Análisis lingüístico para: "{testWord}"
                         </div>
-                        <div style={{ color: '#F87171' }}>
-                          ❌ ¿"Muy {testWord}"? ➔ Absurdo. Los sustantivos NUNCA admiten "muy".
+                        <div style={{ color: isLight ? '#B91C1C' : '#F87171' }}>
+                          Inválido: ¿"Muy {testWord}"? Los sustantivos nunca admiten "muy".
                         </div>
-                        <div style={{ color: '#34D399', fontWeight: 800, marginTop: '2px' }}>
-                          ✔ ¿"Mucho/a {testWord}"? ➔ ¡Coherente y natural! Admite cuantificador variable.
+                        <div style={{ color: isLight ? '#047857' : '#34D399', fontWeight: 800, marginTop: '2px' }}>
+                          Correcto: ¿"Mucho/a {testWord}"? Coherente y natural. Admite cuantificador variable.
                         </div>
-                        <div style={{ marginTop: '6px', fontWeight: 900, color: '#FDE047', fontSize: '0.90rem' }}>
-                          🎯 Veredicto RAE: "{testWord}" funciona como SUSTANTIVO.
+                        <div style={{ marginTop: '6px', fontWeight: 900, color: isLight ? '#92400E' : '#FDE047', fontSize: '0.90rem' }}>
+                          Veredicto RAE: "{testWord}" funciona como SUSTANTIVO.
                         </div>
                       </div>
                     ) : isLikelyAdj ? (
                       <div>
-                        <div style={{ color: '#F472B6', fontWeight: 900, marginBottom: '4px' }}>
-                          🔬 Análisis lingüístico para: "{testWord}"
+                        <div style={{ color: isLight ? '#9D174D' : '#F472B6', fontWeight: 900, marginBottom: '4px' }}>
+                          Análisis lingüístico para: "{testWord}"
                         </div>
-                        <div style={{ color: '#34D399', fontWeight: 800 }}>
-                          ✔ ¿"Muy {testWord}"? ➔ ¡Perfecto y natural! Modifica al adjetivo.
+                        <div style={{ color: isLight ? '#047857' : '#34D399', fontWeight: 800 }}>
+                          Correcto: ¿"Muy {testWord}"? Perfecto y natural. Modifica al adjetivo.
                         </div>
-                        <div style={{ color: '#F87171', marginTop: '2px' }}>
-                          ❌ ¿"Mucho {testWord}"? ➔ Absurdo.
+                        <div style={{ color: isLight ? '#B91C1C' : '#F87171', marginTop: '2px' }}>
+                          Inválido: ¿"Mucho {testWord}"? No se usa con adjetivos individuales.
                         </div>
-                        <div style={{ marginTop: '6px', fontWeight: 900, color: '#38BDF8', fontSize: '0.90rem' }}>
-                          🎯 Veredicto RAE: "{testWord}" funciona como ADJETIVO.
+                        <div style={{ marginTop: '6px', fontWeight: 900, color: isLight ? '#0369A1' : '#38BDF8', fontSize: '0.90rem' }}>
+                          Veredicto RAE: "{testWord}" funciona como ADJETIVO.
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <span style={{ color: '#F472B6', fontWeight: 800 }}>Aplica la regla RAE:</span>
-                        <div style={{ marginTop: '3px' }}>
+                        <span style={{ color: isLight ? '#9D174D' : '#F472B6', fontWeight: 800 }}>Aplica la regla RAE:</span>
+                        <div style={{ marginTop: '3px', color: isLight ? '#334155' : 'inherit' }}>
                           ¿Dices "muy {testWord}" o dices "mucho {testWord}"? Si admite "MUY" es adjetivo/adverbio. Si admite "MUCHO/A/S" es sustantivo.
                         </div>
                       </div>
@@ -693,18 +761,20 @@ export const MnemotecniasVaultView = ({
                   {/* ACLARACIÓN SOBRE LOS LÍMITES DE "GRANDE(S)" */}
                   <div
                     style={{
-                      background: 'rgba(245, 158, 11, 0.08)',
-                      border: '1px solid rgba(245, 158, 11, 0.25)',
+                      background: isLight ? 'rgba(217, 119, 6, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                      border: isLight ? '1px solid rgba(217, 119, 6, 0.25)' : '1px solid rgba(245, 158, 11, 0.25)',
                       borderRadius: '10px',
                       padding: '10px 14px',
                       fontSize: '0.78rem',
-                      color: '#FEF3C7',
+                      color: isLight ? '#78350F' : '#FEF3C7',
                       lineHeight: 1.45
                     }}
                   >
-                    <strong style={{ color: '#FBBF24' }}>⚠️ ¿Por qué el truco escolar de "grande(s)" tiene fallas en examen de admisión?</strong>
-                    <br />
-                    En primaria y secundaria se enseña: <em>"Ponle 'grande' después: si tiene sentido es sustantivo ('casa grande')"</em>. Sin embargo, en exámenes preuniversitarios (UNSA, San Marcos, UNI) este truco falla con sustantivos abstractos no dimensionales (<em>"la nada grande"</em> ❌, <em>"el acaso grande"</em> ❌) y con adjetivos sustantivados. ¡La regla oficial de la RAE es tajante: los sustantivos <strong>NUNCA admiten 'MUY'</strong>!
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                      <AlertTriangle size={14} color={isLight ? '#B45309' : '#FBBF24'} />
+                      <strong style={{ color: isLight ? '#B45309' : '#FBBF24' }}>¿Por qué el truco escolar de "grande(s)" tiene fallas en examen de admisión?</strong>
+                    </div>
+                    En primaria y secundaria se enseña: <em>"Ponle 'grande' después: si tiene sentido es sustantivo ('casa grande')"</em>. Sin embargo, en exámenes preuniversitarios este truco falla con sustantivos abstractos no dimensionales (<em>"la nada grande"</em>, <em>"el acaso grande"</em>) y con adjetivos sustantivados. La regla oficial de la RAE es tajante: los sustantivos <strong>nunca admiten 'MUY'</strong>.
                   </div>
                 </div>
               )}
@@ -716,16 +786,16 @@ export const MnemotecniasVaultView = ({
                 <div
                   className="no-print"
                   style={{
-                    background: 'rgba(2, 6, 23, 0.9)',
-                    border: '1.5px dashed #06B6D4',
+                    background: isLight ? 'rgba(241, 245, 249, 0.95)' : 'rgba(2, 6, 23, 0.9)',
+                    border: isLight ? '1.5px dashed #0891B2' : '1.5px dashed #06B6D4',
                     borderRadius: '16px',
                     padding: '16px',
                     position: 'relative',
                     zIndex: 2
                   }}
                 >
-                  <div style={{ fontSize: '0.76rem', fontWeight: 900, color: '#06B6D4', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Zap size={15} color="#06B6D4" />
+                  <div style={{ fontSize: '0.76rem', fontWeight: 900, color: isLight ? '#0891B2' : '#06B6D4', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Zap size={15} color={isLight ? '#0891B2' : '#06B6D4'} />
                     <span>CANCIÓN DE IDA Y VUELTA: LAS 6 RAZONES TRIGONOMÉTRICAS</span>
                   </div>
 
@@ -738,10 +808,19 @@ export const MnemotecniasVaultView = ({
                       { name: 'Secante', num: 'H', den: 'CA', frac: '\\frac{H}{CA}' },
                       { name: 'Cosecante', num: 'H', den: 'CO', frac: '\\frac{H}{CO}' }
                     ].map((rz, rIdx) => (
-                      <div key={rIdx} style={{ background: 'rgba(6, 182, 212, 0.1)', border: '1px solid rgba(6, 182, 212, 0.3)', borderRadius: '10px', padding: '8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#67E8F9' }}>{rz.name}</div>
-                        <div style={{ fontSize: '1rem', color: '#FFFFFF', margin: '4px 0' }}>{renderMath(rz.frac, false)}</div>
-                        <div style={{ fontSize: '0.66rem', color: '#FDE047' }}>{rz.num} / {rz.den}</div>
+                      <div
+                        key={rIdx}
+                        style={{
+                          background: isLight ? 'rgba(8, 145, 178, 0.08)' : 'rgba(6, 182, 212, 0.1)',
+                          border: isLight ? '1px solid rgba(8, 145, 178, 0.25)' : '1px solid rgba(6, 182, 212, 0.3)',
+                          borderRadius: '10px',
+                          padding: '8px',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <div style={{ fontSize: '0.72rem', fontWeight: 800, color: isLight ? '#0E7490' : '#67E8F9' }}>{rz.name}</div>
+                        <div style={{ fontSize: '1rem', color: isLight ? '#0F172A' : '#FFFFFF', margin: '4px 0' }}>{renderMath(rz.frac, false)}</div>
+                        <div style={{ fontSize: '0.66rem', color: isLight ? '#92400E' : '#FDE047', fontWeight: 700 }}>{rz.num} / {rz.den}</div>
                       </div>
                     ))}
                   </div>
@@ -760,32 +839,32 @@ export const MnemotecniasVaultView = ({
               >
                 <div
                   style={{
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    background: isLight ? 'rgba(0, 0, 0, 0.03)' : 'rgba(255, 255, 255, 0.03)',
+                    border: isLight ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.08)',
                     borderRadius: '14px',
                     padding: '11px 14px'
                   }}
                 >
-                  <div style={{ fontSize: '0.70rem', fontWeight: 900, color: '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    🧠 CÓMO FUNCIONA EL TRUCO
+                  <div style={{ fontSize: '0.70rem', fontWeight: 900, color: isLight ? (themePalette?.textSecondary || '#475569') : '#94A3B8', textTransform: 'uppercase', marginBottom: '4px' }}>
+                    CÓMO FUNCIONA EL TRUCO
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: '#CBD5E1', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '0.82rem', color: isLight ? (themePalette?.textPrimary || '#1E293B') : '#CBD5E1', lineHeight: 1.5 }}>
                     {mne.explicacion}
                   </div>
                 </div>
 
                 <div
                   style={{
-                    background: 'rgba(245, 158, 11, 0.08)',
-                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    background: isLight ? 'rgba(217, 119, 6, 0.08)' : 'rgba(245, 158, 11, 0.08)',
+                    border: isLight ? '1px solid rgba(217, 119, 6, 0.25)' : '1px solid rgba(245, 158, 11, 0.3)',
                     borderRadius: '14px',
                     padding: '11px 14px'
                   }}
                 >
-                  <div style={{ fontSize: '0.70rem', fontWeight: 900, color: '#FBBF24', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    🚨 LA FIJA DE ADMISIÓN / TRAMPA TÍPICA
+                  <div style={{ fontSize: '0.70rem', fontWeight: 900, color: isLight ? '#B45309' : '#FBBF24', textTransform: 'uppercase', marginBottom: '4px' }}>
+                    LA FIJA DE ADMISIÓN / TRAMPA TÍPICA
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: '#FEF3C7', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: '0.82rem', color: isLight ? '#78350F' : '#FEF3C7', lineHeight: 1.5 }}>
                     {mne.fijaExamen}
                   </div>
                 </div>
@@ -795,18 +874,18 @@ export const MnemotecniasVaultView = ({
               {mne.ejemplo && (
                 <div
                   style={{
-                    background: 'rgba(16, 185, 129, 0.08)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    background: isLight ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                    border: isLight ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(16, 185, 129, 0.25)',
                     borderRadius: '14px',
                     padding: '10px 14px',
                     fontSize: '0.82rem',
-                    color: '#A7F3D0',
+                    color: isLight ? '#065F46' : '#A7F3D0',
                     lineHeight: 1.45,
                     position: 'relative',
                     zIndex: 2
                   }}
                 >
-                  <strong style={{ color: '#34D399' }}>📝 Ejemplo resuelto en 10 segundos: </strong>
+                  <strong style={{ color: isLight ? '#047857' : '#34D399' }}>Ejemplo resuelto en 10 segundos: </strong>
                   {mne.ejemplo}
                 </div>
               )}
@@ -903,8 +982,8 @@ export const MnemotecniasVaultView = ({
                     >
                       {mne.subject}
                     </span>
-                    <span style={{ fontSize: '0.70rem', color: '#FBBF24', fontWeight: 800 }}>
-                      ⭐ {mne.importance}
+                    <span style={{ fontSize: '0.70rem', color: isLight ? '#B45309' : '#FBBF24', fontWeight: 800 }}>
+                      {mne.importance}
                     </span>
                   </div>
 
@@ -926,8 +1005,8 @@ export const MnemotecniasVaultView = ({
                   </div>
                 </div>
 
-                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: '#FDE047' }}>
-                  ✨ "{mne.phrase}"
+                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: isLight ? '#92400E' : '#FDE047' }}>
+                  "{mne.phrase}"
                 </h4>
 
                 <div
@@ -946,7 +1025,7 @@ export const MnemotecniasVaultView = ({
                 </div>
 
                 <div style={{ fontSize: '0.72rem', color: isLight ? (themePalette?.textSecondary || '#475569') : '#E2E8F0', lineHeight: 1.35 }}>
-                  <strong style={{ color: '#38BDF8' }}>Truco: </strong>
+                  <strong style={{ color: isLight ? '#0284C7' : '#38BDF8' }}>Truco: </strong>
                   {mne.summary}
                 </div>
 
@@ -1020,7 +1099,7 @@ export const MnemotecniasVaultView = ({
           fontWeight: 700
         }}
       >
-        <span>⭐ Tu colección personal de mnemotecnias guardadas ({mnemonics.length})</span>
+        <span>Colección personal de mnemotecnias guardadas ({mnemonics.length})</span>
       </div>
 
       {mnemonics.map(mne => {
@@ -1046,8 +1125,8 @@ export const MnemotecniasVaultView = ({
                 <span style={{ fontSize: '0.72rem', color: theme.primary, fontWeight: 900 }}>
                   {mne.subject} • {mne.topic}
                 </span>
-                <h4 style={{ margin: '2px 0 0', fontSize: '1.25rem', color: '#FDE047', fontWeight: 900 }}>
-                  ✨ "{mne.phrase}"
+                <h4 style={{ margin: '2px 0 0', fontSize: '1.25rem', color: isLight ? '#92400E' : '#FDE047', fontWeight: 900 }}>
+                  "{mne.phrase}"
                 </h4>
               </div>
 
@@ -1055,17 +1134,17 @@ export const MnemotecniasVaultView = ({
                 type="button"
                 onClick={() => toggleFavorite(mne.id)}
                 style={{
-                  background: 'rgba(245, 158, 11, 0.2)',
+                  background: isLight ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.2)',
                   border: '1px solid #F59E0B',
                   borderRadius: '10px',
-                  padding: '5px 12px',
-                  color: '#FBBF24',
+                  padding: '6px 12px',
+                  color: isLight ? '#B45309' : '#FBBF24',
                   cursor: 'pointer',
                   fontWeight: 800,
                   fontSize: '0.74rem'
                 }}
               >
-                ⭐ Quitar
+                Quitar
               </button>
             </div>
 
@@ -1085,7 +1164,7 @@ export const MnemotecniasVaultView = ({
             </div>
 
             <div style={{ fontSize: '0.80rem', color: isLight ? '#854D0E' : '#FEF3C7', background: isLight ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.12)', border: isLight ? '1px solid rgba(245, 158, 11, 0.2)' : '1px solid rgba(245, 158, 11, 0.25)', padding: '8px 12px', borderRadius: '10px' }}>
-              <strong style={{ color: isLight ? '#B45309' : '#FBBF24' }}>💡 Mnemotecnia & Fija: </strong> {mne.explicacion}
+              <strong style={{ color: isLight ? '#B45309' : '#FBBF24' }}>Mnemotecnia y Fija: </strong> {mne.explicacion}
             </div>
           </div>
         );

@@ -236,12 +236,13 @@ export async function triggerSystemNotification({
   body = 'Tienes una nueva actualización',
   icon = 'applogo.png',
   data = {},
-  tag = null
+  tag = null,
+  force = false
 }) {
   const status = getNotificationStatus();
 
   // 1. Reproducir sonido si está habilitado en primer plano
-  if (status.soundEnabled) {
+  if (status.soundEnabled || force) {
     try {
       playNotificationSound(status.soundType);
     } catch {
@@ -250,7 +251,7 @@ export async function triggerSystemNotification({
   }
 
   // 2. Vibración háptica en móvil
-  if (status.vibrateEnabled && typeof navigator !== 'undefined' && navigator.vibrate) {
+  if ((status.vibrateEnabled || force) && typeof navigator !== 'undefined' && navigator.vibrate) {
     try {
       navigator.vibrate([150, 80, 150]);
     } catch {
@@ -258,16 +259,41 @@ export async function triggerSystemNotification({
     }
   }
 
-  // Si no tiene permisos del sistema, no lanzamos el pop-up de Android
-  if (!status.isSupported || Notification.permission !== 'granted' || !status.isEnabled) {
-    return false;
-  }
-
   const cleanBody = (typeof body === 'string' && body.trim()) ? body.trim() : 'Tienes una nueva actualización';
   const cleanTitle = (typeof title === 'string' && title.trim()) ? title.trim() : 'RASTRO';
   const finalTag = tag || (data?.notifId ? `rastro-notif-${data.notifId}` : `rastro-alert-${Date.now()}`);
   const finalIcon = getAssetUrl(icon || 'applogo.png');
   const finalBadge = getAssetUrl('applogo.png');
+
+  // 0. Prioridad en APK: Local Notifications nativas (banner del sistema)
+  if (isNativeApp()) {
+    try {
+      const isEnabledLocally = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) !== 'false';
+      if (!isEnabledLocally && !force) return false;
+      const perm = await LocalNotifications.checkPermissions();
+      if (perm.display !== 'granted') return false;
+      await LocalNotifications.schedule({
+        notifications: [{
+          title: cleanTitle,
+          body: cleanBody,
+          id: hashTagToId(finalTag),
+          extra: { url: data?.url || '/' }
+        }]
+      });
+      return true;
+    } catch (natErr) {
+      console.warn('Native notification error:', natErr);
+      return false;
+    }
+  }
+
+  // Si no tiene permisos en web/PWA, no lanzamos el pop-up
+  if (!status.isSupported || typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+    return false;
+  }
+  if (!force && !status.isEnabled) {
+    return false;
+  }
 
   const notifOptions = {
     body: cleanBody,
@@ -286,26 +312,6 @@ export async function triggerSystemNotification({
   };
 
   let shown = false;
-
-  // 0. Prioridad en APK: Local Notifications nativas (banner del sistema aunque la app esté abierta)
-  if (isNativeApp()) {
-    try {
-      const perm = await LocalNotifications.checkPermissions();
-      if (perm.display !== 'granted') return false;
-      await LocalNotifications.schedule({
-        notifications: [{
-          title: cleanTitle,
-          body: cleanBody,
-          id: hashTagToId(finalTag),
-          extra: { url: data.url || '/' }
-        }]
-      });
-      return true;
-    } catch (natErr) {
-      console.warn('Native notification error:', natErr);
-      return false;
-    }
-  }
 
   // 1. Prioridad: Service Worker (obligatorio en Android PWA para evitar 'Illegal constructor' error)
   if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -341,7 +347,7 @@ export async function triggerSystemNotification({
       });
       n.onclick = () => {
         window.focus();
-        if (data.url) {
+        if (data?.url) {
           window.location.href = data.url;
         }
         n.close();
@@ -355,4 +361,86 @@ export async function triggerSystemNotification({
 
   return shown;
 }
+
+// Programador de recordatorios nativos inteligentes estilo Duolingo / Knowunity
+export async function scheduleDailyStudyReminder({ streak = 0 }) {
+  if (!isNativeApp()) return;
+  try {
+    const isEnabled = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED) !== 'false';
+    const reminderEnabled = localStorage.getItem(STORAGE_KEYS.DAILY_STUDY_REMINDER_ENABLED) !== 'false';
+    if (!isEnabled || !reminderEnabled) return;
+
+    const perm = await LocalNotifications.checkPermissions();
+    if (perm.display !== 'granted') return;
+
+    // 1. Notificación Nocturna: Salvar Racha Diaria (8:30 PM)
+    const nightDate = new Date();
+    nightDate.setHours(20, 30, 0, 0);
+    if (nightDate.getTime() <= Date.now()) {
+      nightDate.setDate(nightDate.getDate() + 1);
+    }
+
+    const nightTitle = streak > 0
+      ? `🔥 ¡Salva tu racha de ${streak} ${streak === 1 ? 'día' : 'días'}!`
+      : '✨ Orstty y Artyon te están esperando...';
+    const nightBody = streak > 0
+      ? 'Solo 2 minutos: resuelve una lección en Aprender antes de medianoche y protege tu racha.'
+      : 'Tu preparación universitaria se construye día a día. Entra a resolver el reto de hoy en Aprender.';
+
+    // 2. Notificación Tarde: Técnica Pomodoro (4:30 PM)
+    const afternoonDate = new Date();
+    afternoonDate.setHours(16, 30, 0, 0);
+    if (afternoonDate.getTime() <= Date.now()) {
+      afternoonDate.setDate(afternoonDate.getDate() + 1);
+    }
+
+    const pomodoroTitle = '🍅 Sesión con Técnica Pomodoro';
+    const pomodoroBody = 'Aprovecha la tarde: 25 minutos de estudio concentrado y 5 minutos de descanso. ¡Máxima retención!';
+
+    // 3. Notificación Matutina: Reto del Día en Aprender (8:30 AM)
+    const morningDate = new Date();
+    morningDate.setHours(8, 30, 0, 0);
+    if (morningDate.getTime() <= Date.now()) {
+      morningDate.setDate(morningDate.getDate() + 1);
+    }
+
+    const morningTitle = '☀️ Reto del día en Aprender';
+    const morningBody = 'Comienza con la mente fresca. Supera un nuevo nivel de práctica y suma puntos a tu meta.';
+
+    // Cancelar previamente para evitar duplicados
+    try {
+      await LocalNotifications.cancel({ notifications: [{ id: 77777 }, { id: 77778 }, { id: 77779 }] });
+    } catch {}
+
+    // Programar las 3 notificaciones automáticas
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          title: nightTitle,
+          body: nightBody,
+          id: 77777,
+          schedule: { at: nightDate },
+          extra: { url: '/aprender' }
+        },
+        {
+          title: pomodoroTitle,
+          body: pomodoroBody,
+          id: 77778,
+          schedule: { at: afternoonDate },
+          extra: { url: '/pomodoro' }
+        },
+        {
+          title: morningTitle,
+          body: morningBody,
+          id: 77779,
+          schedule: { at: morningDate },
+          extra: { url: '/aprender' }
+        }
+      ]
+    });
+  } catch (err) {
+    console.debug('Schedule study reminder notice:', err);
+  }
+}
+
 

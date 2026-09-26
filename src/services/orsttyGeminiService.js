@@ -2,21 +2,21 @@
 // Servicio unificado para el asistente inteligente ORSTTY con Google Gemini & Modo Voz estilo Alexa
 
 export const PREU_SUBJECTS = [
-  { id: 'biologia', name: 'Biología', icon: '🧬', color: '#10B981', area: 'Ciencias Médicas y Naturales' },
-  { id: 'quimica', name: 'Química', icon: '⚗️', color: '#06B6D4', area: 'Ciencias e Ingenierías' },
-  { id: 'fisica', name: 'Física', icon: '⚡', color: '#EAB308', area: 'Físico-Matemáticas' },
-  { id: 'matematica', name: 'Matemática & Álgebra', icon: '📐', color: '#8B5CF6', area: 'Matemáticas y Análisis' },
-  { id: 'razonamiento_matematico', name: 'Raz. Matemático', icon: '🔢', color: '#6366F1', area: 'Habilidad Cuantitativa' },
-  { id: 'lenguaje', name: 'Lenguaje & Gramática', icon: '📖', color: '#EC4899', area: 'Comunicación y Letras' },
-  { id: 'literatura', name: 'Literatura', icon: '📚', color: '#F43F5E', area: 'Humanidades' },
-  { id: 'filosofia', name: 'Filosofía', icon: '🏛️', color: '#64748B', area: 'Pensamiento Crítico' },
-  { id: 'psicologia', name: 'Psicología', icon: '🧠', color: '#A855F7', area: 'Ciencias Sociales' },
-  { id: 'civica', name: 'Cívica & Constitución', icon: '⚖️', color: '#14B8A6', area: 'Ciudadanía y Derecho' },
-  { id: 'historia_peru', name: 'Historia del Perú', icon: '🇵🇪', color: '#EF4444', area: 'Ciencias Históricas' },
-  { id: 'historia_universal', name: 'Historia Universal', icon: '🌍', color: '#F97316', area: 'Ciencias Históricas' },
-  { id: 'geografia', name: 'Geografía', icon: '🗺️', color: '#059669', area: 'Geografía del Perú y Mundo' },
-  { id: 'logica', name: 'Lógica Proposicional', icon: '💡', color: '#3B82F6', area: 'Razonamiento Formal' },
-  { id: 'anatomia', name: 'Anatomía Humana', icon: '🫀', color: '#DC2626', area: 'Biomédicas' }
+  { id: 'biologia', name: 'Biología', iconSlug: 'dna', color: '#10B981', area: 'Ciencias Médicas y Naturales' },
+  { id: 'quimica', name: 'Química', iconSlug: 'flask', color: '#06B6D4', area: 'Ciencias e Ingenierías' },
+  { id: 'fisica', name: 'Física', iconSlug: 'zap', color: '#EAB308', area: 'Físico-Matemáticas' },
+  { id: 'matematica', name: 'Matemática & Álgebra', iconSlug: 'calculator', color: '#8B5CF6', area: 'Matemáticas y Análisis' },
+  { id: 'razonamiento_matematico', name: 'Raz. Matemático', iconSlug: 'hash', color: '#6366F1', area: 'Habilidad Cuantitativa' },
+  { id: 'lenguaje', name: 'Lenguaje & Gramática', iconSlug: 'book', color: '#EC4899', area: 'Comunicación y Letras' },
+  { id: 'literatura', name: 'Literatura', iconSlug: 'books', color: '#F43F5E', area: 'Humanidades' },
+  { id: 'filosofia', name: 'Filosofía', iconSlug: 'landmark', color: '#64748B', area: 'Pensamiento Crítico' },
+  { id: 'psicologia', name: 'Psicología', iconSlug: 'brain', color: '#A855F7', area: 'Ciencias Sociales' },
+  { id: 'civica', name: 'Cívica & Constitución', iconSlug: 'scale', color: '#14B8A6', area: 'Ciudadanía y Derecho' },
+  { id: 'historia_peru', name: 'Historia del Perú', iconSlug: 'map-pin', color: '#EF4444', area: 'Ciencias Históricas' },
+  { id: 'historia_universal', name: 'Historia Universal', iconSlug: 'globe', color: '#F97316', area: 'Ciencias Históricas' },
+  { id: 'geografia', name: 'Geografía', iconSlug: 'map', color: '#059669', area: 'Geografía del Perú y Mundo' },
+  { id: 'logica', name: 'Lógica Proposicional', iconSlug: 'lightbulb', color: '#3B82F6', area: 'Razonamiento Formal' },
+  { id: 'anatomia', name: 'Anatomía Humana', iconSlug: 'heart', color: '#DC2626', area: 'Biomédicas' }
 ];
 
 /**
@@ -72,50 +72,138 @@ function fallbackOrsttyResponse(text) {
     q.includes('esapecuifico') || q.includes('haga el test') || q.includes('hazme el test')
   ) {
     return {
-      text: '¡Por supuesto! Si no estás seguro de qué carrera o área elegir para postular a la **UNSA**, el **Test Vocacional Oficial** te ayuda a identificar tu perfil mediante 20 preguntas ponderadas en **Biomédicas**, **Ingenierías** y **Sociales**.',
-      speechSummary: 'Te he enviado la tarjeta especial para realizar el Test Vocacional Oficial de la UNSA.',
-      suggestions: ['✨ Iniciar Test Vocacional Ahora', 'Ver Área Biomédicas (Biología)', 'Ver Área Ingenierías (Física)', 'Ver Área Sociales (Filosofía)'],
+      text: 'Si tienes dudas sobre qué carrera o área elegir para postular a la universidad, el **Test Vocacional Oficial** te ayuda a identificar tu perfil mediante 20 preguntas ponderadas en **Biomédicas**, **Ingenierías** y **Sociales**.',
+      speechSummary: 'Te he enviado la tarjeta para realizar el Test Vocacional Oficial Universitario.',
+      suggestions: ['Iniciar Test Vocacional Ahora', 'Ver Área Biomédicas (Biología)', 'Ver Área Ingenierías (Física)', 'Ver Área Sociales (Filosofía)'],
       originCard: {
         type: 'VOCATIONAL_TEST',
-        title: '🧭 Test Vocacional Oficial UNSA',
+        title: 'Test Vocacional Universitario Oficial',
         badge: 'Orientación Vocacional',
         badgeColor: '#A855F7',
         target: 'VOCATIONAL_TEST',
-        description: 'Diagnóstico de 20 preguntas reales para calcular tu afinidad y carrera compatible en la UNSA.',
-        ctaLabel: '✨ Iniciar Test Vocacional',
-        previewItems: ['20 Preguntas Oficiales', 'Puntaje Ponderado UNSA', 'Diagnóstico de Carrera']
+        description: 'Diagnóstico de 20 preguntas reales para calcular tu afinidad y carrera compatible.',
+        ctaLabel: 'Iniciar Test Vocacional',
+        previewItems: ['20 Preguntas Oficiales', 'Puntaje Ponderado', 'Diagnóstico de Carrera']
       },
       actions: [
-        { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: '🧭 Iniciar Test Vocacional', badge: 'Test Vocacional' },
-        { type: 'NAVIGATE', target: '/aprender', label: '📚 Ver Temario Completo', badge: 'Aprender' }
+        { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: 'Iniciar Test Vocacional', badge: 'Test Vocacional' },
+        { type: 'NAVIGATE', target: '/aprender', label: 'Ver Temario Completo', badge: 'Aprender' }
       ],
-      action: { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: '🧭 Iniciar Test Vocacional', badge: 'Test Vocacional' }
+      action: { type: 'VOCATIONAL_TEST', target: 'VOCATIONAL_TEST', label: 'Iniciar Test Vocacional', badge: 'Test Vocacional' }
     };
   }
 
-  // 2. Detección de Área Biomédicas (Biología, Medicina, Química, Anatomía, Célula)
+  // 2. Chats / Permisos de compartir / Contactar creadores o usuarios
+  if (
+    q.includes('chat') || q.includes('permis') || q.includes('contact') || 
+    q.includes('creador') || q.includes('hablar') || q.includes('autor') ||
+    q.includes('pedir permiso') || q.includes('grupo') || q.includes('amigo')
+  ) {
+    return {
+      text: 'En la sección **Chats** puedes comunicarte con otros estudiantes y creadores de contenido de la comunidad para solicitar permisos de difusión de material o coordinar grupos de estudio.',
+      speechSummary: 'Puedes usar la sección Chats para contactar a creadores y pedir permisos de material.',
+      suggestions: ['Ir a Chats', 'Ver Material Compartido', 'Ver Temario de Aprender'],
+      originCard: {
+        type: 'CHATS',
+        title: 'Mensajería & Chats de Comunidad',
+        badge: 'Chats & Colaboración',
+        badgeColor: '#0EA5E9',
+        target: '/chats',
+        description: 'Canal directo para coordinar con creadores, solicitar autorización de contenido y formar grupos de estudio.',
+        ctaLabel: 'Abrir Sección de Chats',
+        previewItems: ['Mensajes Directos', 'Permisos de Contenido', 'Grupos de Estudio']
+      },
+      actions: [
+        { type: 'NAVIGATE', target: '/chats', label: 'Abrir Chats', badge: 'Chats' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: 'Ver Biblioteca', badge: 'Biblioteca' }
+      ],
+      action: { type: 'NAVIGATE', target: '/chats', label: 'Abrir Chats', badge: 'Chats' }
+    };
+  }
+
+  // 3. Detección de Apuntes / Resúmenes / Separatas / PDFs
+  if (
+    q.includes('apunte') || q.includes('resumen') || q.includes('nota') || 
+    q.includes('separat') || q.includes('pdf') || q.includes('guia') ||
+    q.includes('compend') || q.includes('tomo')
+  ) {
+    const isBio = q.includes('bio') || q.includes('medicin') || q.includes('anatom') || q.includes('salud');
+    const isIng = q.includes('ingen') || q.includes('fisic') || q.includes('mate') || q.includes('algeb') || q.includes('rm');
+    const isSoc = q.includes('social') || q.includes('filo') || q.includes('civic') || q.includes('histor') || q.includes('lengua') || q.includes('literat');
+    const isQuim = q.includes('quim');
+
+    let subjTarget = '/aprender';
+    let subjName = 'General';
+    let areaColor = '#10B981';
+    let areaLabel = 'Material de Repaso';
+
+    if (isBio) {
+      subjTarget = '/aprender/biologia';
+      subjName = 'Biología & Ciencias de la Salud';
+      areaColor = '#10B981';
+      areaLabel = 'Apuntes Biomédicas';
+    } else if (isIng) {
+      subjTarget = '/aprender/fisica';
+      subjName = 'Física, Matemáticas & Exactas';
+      areaColor = '#EAB308';
+      areaLabel = 'Apuntes Ingenierías';
+    } else if (isSoc) {
+      subjTarget = '/aprender/filosofia';
+      subjName = 'Filosofía, Humanidades & Sociales';
+      areaColor = '#64748B';
+      areaLabel = 'Apuntes Sociales';
+    } else if (isQuim) {
+      subjTarget = '/aprender/quimica';
+      subjName = 'Química Preuniversitaria';
+      areaColor = '#06B6D4';
+      areaLabel = 'Apuntes Química';
+    }
+
+    return {
+      text: `En la **Biblioteca & Material Compartido** tienes acceso a tomos preuniversitarios, apuntes y separatas en PDF. Si buscas la **teoría oficial estructurada** tema por tema, también puedes estudiarla directamente en la sección **Aprender**:`,
+      speechSummary: `Encuentra apuntes en la Biblioteca y la teoría oficial completa en Aprender.`,
+      suggestions: ['Ver Material en Biblioteca', `Ver Teoría en Aprender`, 'Simulador de Examen', 'Test Vocacional'],
+      originCard: {
+        type: 'LIBRARY',
+        title: `Apuntes & Material: ${subjName}`,
+        badge: areaLabel,
+        badgeColor: areaColor,
+        target: '/biblioteca',
+        description: `Bancos de preguntas, compendios en PDF y resúmenes compartidos para reforzar tu preparación hacia la universidad.`,
+        ctaLabel: 'Abrir Material Compartido',
+        previewItems: ['Tomos Preuniversitarios', 'Separatas en PDF', 'Acceso Libre']
+      },
+      actions: [
+        { type: 'NAVIGATE', target: '/biblioteca', label: 'Abrir Biblioteca', badge: 'Biblioteca' },
+        { type: 'NAVIGATE', target: subjTarget, label: `Ver Teoría de ${subjName}`, badge: 'Aprender' }
+      ],
+      action: { type: 'NAVIGATE', target: '/biblioteca', label: 'Abrir Biblioteca', badge: 'Biblioteca' }
+    };
+  }
+
+  // 4. Detección de Área Biomédicas (Biología, Medicina, Química, Anatomía, Célula)
   if (
     q.includes('biomed') || q.includes('medicin') || q.includes('bio') || q.includes('celul') || 
-    q.includes('mitos') || q.includes('enferm') || q.includes('anatom') || q.includes('quimic') ||
-    q.includes('biolojia') || q.includes('biologia')
+    q.includes('mitos') || q.includes('meios') || q.includes('adn') || q.includes('genet') || 
+    q.includes('enferm') || q.includes('anatom') || q.includes('quimic') || q.includes('organo') ||
+    q.includes('biolojia') || q.includes('biologia') || q.includes('ecolog') || q.includes('tejido')
   ) {
     const isQuimica = q.includes('quim');
-    const subjId = isQuimica ? 'quimica' : 'biologia';
-    const subjName = isQuimica ? 'Química' : 'Biología';
-    const color = isQuimica ? '#06B6D4' : '#10B981';
-    const icon = isQuimica ? '🧪' : '🧬';
-    const topics = isQuimica ? '36 temas' : '43 temas';
+    const isAnat = q.includes('anatom') || q.includes('organo');
+    const subjId = isQuimica ? 'quimica' : isAnat ? 'anatomia' : 'biologia';
+    const subjName = isQuimica ? 'Química' : isAnat ? 'Anatomía Humana' : 'Biología';
+    const color = isQuimica ? '#06B6D4' : isAnat ? '#DC2626' : '#10B981';
+    const topics = isQuimica ? '36 temas' : isAnat ? '24 temas' : '43 temas';
 
     return {
       text: `En el **Área de Biomédicas** (Medicina, Enfermería, Odontología), **${subjName}** representa la mayor ponderación de tu examen. Aquí tienes la tarjeta oficial con acceso directo a fichas, temario y contenido del curso:`,
       speechSummary: `Para Biomédicas, ${subjName} es la materia clave. Te envío su tarjeta con acceso al origen.`,
-      suggestions: [`⚡ Fichas de ${subjName}`, `📄 Temas de ${subjName}`, 'Simulador Biomédicas', 'Test Vocacional'],
+      suggestions: [`Fichas de ${subjName}`, `Temas de ${subjName}`, 'Simulador Biomédicas', 'Test Vocacional'],
       originCard: {
         type: 'SUBJECT_PATH',
         subjectId: subjId,
         subjectName: subjName,
-        title: `${subjName}`,
-        icon: icon,
+        title: subjName,
         topicsCount: topics,
         badge: 'Área Biomédicas',
         badgeColor: color,
@@ -123,39 +211,40 @@ function fallbackOrsttyResponse(text) {
         description: isQuimica 
           ? 'Materia, estructura atómica, tabla periódica, enlaces, nomenclatura y química orgánica.'
           : 'Citología, Genética, Fisiología, Bioquímica con teoría interactiva y fijas de examen.',
-        ctaLabel: `🚀 Ir al curso de ${subjName}`,
+        ctaLabel: `Ir al curso de ${subjName}`,
         previewItems: [topics, '12 Semanas Oficiales', 'Fijas Tipo Admisión']
       },
       actions: [
-        { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `🚀 Ir a ${subjName}`, badge: 'Biomédicas' }
+        { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `Ir a ${subjName}`, badge: 'Biomédicas' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: `Apuntes de ${subjName}`, badge: 'Biblioteca' }
       ],
-      action: { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `🚀 Ir a ${subjName}`, badge: 'Biomédicas' }
+      action: { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `Ir a ${subjName}`, badge: 'Biomédicas' }
     };
   }
 
-  // 3. Detección de Área Ingenierías (Física, Álgebra, Geometría, Trigonometría, Matemáticas)
+  // 5. Detección de Área Ingenierías (Física, Álgebra, Geometría, Trigonometría, Matemáticas)
   if (
     q.includes('ingen') || q.includes('fisic') || q.includes('fisca') || q.includes('mate') || 
     q.includes('algeb') || q.includes('rm') || q.includes('geomet') || q.includes('trigono') ||
-    q.includes('cinemat') || q.includes('estatic')
+    q.includes('cinemat') || q.includes('estatic') || q.includes('dinamic') || q.includes('vector') ||
+    q.includes('newton') || q.includes('termodinam') || q.includes('electromagnet')
   ) {
-    const isFisica = q.includes('fis');
-    const subjId = isFisica ? 'fisica' : 'matematica';
-    const subjName = isFisica ? 'Física' : 'Matemática';
-    const color = isFisica ? '#EAB308' : '#8B5CF6';
-    const icon = isFisica ? '⚡' : '📐';
-    const topics = isFisica ? '38 temas' : '48 temas';
+    const isFisica = q.includes('fis') || q.includes('vector') || q.includes('newton') || q.includes('cinemat') || q.includes('estatic') || q.includes('dinamic');
+    const isRM = q.includes('rm') || q.includes('razonamiento matematico');
+    const subjId = isFisica ? 'fisica' : isRM ? 'razonamiento_matematico' : 'matematica';
+    const subjName = isFisica ? 'Física' : isRM ? 'Raz. Matemático' : 'Matemática & Álgebra';
+    const color = isFisica ? '#EAB308' : isRM ? '#6366F1' : '#8B5CF6';
+    const topics = isFisica ? '38 temas' : isRM ? '30 temas' : '48 temas';
 
     return {
-      text: `En el **Área de Ingenierías**, **${subjName}** y el razonamiento cuantitativo definen tu ingreso a la UNSA. Aquí tienes la tarjeta oficial con acceso directo:`,
+      text: `En el **Área de Ingenierías**, **${subjName}** y el razonamiento cuantitativo definen tu ingreso universitario. Aquí tienes la tarjeta oficial con acceso directo:`,
       speechSummary: `Para Ingenierías, ${subjName} es fundamental. Te envío la tarjeta directa.`,
-      suggestions: [`⚡ Fichas de ${subjName}`, `📄 Temas de ${subjName}`, 'Formularios y Teoremas', 'Simulador Ingenierías'],
+      suggestions: [`Fichas de ${subjName}`, `Temas de ${subjName}`, 'Formularios y Teoremas', 'Simulador Ingenierías'],
       originCard: {
         type: 'SUBJECT_PATH',
         subjectId: subjId,
         subjectName: subjName,
-        title: `${subjName}`,
-        icon: icon,
+        title: subjName,
         topicsCount: topics,
         badge: 'Área Ingenierías',
         badgeColor: color,
@@ -163,169 +252,155 @@ function fallbackOrsttyResponse(text) {
         description: isFisica 
           ? 'Análisis dimensional, vectores, MRU/MRUV, leyes de Newton, estática, trabajo y fluidos.'
           : 'Polinomios, matrices, funciones, geometría del espacio y trigonometría analítica.',
-        ctaLabel: `🚀 Ir al curso de ${subjName}`,
+        ctaLabel: `Ir al curso de ${subjName}`,
         previewItems: [topics, '12 Semanas Oficiales', 'Formularios & DCL']
       },
       actions: [
-        { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `⚡ Abrir ${subjName}`, badge: 'Ingenierías' }
+        { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `Abrir ${subjName}`, badge: 'Ingenierías' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: `Apuntes de ${subjName}`, badge: 'Biblioteca' }
       ],
-      action: { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `⚡ Abrir ${subjName}`, badge: 'Ingenierías' }
+      action: { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `Abrir ${subjName}`, badge: 'Ingenierías' }
     };
   }
 
-  // 4. Detección de Área Sociales y Humanidades (Filosofía, Lenguaje, Historia, Cívica, Literatura)
+  // 6. Detección de Área Sociales y Humanidades (Filosofía, Lenguaje, Historia, Cívica, Literatura)
   if (
     q.includes('social') || q.includes('derech') || q.includes('filo') || q.includes('lengua') || 
     q.includes('civic') || q.includes('histor') || q.includes('literat') || q.includes('psico') ||
-    q.includes('humanid') || q.includes('constituc')
+    q.includes('humanid') || q.includes('constituc') || q.includes('geograf') || q.includes('logic') ||
+    q.includes('platon') || q.includes('aristotel') || q.includes('vallejo') || q.includes('tahuantinsuyo')
   ) {
-    const isFilo = q.includes('filo');
-    const isCivica = q.includes('civic') || q.includes('derech');
-    const isHist = q.includes('histor');
-    const subjId = isFilo ? 'filosofia' : isCivica ? 'civica' : isHist ? 'historia_peru' : 'lenguaje';
-    const subjName = isFilo ? 'Filosofía' : isCivica ? 'Cívica' : isHist ? 'Historia del Perú' : 'Lenguaje';
-    const color = isFilo ? '#64748B' : isCivica ? '#14B8A6' : isHist ? '#EF4444' : '#EC4899';
-    const icon = isFilo ? '🏛️' : isCivica ? '⚖️' : isHist ? '🇵🇪' : '📖';
+    const isFilo = q.includes('filo') || q.includes('platon') || q.includes('aristotel');
+    const isCivica = q.includes('civic') || q.includes('derech') || q.includes('constituc');
+    const isHist = q.includes('histor') || q.includes('tahuantinsuyo');
+    const isLit = q.includes('literat') || q.includes('vallejo') || q.includes('obra');
+    const isPsico = q.includes('psico');
+    const isGeo = q.includes('geograf');
+
+    const subjId = isFilo ? 'filosofia' : isCivica ? 'civica' : isHist ? 'historia_peru' : isLit ? 'literatura' : isPsico ? 'psicologia' : isGeo ? 'geografia' : 'lenguaje';
+    const subjName = isFilo ? 'Filosofía' : isCivica ? 'Cívica & Constitución' : isHist ? 'Historia Nacional' : isLit ? 'Literatura' : isPsico ? 'Psicología' : isGeo ? 'Geografía' : 'Lenguaje & Gramática';
+    const color = isFilo ? '#64748B' : isCivica ? '#14B8A6' : isHist ? '#EF4444' : isLit ? '#F43F5E' : isPsico ? '#A855F7' : isGeo ? '#059669' : '#EC4899';
     const topics = isFilo ? '24 temas' : isCivica ? '28 temas' : '32 temas';
 
     return {
       text: `En el **Área de Sociales y Humanidades** (Derecho, Psicología, Educación, Administración), **${subjName}** tiene un peso crucial en el puntaje. Aquí tienes la tarjeta oficial con acceso al origen:`,
       speechSummary: `En Sociales, ${subjName} es determinante. Te envío la tarjeta directa.`,
-      suggestions: [`⚡ Fichas de ${subjName}`, `📄 Temas de ${subjName}`, 'Simulador Sociales', 'Constitución 1993'],
+      suggestions: [`Fichas de ${subjName}`, `Temas de ${subjName}`, 'Simulador Sociales', 'Constitución'],
       originCard: {
         type: 'SUBJECT_PATH',
         subjectId: subjId,
         subjectName: subjName,
-        title: `${subjName}`,
-        icon: icon,
+        title: subjName,
         topicsCount: topics,
         badge: 'Área Sociales',
         badgeColor: color,
         target: `/aprender/${subjId}`,
-        description: 'Teoría sintetizada, doctrinas, leyes constitucionales y fijas oficiales de examen UNSA.',
-        ctaLabel: `🚀 Ir al curso de ${subjName}`,
-        previewItems: [topics, '12 Semanas Oficiales', 'Fijas UNSA']
+        description: 'Teoría sintetizada, doctrinas, leyes constitucionales y fijas oficiales de examen de admisión.',
+        ctaLabel: `Ir al curso de ${subjName}`,
+        previewItems: [topics, '12 Semanas Oficiales', 'Fijas de Admisión']
       },
       actions: [
-        { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `🏛️ Abrir ${subjName}`, badge: 'Sociales' }
+        { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `Abrir ${subjName}`, badge: 'Sociales' },
+        { type: 'NAVIGATE', target: '/biblioteca', label: `Apuntes de ${subjName}`, badge: 'Biblioteca' }
       ],
-      action: { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `🏛️ Abrir ${subjName}`, badge: 'Sociales' }
+      action: { type: 'NAVIGATE', target: `/aprender/${subjId}`, label: `Abrir ${subjName}`, badge: 'Sociales' }
     };
   }
 
-  // 5. Pomodoro / Cronómetro de estudio
-  if (q.includes('pomodor') || q.includes('pomo') || q.includes('cronomet') || q.includes('temporiz')) {
+  // 7. Pomodoro / Cronómetro de estudio
+  if (q.includes('pomodor') || q.includes('pomo') || q.includes('cronomet') || q.includes('temporiz') || q.includes('concentr')) {
     return {
-      text: '¡Excelente! La técnica **Pomodoro** (25 min de foco + 5 min de descanso) maximiza tu retención para el examen UNSA. Puedes abrir el temporizador con el botón en la barra de navegación o aquí mismo:',
+      text: '¡Excelente! La técnica **Pomodoro** (25 min de concentración + 5 min de descanso) maximiza tu retención para el examen de admisión. Puedes abrir el temporizador con el botón en la barra de navegación o aquí mismo:',
       speechSummary: 'Iniciando técnica Pomodoro para tu sesión de estudio.',
       suggestions: ['Abrir Pomodoro', 'Modo Estudio Intenso 50m', 'Test Vocacional'],
       originCard: {
         type: 'POMODORO',
-        title: '⏱️ Temporizador Pomodoro Pro',
+        title: 'Temporizador Pomodoro Pro',
         badge: 'Método de Estudio',
         badgeColor: '#EF4444',
         target: 'POMODORO',
         description: 'Técnica científica de estudio: 25 minutos de concentración absoluta y 5 minutos de descanso con 24 tonos de alarma.',
-        ctaLabel: '🚀 Abrir Temporizador Pomodoro',
+        ctaLabel: 'Abrir Temporizador Pomodoro',
         previewItems: ['Bloques de 25 min', '24 Tonos de Alarma', 'Modo Píldora Flotante']
       },
       actions: [
-        { type: 'POMODORO', target: 'POMODORO', label: '⏱️ Abrir Pomodoro', badge: 'Pomodoro' }
+        { type: 'POMODORO', target: 'POMODORO', label: 'Abrir Pomodoro', badge: 'Pomodoro' }
       ],
-      action: { type: 'POMODORO', target: 'POMODORO', label: '⏱️ Abrir Pomodoro', badge: 'Pomodoro' }
+      action: { type: 'POMODORO', target: 'POMODORO', label: 'Abrir Pomodoro', badge: 'Pomodoro' }
     };
   }
 
-  // 6. Simulador / Examen tipo UNSA
+  // 8. Simulador / Examen de admisión
   if (q.includes('simula') || q.includes('examen') || q.includes('rank') || q.includes('practic')) {
     return {
-      text: 'En el **Simulador de Examen** de RASTRO puedes rendir exámenes con cronómetro real de 2 horas, puntaje ponderado oficial UNSA y comparativa en el ranking de postulantes.',
+      text: 'En el **Simulador de Examen** de RASTRO puedes rendir exámenes con cronómetro real de 2 horas, puntaje ponderado oficial y comparativa en el ranking de postulantes.',
       speechSummary: 'Abriendo simulador de examen para tu práctica.',
-      suggestions: ['Iniciar simulacro ahora', 'Ver ranking nacional', 'Repasar teoría'],
+      suggestions: ['Iniciar simulacro ahora', 'Ver ranking de postulantes', 'Repasar teoría'],
       originCard: {
         type: 'SIMULATOR',
-        title: '🎯 Simulador Oficial de Examen UNSA',
+        title: 'Simulador Oficial de Examen de Admisión',
         badge: 'Simulacros & Ranking',
         badgeColor: '#F59E0B',
         target: '/simulador',
         description: 'Cronómetro real de 2 horas, puntaje ponderado por área y ranking de postulantes.',
-        ctaLabel: '🚀 Abrir Simulador de Examen',
-        previewItems: ['Cronómetro en Vivo', 'Puntaje Ponderado', 'Ranking Nacional']
+        ctaLabel: 'Abrir Simulador de Examen',
+        previewItems: ['Cronómetro en Vivo', 'Puntaje Ponderado', 'Ranking de Postulantes']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/simulador', label: '🚀 Ir al Simulador de Examen', badge: 'Simulador' }
+        { type: 'NAVIGATE', target: '/simulador', label: 'Ir al Simulador de Examen', badge: 'Simulador' }
       ],
-      action: { type: 'NAVIGATE', target: '/simulador', label: '🚀 Ir al Simulador de Examen', badge: 'Simulador' }
+      action: { type: 'NAVIGATE', target: '/simulador', label: 'Ir al Simulador de Examen', badge: 'Simulador' }
     };
   }
 
-  if (q.includes('curso') || q.includes('video') || q.includes('clase')) {
+  // 9. Cursos y rutas de estudio
+  if (q.includes('curso') || q.includes('video') || q.includes('clase') || q.includes('academ') || q.includes('profesor') || q.includes('aprender')) {
     return {
-      text: 'En la sección **Cursos** encontrarás clases en video organizadas por academia y tema para reforzar tu estudio.',
-      speechSummary: 'Puedes explorar todas las clases en video en la sección Cursos.',
-      suggestions: ['Ver videos de Biología', 'Ver videos de Química', 'Simulador'],
+      text: 'En la sección **Aprender** y **Cursos** encontrarás las **Rutas Temáticas oficiales**, resúmenes preuniversitarios de obras literarias y bancos de preguntas clasificados.',
+      speechSummary: 'Puedes explorar todas las Rutas Temáticas oficiales y resúmenes de estudio en la sección Aprender.',
+      suggestions: ['Ver Rutas Temáticas', 'Ver Obras Literarias', 'Simulador'],
       originCard: {
         type: 'COURSE_VIDEOS',
-        title: '🎥 Clases en Video por Academia (Cursos)',
-        badge: 'Cursos & Academias',
+        title: 'Rutas Temáticas y Material de Estudio (Aprender)',
+        badge: 'Temario Oficial',
         badgeColor: '#38BDF8',
-        target: '/cursos',
-        description: 'Clases en video explicativas grabadas por profesores de academias líderes.',
-        ctaLabel: '🚀 Ir a Cursos en Video',
-        previewItems: ['Academias Destacadas', 'Resolución en Pizarra', 'Material de Repaso']
+        target: '/aprender',
+        description: 'Módulos paso a paso organizados por materia con teoría preuniversitaria y preguntas oficiales.',
+        ctaLabel: 'Ir a Aprender',
+        previewItems: ['Rutas Temáticas', 'Bancos de Preguntas', 'Resúmenes de Obras']
       },
       actions: [
-        { type: 'NAVIGATE', target: '/cursos', label: '🎥 Ir a Cursos en Video', badge: 'Cursos' }
+        { type: 'NAVIGATE', target: '/aprender', label: 'Ir a Rutas de Estudio', badge: 'Aprender' }
       ],
-      action: { type: 'NAVIGATE', target: '/cursos', label: '🎥 Ir a Cursos en Video', badge: 'Cursos' }
+      action: { type: 'NAVIGATE', target: '/aprender', label: 'Ir a Rutas de Estudio', badge: 'Aprender' }
     };
   }
 
-  if (q.includes('libro') || q.includes('biblioteca') || q.includes('pdf') || q.includes('material')) {
-    return {
-      text: 'En la **Biblioteca / Material Compartido** tienes acceso a tomos de CEPREUNSA, compendios, libros y separatas en PDF.',
-      speechSummary: 'Todos los libros y materiales compartidos están en la Biblioteca.',
-      suggestions: ['Tomos de Cepreunsa', 'Formularios PDF', 'Ver Aprender'],
-      originCard: {
-        type: 'LIBRARY',
-        title: '📚 Material Compartido & Biblioteca PDF',
-        badge: 'Material Compartido',
-        badgeColor: '#34D399',
-        target: '/biblioteca',
-        description: 'Tomos oficiales CEPREUNSA, compendios y separatas descargables.',
-        ctaLabel: '🚀 Abrir Material Compartido',
-        previewItems: ['Tomos CEPREUNSA', 'Separatas y Resúmenes', 'Bancos en PDF']
-      },
-      actions: [
-        { type: 'NAVIGATE', target: '/biblioteca', label: '📚 Abrir Material Compartido', badge: 'Material Compartido' }
-      ],
-      action: { type: 'NAVIGATE', target: '/biblioteca', label: '📚 Abrir Material Compartido', badge: 'Material Compartido' }
-    };
-  }
-
+  // 10. Fallback General
   return {
-    text: `¡Entendido! He procesado tu consulta sobre **${text}**. Puedes acceder a la teoría en Aprender, ver las clases grabadas en Cursos o realizar tu Test Vocacional:`,
+    text: `He procesado tu consulta sobre **${text}**. Puedes acceder a la teoría en Aprender, ver las clases grabadas en Cursos o realizar tu Test Vocacional:`,
     speechSummary: 'Te dejo los accesos directos al origen del contenido en RASTRO.',
     suggestions: [
-      'Test Vocacional UNSA',
+      'Test Vocacional',
       'Explicar mitosis y meiosis',
       'Fórmulas de Física',
       'Simulador de examen'
     ],
     originCard: {
       type: 'SUBJECT_PATH',
-      title: '📖 Ruta de Aprendizaje (12 Semanas)',
+      title: 'Ruta de Aprendizaje (12 Semanas)',
       badge: 'Temario Oficial',
       badgeColor: '#A855F7',
       target: '/aprender',
       description: 'Acceso a las 15 asignaturas preuniversitarias con teoría y preguntas fijas.',
-      ctaLabel: '🚀 Ir al Origen de Aprender',
+      ctaLabel: 'Ir a Aprender',
       previewItems: ['15 Materias', '12 Semanas de Ruta', 'Fijas de Admisión']
     },
     actions: [
-      { type: 'NAVIGATE', target: '/aprender', label: '📖 Temario en Aprender', badge: 'Aprender' }
+      { type: 'NAVIGATE', target: '/aprender', label: 'Temario en Aprender', badge: 'Aprender' },
+      { type: 'NAVIGATE', target: '/biblioteca', label: 'Abrir Material Compartido', badge: 'Biblioteca' }
     ],
-    action: { type: 'NAVIGATE', target: '/aprender', label: '📖 Temario en Aprender', badge: 'Aprender' }
+    action: { type: 'NAVIGATE', target: '/aprender', label: 'Temario en Aprender', badge: 'Aprender' }
   };
 }
 

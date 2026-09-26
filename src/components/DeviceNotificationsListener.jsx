@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '../lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
-import { triggerSystemNotification, getNotificationStatus } from '../lib/notifications';
+import { triggerSystemNotification, getNotificationStatus, scheduleDailyStudyReminder } from '../lib/notifications';
+import { getSmartStreakNotification } from '../lib/streakNotifications';
 
 export const DeviceNotificationsListener = () => {
   const { user } = useAuth();
@@ -281,40 +282,23 @@ export const DeviceNotificationsListener = () => {
         // Si el usuario ya practicó hoy, no interrumpirlo con el aviso
         if (lastActiveDate === todayStr) return;
 
-        let title = '';
-        let body = '';
-
-        const dayOfMonth = new Date().getDate();
-
-        if (streak > 0) {
-          const streakMessages = [
-            `No necesitas estar motivado para comenzar, eso es disciplina. ¡Protege tu racha de ${streak} ${streak === 1 ? 'día' : 'días'} hoy! 🔥`,
-            `La motivación te hace empezar, pero la disciplina te da el ingreso. ¡Tus ${streak} ${streak === 1 ? 'día' : 'días'} de constancia valen la pena! 💪`,
-            `El éxito no es suerte, es disciplina diaria. Resuelve 1 lección hoy y mantén tus ${streak} ${streak === 1 ? 'día' : 'días'} intactos. ✨`,
-            `¡Que no se apague tu fuego! La disciplina se construye día a día en RASTRO. Protege tus ${streak} ${streak === 1 ? 'día' : 'días'} consecutivos. 🚀`
-          ];
-          const chosenMsg = streakMessages[(dayOfMonth + streak) % streakMessages.length];
-          title = `🔥 ¡Protege tu Racha de ${streak} ${streak === 1 ? 'Día' : 'Días'}!`;
-          body = chosenMsg;
-        } else {
-          const noStreakMessages = [
-            `No necesitas estar motivado para comenzar, eso es disciplina. ¡Resuelve tu primera lección hoy y enciende tu racha! 🔥`,
-            `La motivación es el chispazo, pero la disciplina enciende el motor. ¡Empieza tu racha de estudio en RASTRO hoy! 🚀`,
-            `Tu ingreso a la universidad se construye con la pregunta que resuelves hoy. ¡Inicia tu racha de constancia! 💪`,
-            `El mejor momento para empezar fue ayer, el segundo mejor momento es AHORA. ¡Comienza tu racha de estudio! ✨`
-          ];
-          const chosenMsg = noStreakMessages[dayOfMonth % noStreakMessages.length];
-          title = `🚀 ¡Empieza tu Racha de Estudio Hoy!`;
-          body = chosenMsg;
-        }
+        const userName = user?.displayName || user?.email?.split('@')[0] || '';
+        const smartNotif = getSmartStreakNotification({
+          name: userName,
+          streak,
+          lastActiveDate
+        });
 
         triggerSystemNotification({
-          title,
-          body,
+          title: smartNotif.title,
+          body: smartNotif.body,
           icon: 'applogo.png',
           data: { url: '/aprender' },
           tag: `rastro-streak-reminder-${todayStr}`
         });
+
+        // Programar recordatorio de fondo para las 8:00 PM
+        scheduleDailyStudyReminder({ streak });
       }
     }, 6000);
 

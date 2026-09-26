@@ -26,16 +26,22 @@ export const resolveMascotAsset = (path) => {
  */
 export const ORSTTY_EMOTIONS = {
   happy: resolveMascotAsset('assets/mascots/orstty-feliz.png'),
+  feliz: resolveMascotAsset('assets/mascots/orstty-feliz.png'),
   cheering: resolveMascotAsset('assets/mascots/orstty-feliz.png'),
+  emocionado: resolveMascotAsset('assets/mascots/orstty-feliz.png'),
   content: resolveMascotAsset('assets/mascots/orstty-contento.png'),
+  contento: resolveMascotAsset('assets/mascots/orstty-contento.png'),
   waving: resolveMascotAsset('assets/mascots/orstty-guinando.png'),
+  guinando: resolveMascotAsset('assets/mascots/orstty-guinando.png'),
   study: resolveMascotAsset('assets/mascots/orstty-pensativo.png'),
   pensativo: resolveMascotAsset('assets/mascots/orstty-pensativo.png'),
   surprised: resolveMascotAsset('assets/mascots/orstty-sorprendido.png'),
+  sorprendido: resolveMascotAsset('assets/mascots/orstty-sorprendido.png'),
   shy: resolveMascotAsset('assets/mascots/orstty-timido.png'),
   timido: resolveMascotAsset('assets/mascots/orstty-timido.png'),
   scared: resolveMascotAsset('assets/mascots/orstty-asustado.png'),
   asustado: resolveMascotAsset('assets/mascots/orstty-asustado.png'),
+  asustado2: resolveMascotAsset('assets/mascots/orstty-asustado2.png'),
   sad: resolveMascotAsset('assets/mascots/orstty-triste.png'),
   triste: resolveMascotAsset('assets/mascots/orstty-triste.png'),
   angry: resolveMascotAsset('assets/mascots/orstty-enojado.png'),
@@ -47,30 +53,37 @@ export const ORSTTY_EMOTIONS = {
 export const ARTYON_EMOTIONS = {
   celebrating: resolveMascotAsset('assets/ARTYON.png'),
   happy: resolveMascotAsset('assets/mascots/artyon-feliz.png'),
+  feliz: resolveMascotAsset('assets/mascots/artyon-feliz.png'),
   cheering: resolveMascotAsset('assets/mascots/artyon-emocionado.png'),
+  emocionado: resolveMascotAsset('assets/mascots/artyon-emocionado.png'),
   content: resolveMascotAsset('assets/mascots/artyon-contento.png'),
+  contento: resolveMascotAsset('assets/mascots/artyon-contento.png'),
   waving: resolveMascotAsset('assets/mascots/artyon-guinando.png'),
+  guinando: resolveMascotAsset('assets/mascots/artyon-guinando.png'),
   study: resolveMascotAsset('assets/mascots/artyon-pensativo.png'),
   pensativo: resolveMascotAsset('assets/mascots/artyon-pensativo.png'),
   surprised: resolveMascotAsset('assets/mascots/artyon-sorprendido.png'),
+  sorprendido: resolveMascotAsset('assets/mascots/artyon-sorprendido.png'),
   shy: resolveMascotAsset('assets/mascots/artyon-timido.png'),
   timido: resolveMascotAsset('assets/mascots/artyon-timido.png'),
   scared: resolveMascotAsset('assets/mascots/artyon-asustado.png'),
   asustado: resolveMascotAsset('assets/mascots/artyon-asustado.png'),
+  asustado2: resolveMascotAsset('assets/mascots/artyon-asustado2.png'),
+  confused: resolveMascotAsset('assets/mascots/artyon-confundido.png'),
+  confundido: resolveMascotAsset('assets/mascots/artyon-confundido.png'),
   sad: resolveMascotAsset('assets/mascots/artyon-triste.png'),
   triste: resolveMascotAsset('assets/mascots/artyon-triste.png'),
   angry: resolveMascotAsset('assets/mascots/artyon-enojado.png'),
   enojado: resolveMascotAsset('assets/mascots/artyon-enojado.png'),
-  default: resolveMascotAsset('assets/ARTYON.png')
+  default: resolveMascotAsset('assets/mascots/artyon-feliz.png')
 };
 
 /**
- * ORSTTY - La Mascota Principal de RASTRO (El Chiquito Moradito)
- * Ilustración oficial con emociones reales (feliz, emocionado, pensativo, etc.)
+ * ORSTTY - Mascota Oficial RUMBO (El Chiquito Moradito)
  */
 export const OrsttyMascot = ({
   size = 80,
-  mood = 'happy', // 'happy' | 'cheering' | 'astronaut' | 'study' | 'waving' | 'surprised' | 'shy' | 'sad' | 'angry'
+  mood = 'happy',
   animate = true,
   slow = false,
   className = '',
@@ -84,7 +97,7 @@ export const OrsttyMascot = ({
         rotate: [0, -0.8, 0.8, 0],
         scale: 1
       }
-    : (mood === 'cheering'
+    : (mood === 'cheering' || mood === 'emocionado'
         ? {
             y: [0, -4, 0, -2, 0],
             rotate: [0, -1.5, 1.5, -0.8, 0],
@@ -96,7 +109,7 @@ export const OrsttyMascot = ({
             scale: 1
           });
 
-  const animDuration = slow ? 5.5 : (mood === 'cheering' ? 3.6 : 4.5);
+  const animDuration = slow ? 5.5 : (mood === 'cheering' || mood === 'emocionado' ? 3.6 : 4.5);
 
   return (
     <motion.div
@@ -113,7 +126,7 @@ export const OrsttyMascot = ({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        filter: 'drop-shadow(0 8px 22px rgba(147, 51, 234, 0.55))',
+        filter: 'drop-shadow(0 8px 22px rgba(147, 51, 234, 0.45))',
         userSelect: 'none',
         flexShrink: 0,
         ...style
@@ -137,12 +150,11 @@ export const OrsttyMascot = ({
 };
 
 /**
- * ARTYON - La Mascota Verde de RASTRO (El Compañero Alegre)
- * Ilustración oficial en alta resolución celebrando o con sus emociones.
+ * ARTYON - Mascota Oficial RUMBO (El Compañero Cósmico Alegre)
  */
 export const ArtyonMascot = ({
   size = 80,
-  mood = 'celebrating',
+  mood = 'happy',
   animate = true,
   className = '',
   style = {}
@@ -153,12 +165,12 @@ export const ArtyonMascot = ({
     <motion.div
       className={className}
       animate={animate ? {
-        y: [0, -8, 0],
-        rotate: [0, 3, -3, 0],
-        scale: [1, 1.04, 1]
+        y: [0, -5, 0, -2, 0],
+        rotate: [0, 2, -2, 0],
+        scale: [1, 1.03, 1]
       } : {}}
       transition={{
-        duration: 3,
+        duration: 3.8,
         repeat: Infinity,
         ease: 'easeInOut'
       }}
@@ -168,7 +180,7 @@ export const ArtyonMascot = ({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        filter: 'drop-shadow(0 8px 22px rgba(20, 184, 166, 0.55))',
+        filter: 'drop-shadow(0 8px 22px rgba(16, 185, 129, 0.45))',
         userSelect: 'none',
         flexShrink: 0,
         ...style
@@ -178,7 +190,7 @@ export const ArtyonMascot = ({
         src={imgSrc}
         alt={`ARTYON (${mood})`}
         onError={(e) => {
-          e.currentTarget.src = resolveMascotAsset('assets/ARTYON.png');
+          e.currentTarget.src = resolveMascotAsset('assets/mascots/artyon-feliz.png');
         }}
         style={{
           width: '100%',
@@ -192,8 +204,61 @@ export const ArtyonMascot = ({
 };
 
 /**
+ * DUAL MASCOT DUO - Orstty y Artyon juntos celebrando el progreso del estudiante
+ * Diseñado con física de resortes y micro-interacción Duolingo-grade.
+ */
+export const DualMascotDuo = ({
+  size = 64,
+  orsttyMood = 'feliz',
+  artyonMood = 'emocionado',
+  animate = true,
+  className = '',
+  style = {}
+}) => {
+  return (
+    <div
+      className={className}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: `${Math.round(size * 0.12)}px`,
+        userSelect: 'none',
+        ...style
+      }}
+    >
+      <OrsttyMascot size={size} mood={orsttyMood} animate={animate} />
+      <ArtyonMascot size={Math.round(size * 0.95)} mood={artyonMood} animate={animate} />
+    </div>
+  );
+};
+
+/**
+ * DYNAMIC MASCOT COMPANION - Alterna fluidamente entre Artyon y Orstty
+ * Garantiza constante diversidad en cards, modales y avisos.
+ */
+export const DynamicMascot = ({
+  prefer = 'auto', // 'auto' | 'orstty' | 'artyon' | 'duo'
+  size = 72,
+  mood = 'feliz',
+  animate = true,
+  className = '',
+  style = {}
+}) => {
+  if (prefer === 'duo') {
+    return <DualMascotDuo size={size} orsttyMood={mood} artyonMood={mood} animate={animate} className={className} style={style} />;
+  }
+
+  const isOrstty = prefer === 'orstty' ? true : (prefer === 'artyon' ? false : (Math.sin(Date.now() / 3600000) > 0));
+
+  if (isOrstty) {
+    return <OrsttyMascot size={size} mood={mood} animate={animate} className={className} style={style} />;
+  }
+  return <ArtyonMascot size={size} mood={mood} animate={animate} className={className} style={style} />;
+};
+
+/**
  * ÍCONO AVATAR DE ORSTTY PARA LA BARRA DE NAVEGACIÓN Y WIDGETS
- * Muestra el rostro oficial de ORSTTY (el moradito) nítido y luminoso.
  */
 export const OrsttyAvatarIcon = ({ size = 24, active = false, className = '', style = {} }) => {
   return (
@@ -232,17 +297,20 @@ export const OrsttyAvatarIcon = ({ size = 24, active = false, className = '', st
 };
 
 /**
- * COMPONENTE DE DIÁLOGO / BURBUJA DE ORSTTY (DUOLINGO STYLE)
+ * COMPONENTE DE DIÁLOGO / BURBUJA DE MASCOTA (DUOLINGO STYLE - CERO EMOJIS)
  */
 export const MascotDialogue = ({
-  mascotMood = 'cheering',
-  title = '¡Hola! Soy ORSTTY',
+  mascotType = 'orstty', // 'orstty' | 'artyon'
+  mascotMood = 'feliz',
+  title = 'RUMBO',
   message = '¿Listo para dominar las preguntas fijas de este curso?',
   actionText,
   onAction,
   onDismiss,
   style = {}
 }) => {
+  const isOrstty = mascotType === 'orstty';
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12, scale: 0.96 }}
@@ -255,21 +323,26 @@ export const MascotDialogue = ({
         gap: '14px',
         padding: '14px 18px',
         borderRadius: '24px',
-        background: 'linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(30, 27, 75, 0.6) 100%)',
-        border: '2px solid rgba(168, 85, 247, 0.45)',
-        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35), 0 0 24px rgba(168, 85, 247, 0.25)',
+        background: isOrstty
+          ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(30, 27, 75, 0.6) 100%)'
+          : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 78, 59, 0.6) 100%)',
+        border: isOrstty ? '1.5px solid rgba(168, 85, 247, 0.45)' : '1.5px solid rgba(16, 185, 129, 0.45)',
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.35)',
         position: 'relative',
         ...style
       }}
     >
-      <OrsttyMascot size={72} mood={mascotMood} />
+      {isOrstty ? (
+        <OrsttyMascot size={72} mood={mascotMood} />
+      ) : (
+        <ArtyonMascot size={72} mood={mascotMood} />
+      )}
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-          <span style={{ fontSize: '0.74rem', fontWeight: 900, color: '#FDE047', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '0.74rem', fontWeight: 900, color: isOrstty ? '#FDE047' : '#6EE7B7', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
             {title}
           </span>
-          <span style={{ fontSize: '0.72rem' }}>💜</span>
         </div>
         <p style={{ margin: 0, fontSize: '0.86rem', color: '#FFFFFF', fontWeight: 600, lineHeight: 1.4 }}>
           {message}
@@ -284,12 +357,14 @@ export const MascotDialogue = ({
               padding: '6px 14px',
               borderRadius: '999px',
               border: 'none',
-              background: 'linear-gradient(135deg, #A855F7 0%, #7E22CE 100%)',
+              background: isOrstty
+                ? 'linear-gradient(135deg, #A855F7 0%, #7E22CE 100%)'
+                : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
               color: '#FFFFFF',
               fontSize: '0.78rem',
               fontWeight: 900,
               cursor: 'pointer',
-              boxShadow: '0 3px 10px rgba(168, 85, 247, 0.4)'
+              boxShadow: '0 3px 10px rgba(0, 0, 0, 0.3)'
             }}
           >
             {actionText}

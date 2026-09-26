@@ -64,176 +64,34 @@ export default function OrsttyPage() {
   };
 
   return (
-    <div className="orstty-backdrop">
+    <div className="orstty-native-page">
       <style>{`
-        .orstty-backdrop {
+        .orstty-native-page {
           position: fixed;
           inset: 0;
+          width: 100vw;
+          height: 100dvh;
           z-index: 999998;
-          background: rgba(0, 0, 0, 0.65);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 12px;
-        }
-        .orstty-page-wrapper {
-          position: relative;
-          width: 100%;
-          max-width: 780px;
-          height: 100%;
-          max-height: 860px;
-          z-index: 999999;
-          padding: 14px 12px;
-          box-sizing: border-box;
+          background: var(--bg-main, #0F172A);
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          background: var(--bg-main, #0F172A);
-          border-radius: 24px;
-          box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1.5px rgba(124, 58, 237, 0.4);
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
         }
         @media (min-width: 768px) {
-          .orstty-backdrop {
-            padding: 24px;
-          }
-          .orstty-page-wrapper {
-            padding: 20px 24px;
-            border-radius: 28px;
+          .orstty-native-page {
+            max-width: 760px;
+            margin: 0 auto;
+            border-left: 1px solid var(--card-border, rgba(124, 58, 237, 0.2));
+            border-right: 1px solid var(--card-border, rgba(124, 58, 237, 0.2));
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.45);
           }
         }
       `}</style>
-      <div className="orstty-page-wrapper">
 
-      {/* Header bar with Back button, Status and Deactivate button */}
-      <div 
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '6px',
-          padding: '0 2px',
-          flexShrink: 0
-        }}
-      >
-        <button
-          onClick={() => navigate(-1)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '5px 12px',
-            borderRadius: '10px',
-            border: '1px solid rgba(124, 58, 237, 0.25)',
-            background: 'var(--card-bg, rgba(255, 255, 255, 0.9))',
-            color: 'var(--text-main, #1F2937)',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            boxShadow: '0 2px 8px rgba(124, 58, 237, 0.08)',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          <ArrowLeft size={14} color="#7C3AED" />
-          <span>Volver</span>
-        </button>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Botón rápido para Desactivar / Reactivar */}
-          {isOrsttyDisabledByUser ? (
-            <button
-              onClick={handleReactivate}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '4px 10px',
-                borderRadius: '10px',
-                border: '1px solid rgba(52, 168, 83, 0.35)',
-                background: 'rgba(52, 168, 83, 0.12)',
-                color: '#34A853',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              <Sparkles size={13} />
-              <span>Reactivar Botón</span>
-            </button>
-          ) : (
-            <button
-              onClick={() => setIsDeactivateModalOpen(true)}
-              title="Configurar visibilidad del botón de ORSTTY"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '4px 10px',
-                borderRadius: '10px',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                background: 'var(--card-bg, rgba(255, 255, 255, 0.8))',
-                color: '#EF4444',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer'
-              }}
-            >
-              <EyeOff size={13} />
-              <span>Desactivar Botón</span>
-            </button>
-          )}
-
-          {/* Badge de Estado */}
-          <div 
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: '99px',
-              background: isOrsttyDisabledByAdmin 
-                ? 'rgba(239, 68, 68, 0.12)' 
-                : isOrsttyDisabledByUser 
-                ? 'rgba(245, 158, 11, 0.12)' 
-                : 'rgba(124, 58, 237, 0.12)',
-              border: isOrsttyDisabledByAdmin 
-                ? '1px solid rgba(239, 68, 68, 0.3)' 
-                : isOrsttyDisabledByUser 
-                ? '1px solid rgba(245, 158, 11, 0.3)' 
-                : '1px solid rgba(124, 58, 237, 0.28)',
-              color: isOrsttyDisabledByAdmin 
-                ? '#DC2626' 
-                : isOrsttyDisabledByUser 
-                ? '#B45309' 
-                : '#7C3AED',
-              fontSize: '0.72rem',
-              fontWeight: 800
-            }}
-          >
-            <span 
-              style={{ 
-                width: '6px', 
-                height: '6px', 
-                borderRadius: '50%', 
-                background: isOrsttyDisabledByAdmin ? '#DC2626' : isOrsttyDisabledByUser ? '#F59E0B' : '#7C3AED', 
-                boxShadow: isOrsttyDisabledByAdmin ? '0 0 8px #DC2626' : isOrsttyDisabledByUser ? '0 0 8px #F59E0B' : '0 0 8px #7C3AED' 
-              }} 
-            />
-            <span>
-              {isOrsttyDisabledByAdmin 
-                ? 'Mantenimiento' 
-                : isOrsttyDisabledByUser 
-                ? 'Oculto' 
-                : 'ORSTTY Activo'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Toast de confirmación */}
+      {/* Toast de confirmación si se activa o desactiva */}
       <AnimatePresence>
         {successToast && (
           <motion.div
@@ -302,7 +160,7 @@ export default function OrsttyPage() {
             </div>
 
             <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 10px', color: 'var(--text-main)' }}>
-              ORSTTY en Mantenimiento Temporal 🔧
+              ORSTTY en Mantenimiento Temporal
             </h2>
 
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.55, margin: '0 0 24px' }}>
@@ -440,7 +298,11 @@ export default function OrsttyPage() {
 
           {/* Main Chat Component */}
           <div style={{ width: '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-            <OrsttyChat />
+            <OrsttyChat 
+              onBack={() => navigate(-1)} 
+              isAdmin={isAdmin} 
+              onOpenDeactivate={() => setIsDeactivateModalOpen(true)} 
+            />
           </div>
         </>
       )}
@@ -534,7 +396,6 @@ export default function OrsttyPage() {
           </div>
         </div>
       </IOSModal>
-      </div>
     </div>
   );
 }

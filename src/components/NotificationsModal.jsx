@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, Component } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, X, Check, MessageSquare, Heart, Sparkles, Trash2, ExternalLink, Megaphone, Info, Eye, ChevronDown, ChevronUp, Settings, Volume2, VolumeX, Smartphone, Play } from 'lucide-react';
+import { Bell, X, Check, MessageSquare, Heart, Sparkles, Trash2, ExternalLink, Megaphone, Info, Eye, ChevronDown, ChevronUp, Settings, Volume2, VolumeX, Smartphone, Play, Flame, BookOpen, AlertTriangle } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { 
   collection, 
@@ -127,31 +127,61 @@ export const NotificationsModal = ({ isOpen, onClose }) => {
     playNotificationSound(type);
   };
 
-  const handleSendTestNotification = async () => {
-    if (systemNotifState.soundEnabled) {
-      playNotificationSound(systemNotifState.soundType);
+  const PRESET_TEST_NOTIFICATIONS = [
+    {
+      title: '🔥 ¡Salva tu racha en Rumbo!',
+      body: 'Solo 2 minutos: entra a Aprender y supera un nivel para no perder tu racha de estudio.',
+      url: '/aprender'
+    },
+    {
+      title: '☀️ Reto del día en Aprender',
+      body: '¡Mente fresca! Domina un nuevo tema del temario oficial CEPREUNSA hoy.',
+      url: '/aprender'
+    },
+    {
+      title: '🍅 Sesión Pomodoro Lista',
+      body: '25 minutos de concentración total y 5 de descanso. ¡Máxima retención para tu ingreso!',
+      url: '/aprender'
+    },
+    {
+      title: '📚 Compendio & Claves Fijas',
+      body: 'Repasa las mnemotecnias y fórmulas canónicas antes de tu evaluación.',
+      url: '/formulario'
     }
+  ];
+  const [testNotifIndex, setTestNotifIndex] = useState(0);
+
+  const handleSendTestNotification = async () => {
+    playNotificationSound(systemNotifState.soundType);
+
     if (systemNotifState.permission !== 'granted') {
       const res = await requestSystemNotificationPermission();
       refreshSystemStatus();
       if (!res.success) {
-        setTestSuccessMsg('Debes permitir las notificaciones en el navegador.');
+        setTestSuccessMsg('Debes permitir las notificaciones en el navegador o dispositivo.');
         setTimeout(() => setTestSuccessMsg(''), 3500);
         return;
       }
     }
-    setTestSuccessMsg('Enviando notificación de prueba...');
+
+    const currentPreset = PRESET_TEST_NOTIFICATIONS[testNotifIndex % PRESET_TEST_NOTIFICATIONS.length];
+    setTestNotifIndex(prev => prev + 1);
+
+    setTestSuccessMsg(`Enviando aviso: "${currentPreset.title}"...`);
+
     const ok = await triggerSystemNotification({
-      title: '🎓 Rumbo - Aviso del Sistema',
-      body: '¡Esta es una notificación de prueba en tu dispositivo con sonido!',
-      data: { url: '/cursos' }
+      title: currentPreset.title,
+      body: currentPreset.body,
+      data: { url: currentPreset.url },
+      force: true
     });
+
     if (ok) {
-      setTestSuccessMsg('¡Notificación enviada con éxito!');
+      setTestSuccessMsg(`¡Notificación enviada: "${currentPreset.title}"!`);
     } else {
-      setTestSuccessMsg('Revisa los permisos de notificación de tu navegador.');
+      setTestSuccessMsg('Aviso emitido con sonido. Si no ves el banner, verifica no tener "No molestar" activo.');
     }
-    setTimeout(() => setTestSuccessMsg(''), 3500);
+    setTimeout(() => setTestSuccessMsg(''), 4000);
   };
 
   const toggleGroupExpand = (groupKey) => {
@@ -693,8 +723,9 @@ export const NotificationsModal = ({ isOpen, onClose }) => {
                         </div>
 
                         {systemNotifState.permission === 'denied' && (
-                          <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontSize: '0.78rem', fontWeight: 600 }}>
-                            ⚠️ Los permisos fueron bloqueados en los ajustes del navegador de tu teléfono. Puedes reactivarlos tocando el candado en la barra de direcciones.
+                          <div style={{ padding: '8px 12px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+                            <span>Los permisos fueron bloqueados en los ajustes del navegador de tu teléfono. Puedes reactivarlos tocando el candado en la barra de direcciones.</span>
                           </div>
                         )}
                       </div>
@@ -835,10 +866,9 @@ export const NotificationsModal = ({ isOpen, onClose }) => {
                             color: '#EF4444',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.1rem'
+                            justifyContent: 'center'
                           }}>
-                            🔥
+                            <Flame size={19} color="#EF4444" />
                           </div>
                           <div>
                             <h4 style={{ margin: 0, fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)' }}>
@@ -899,10 +929,9 @@ export const NotificationsModal = ({ isOpen, onClose }) => {
                             color: '#3B82F6',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.1rem'
+                            justifyContent: 'center'
                           }}>
-                            📚
+                            <BookOpen size={18} color="#3B82F6" />
                           </div>
                           <div>
                             <h4 style={{ margin: 0, fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-main)' }}>

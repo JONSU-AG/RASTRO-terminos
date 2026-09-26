@@ -5,20 +5,20 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="16dp"
+    android:padding="14dp"
     android:gravity="center_vertical">
 
-    <!-- Top: Flame & Streak Number -->
+    <!-- Top: Flame, Title & Mascot -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="10dp">
+        android:layout_marginBottom="8dp">
 
         <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:src="@drawable/ic_flame_vector"
             android:contentDescription="Racha"
             android:layout_marginEnd="6dp" />
@@ -30,20 +30,20 @@
             android:layout_weight="1"
             android:text="5 DÍAS DE RACHA"
             android:textColor="#F59E0B"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:letterSpacing="0.04" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SEMANA"
-            android:textColor="#94A3B8"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+        <ImageView
+            android:id="@+id/widget_weekly_mascot"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/mascot_orstty_happy"
+            android:contentDescription="ORSTTY" />
     </LinearLayout>
 
-    <!-- 7 Day Circles Row -->
+    <!-- 7 Day Circles Row (L M M J V S D) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -60,8 +60,8 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_1"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@drawable/widget_day_active"
                 android:gravity="center"
                 android:text="L"
@@ -79,8 +79,8 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_2"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@drawable/widget_day_active"
                 android:gravity="center"
                 android:text="M"
@@ -98,8 +98,8 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_3"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@drawable/widget_day_active"
                 android:gravity="center"
                 android:text="M"
@@ -117,9 +117,9 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_4"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:background="@drawable/widget_day_today"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:background="@drawable/widget_day_active"
                 android:gravity="center"
                 android:text="J"
                 android:textColor="#FFFFFF"
@@ -136,12 +136,12 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_5"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:background="@drawable/widget_day_inactive"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:background="@drawable/widget_day_active"
                 android:gravity="center"
                 android:text="V"
-                android:textColor="#94A3B8"
+                android:textColor="#FFFFFF"
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -155,8 +155,8 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_6"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@drawable/widget_day_inactive"
                 android:gravity="center"
                 android:text="S"
@@ -174,8 +174,8 @@
             android:orientation="vertical">
             <TextView
                 android:id="@+id/day_indicator_7"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:background="@drawable/widget_day_inactive"
                 android:gravity="center"
                 android:text="D"
@@ -183,18 +183,17 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- Motivational bottom message -->
+    <!-- Motivational Message -->
     <TextView
         android:id="@+id/widget_streak_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="¡Completa una lección hoy para no perder tu racha! 🔥"
+        android:text="Gran constancia. Mantén tu racha activa hoy"
         android:textColor="#CBD5E1"
         android:textSize="11sp"
-        android:maxLines="1"
+        android:maxLines="2"
         android:ellipsize="end" />
 
 </LinearLayout>

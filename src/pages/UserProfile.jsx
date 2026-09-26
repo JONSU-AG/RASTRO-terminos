@@ -94,8 +94,10 @@ import { BookmarkButton } from '../components/BookmarkButton';
 import { PdfSheetPreview } from '../components/PdfSheetPreview';
 import { FollowersFollowingModal } from '../components/FollowersFollowingModal';
 import { getOrsttyStatus, deactivateOrstty, reactivateOrstty } from '../lib/orsttySettings';
+import { CopyCheckMorph } from '../components/common/MorphIcon';
+import { OrsttyMascot, ArtyonMascot, DynamicMascot, DualMascotDuo } from '../components/Mascots';
 
-// ─── MARCOS DE PERFIL (GAMER, CREADOR & COMUNIDAD ACADÉMICA / UNSA) ────────────
+// ─── MARCOS DE PERFIL (GAMER, CREADOR & COMUNIDAD ACADÉMICA) ────────────
 export const AVATAR_FRAMES = [
   {
     id: 'none',
@@ -108,135 +110,135 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'fuego_creador',
-    label: 'Marco Creador 360° 🔥 (Personalizable)',
+    label: 'Marco Creador 360° (Personalizable)',
     desc: 'Marco animado con 4 colores rotativos continuos',
     ringClass: 'frame-fuego-creador',
     ring: 'linear-gradient(135deg, #701A75 0%, #831843 30%, #DC2626 65%, #FF8A00 85%, #FBBF24 100%)',
     glow: '0 0 22px rgba(255, 85, 0, 0.75)',
-    badge: '👑 CREADOR',
+    badge: 'CREADOR',
     badgeColor: '#831843',
     adminOnly: false
   },
   {
     id: 'carmesi',
-    label: 'Carmesí Agustino 🍷',
-    desc: 'Vino agustino, rojo profundo y destellos carmesí',
+    label: 'Carmesí Académico',
+    desc: 'Rojo vino profundo y destellos carmesí',
     ring: 'linear-gradient(135deg, #701A75 0%, #991B1B 40%, #BE123C 75%, #F59E0B 100%)',
     glow: '0 0 20px rgba(190, 18, 60, 0.6)',
-    badge: '🍷 CARMESÍ',
+    badge: 'CARMESÍ',
     badgeColor: '#BE123C'
   },
   {
     id: 'celeste_unsa',
-    label: 'Celeste Cielo UNSA 🩵',
+    label: 'Celeste Universitario',
     desc: 'Azul cielo radiante y cian preuniversitario',
     ring: 'linear-gradient(135deg, #00C6FF 0%, #007AFF 50%, #38BDF8 100%)',
     glow: '0 0 18px rgba(0, 198, 255, 0.55)',
-    badge: '🩵 CELESTE',
+    badge: 'CELESTE',
     badgeColor: '#00C6FF'
   },
   {
     id: 'sol_dorado',
-    label: 'Sol Dorado Cachimbo ⭐',
+    label: 'Sol Dorado Ingresante',
     desc: 'Oro deslumbrante y mérito académico',
     ring: 'linear-gradient(135deg, #D97706 0%, #F59E0B 40%, #FDE68A 75%, #B45309 100%)',
     glow: '0 0 22px rgba(245, 158, 11, 0.6)',
-    badge: '⭐ DORADO',
+    badge: 'DORADO',
     badgeColor: '#D97706'
   },
   {
     id: 'fuego',
-    label: 'Marco Fuego Clásico 🔥',
+    label: 'Marco Fuego Clásico',
     desc: 'Degradado llama viva naranja y escarlata',
     ring: 'linear-gradient(135deg, #FF5500 0%, #FF8A00 50%, #FF3D00 100%)',
     glow: '0 0 18px rgba(255, 85, 0, 0.5)',
-    badge: '🔥 FUEGO',
+    badge: 'FUEGO',
     badgeColor: '#FF5500'
   },
   {
     id: 'esmeralda',
-    label: 'Marco Esmeralda 🌿',
-    desc: 'Verde esmeralda y brillo de la salud',
+    label: 'Marco Esmeralda',
+    desc: 'Verde esmeralda y brillo de superación',
     ring: 'linear-gradient(135deg, #059669 0%, #10B981 50%, #FBBF24 100%)',
     glow: '0 0 18px rgba(16, 185, 129, 0.5)',
-    badge: '🌿 ESMERALDA',
+    badge: 'ESMERALDA',
     badgeColor: '#059669'
   },
   {
     id: 'neon_azul',
-    label: 'Marco Neón Azul ⚡',
-    desc: 'Azul ciberpunk y energía cuántica',
+    label: 'Marco Neón Azul',
+    desc: 'Azul eléctrico y energía cuántica',
     ring: 'linear-gradient(135deg, #007AFF 0%, #3B82F6 50%, #60A5FA 100%)',
     glow: '0 0 18px rgba(0, 122, 255, 0.55)',
-    badge: '⚡ NEÓN',
+    badge: 'NEÓN',
     badgeColor: '#007AFF'
   },
   {
     id: 'magico_purple',
-    label: 'Púrpura Mágico ✨',
+    label: 'Púrpura Mágico',
     desc: 'Violeta estelar y magenta místico',
     ring: 'linear-gradient(135deg, #7E22CE 0%, #A855F7 50%, #EC4899 100%)',
     glow: '0 0 18px rgba(168, 85, 247, 0.5)',
-    badge: '✨ VIOLETA',
+    badge: 'VIOLETA',
     badgeColor: '#9333EA'
   },
   {
     id: 'galaxia_neon',
-    label: 'Galaxia Ciberpunk 🌌',
+    label: 'Galaxia Ciberpunk',
     desc: 'Cian, violeta y fucsia galáctico',
     ring: 'linear-gradient(135deg, #06B6D4 0%, #8B5CF6 50%, #F43F5E 100%)',
     glow: '0 0 20px rgba(139, 92, 246, 0.55)',
-    badge: '🌌 GALAXIA',
+    badge: 'GALAXIA',
     badgeColor: '#8B5CF6'
   },
   {
     id: 'arcoiris_neon',
-    label: 'Arcoíris Neón 🌈',
+    label: 'Arcoíris Neón',
     desc: 'Multicolor animado en movimiento continuo',
     ringClass: 'frame-arcoiris',
     ring: 'linear-gradient(135deg, #FF0055, #FF5000, #FFCC00, #00FF66, #00CCFF, #7700FF, #FF0055)',
     glow: '0 0 20px rgba(0, 204, 255, 0.55)',
-    badge: '🌈 ARCOÍRIS',
+    badge: 'ARCOÍRIS',
     badgeColor: '#EC4899'
   }
 ];
 
-// ─── FOTOS DE PORTADA CURADAS (CAMPUS UNSA, BIBLIOTECA, ESTUDIO) ─────────────
+// ─── FOTOS DE PORTADA CURADAS (CAMPUS UNIVERSITARIO, BIBLIOTECA, ESTUDIO) ─────────────
 const COVER_PHOTO_PRESETS = [
-  { id: 'campus_unsa', label: 'Campus Universitario UNSA 🏛️', url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&auto=format&fit=crop&q=80' },
-  { id: 'library_agustina', label: 'Biblioteca & Sala de Estudio 📚', url: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1600&auto=format&fit=crop&q=80' },
-  { id: 'study_desk', label: 'Mesa de Estudio y Apuntes ✍️', url: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1600&auto=format&fit=crop&q=80' },
-  { id: 'chalkboard', label: 'Pizarra de Fórmulas y Ciencias 📐', url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1600&auto=format&fit=crop&q=80' },
-  { id: 'bookshelf', label: 'Libros y Sabiduría 📖', url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1600&auto=format&fit=crop&q=80' },
-  { id: 'coffee_focus', label: 'Café & Concentración Matutina ☕', url: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=1600&auto=format&fit=crop&q=80' }
+  { id: 'campus_unsa', label: 'Campus Universitario', url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1600&auto=format&fit=crop&q=80' },
+  { id: 'library_agustina', label: 'Biblioteca y Sala de Estudio', url: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1600&auto=format&fit=crop&q=80' },
+  { id: 'study_desk', label: 'Mesa de Estudio y Apuntes', url: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=1600&auto=format&fit=crop&q=80' },
+  { id: 'chalkboard', label: 'Pizarra de Fórmulas y Ciencias', url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=1600&auto=format&fit=crop&q=80' },
+  { id: 'bookshelf', label: 'Libros y Sabiduría', url: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=1600&auto=format&fit=crop&q=80' },
+  { id: 'coffee_focus', label: 'Café y Concentración Matutina', url: 'https://images.unsplash.com/photo-1498243691581-b145c3f54a5a?w=1600&auto=format&fit=crop&q=80' }
 ];
 
 // ─── BANNER GRADIENT PRESETS NATURALES Y UNIVERSITARIOS ──────────────────────
 const BANNER_PRESETS = [
-  { id: 'unsa_burgundy', label: 'Granate Arequipa UNSA 🌋', style: 'linear-gradient(135deg, #701A75 0%, #831843 50%, #BE123C 100%)' },
-  { id: 'rumbo_blue', label: 'Azul Preuniversitario 🎓', style: 'linear-gradient(135deg, #007AFF 0%, #0051A8 100%)' },
-  { id: 'san_marcos', label: 'Azul San Marcos 🏛️', style: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%)' },
-  { id: 'uni_red', label: 'Escarlata UNI 📐', style: 'linear-gradient(135deg, #991B1B 0%, #DC2626 50%, #EF4444 100%)' },
-  { id: 'med_emerald', label: 'Verde Ciencias Médicas 🩺', style: 'linear-gradient(135deg, #065F46 0%, #059669 50%, #10B981 100%)' },
-  { id: 'gold_academic', label: 'Oro Mérito Académico ⭐', style: 'linear-gradient(135deg, #B45309 0%, #D97706 50%, #F59E0B 100%)' },
-  { id: 'dark_slate', label: 'Noche de Repaso 🌙', style: 'linear-gradient(135deg, #1E293B 0%, #334155 50%, #475569 100%)' },
-  { id: 'focus_purple', label: 'Púrpura Concentración 💡', style: 'linear-gradient(135deg, #581C87 0%, #7E22CE 50%, #A855F7 100%)' }
+  { id: 'unsa_burgundy', label: 'Granate Borgoña', style: 'linear-gradient(135deg, #701A75 0%, #831843 50%, #BE123C 100%)' },
+  { id: 'rumbo_blue', label: 'Azul Preuniversitario', style: 'linear-gradient(135deg, #007AFF 0%, #0051A8 100%)' },
+  { id: 'san_marcos', label: 'Azul Clásico', style: 'linear-gradient(135deg, #1E3A8A 0%, #2563EB 50%, #3B82F6 100%)' },
+  { id: 'uni_red', label: 'Escarlata Científico', style: 'linear-gradient(135deg, #991B1B 0%, #DC2626 50%, #EF4444 100%)' },
+  { id: 'med_emerald', label: 'Verde Ciencias de la Salud', style: 'linear-gradient(135deg, #065F46 0%, #059669 50%, #10B981 100%)' },
+  { id: 'gold_academic', label: 'Oro Mérito Académico', style: 'linear-gradient(135deg, #B45309 0%, #D97706 50%, #F59E0B 100%)' },
+  { id: 'dark_slate', label: 'Noche de Repaso', style: 'linear-gradient(135deg, #1E293B 0%, #334155 50%, #475569 100%)' },
+  { id: 'focus_purple', label: 'Púrpura Concentración', style: 'linear-gradient(135deg, #581C87 0%, #7E22CE 50%, #A855F7 100%)' }
 ];
 
 // ─── AVATAR PRESETS (ANIMATED CARTOON ILLUSTRATIONS - NO REAL PERSONS) ─────────
 const AVATAR_PRESETS = [
-  { id: 'cosmo', label: 'Cosmo 🚀', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Cosmo&backgroundColor=b6e3f4,c0aede' },
-  { id: 'luna', label: 'Luna 🌙', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna&backgroundColor=ffd5dc,ffdfbf' },
-  { id: 'sparky', label: 'Sparky 🤖', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Sparky&backgroundColor=d1d4f9,b6e3f4' },
-  { id: 'felix', label: 'Félix 🎧', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=c0aede,b6e3f4' },
-  { id: 'michi', label: 'Michi 🐱', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Michi&backgroundColor=ffdfbf,ffd5dc' },
-  { id: 'aria', label: 'Aria ✨', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aria&backgroundColor=ffd5dc,c0aede' },
-  { id: 'panda', label: 'Panda 🐼', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Panda&backgroundColor=b6e3f4,d1d4f9' },
-  { id: 'oliver', label: 'Oliver 👓', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver&backgroundColor=c0aede,d1d4f9' },
-  { id: 'pixel', label: 'Pixel 🎮', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Pixel&backgroundColor=ffd5dc,ffdfbf' },
-  { id: 'maya', label: 'Maya 🌿', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maya&backgroundColor=b6e3f4,ffdfbf' },
-  { id: 'star', label: 'Estrella ⭐', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Star&backgroundColor=ffdfbf,ffd5dc' },
-  { id: 'leo', label: 'Leo 🦁', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=d1d4f9,c0aede' }
+  { id: 'cosmo', label: 'Cosmo', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Cosmo&backgroundColor=b6e3f4,c0aede' },
+  { id: 'luna', label: 'Luna', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna&backgroundColor=ffd5dc,ffdfbf' },
+  { id: 'sparky', label: 'Sparky', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Sparky&backgroundColor=d1d4f9,b6e3f4' },
+  { id: 'felix', label: 'Félix', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=c0aede,b6e3f4' },
+  { id: 'michi', label: 'Michi', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Michi&backgroundColor=ffdfbf,ffd5dc' },
+  { id: 'aria', label: 'Aria', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Aria&backgroundColor=ffd5dc,c0aede' },
+  { id: 'panda', label: 'Panda', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Panda&backgroundColor=b6e3f4,d1d4f9' },
+  { id: 'oliver', label: 'Oliver', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver&backgroundColor=c0aede,d1d4f9' },
+  { id: 'pixel', label: 'Pixel', url: 'https://api.dicebear.com/7.x/bottts/svg?seed=Pixel&backgroundColor=ffd5dc,ffdfbf' },
+  { id: 'maya', label: 'Maya', url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Maya&backgroundColor=b6e3f4,ffdfbf' },
+  { id: 'star', label: 'Estrella', url: 'https://api.dicebear.com/7.x/fun-emoji/svg?seed=Star&backgroundColor=ffdfbf,ffd5dc' },
+  { id: 'leo', label: 'Leo', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Leo&backgroundColor=d1d4f9,c0aede' }
 ];
 
 const SUGGESTED_UNIVERSITIES = [
@@ -572,11 +574,9 @@ export const UserProfile = () => {
   // (State declared above)
 
   const isOwnProfile = user && targetUid === user.uid;
-  const isUserAdmin = Boolean(
-    (user?.email && (ADMIN_EMAILS.includes(user.email.toLowerCase()) || isAuthorOfFirebase(user?.email))) || 
-    profileUser?.isAdmin || 
-    profileUser?.isCreator || 
-    isAdmin
+  // Seguridad estricta: Solo el dueño absoluto de Firebase tiene insignia y rango de Administrador
+  const isProfileAdmin = Boolean(
+    profileUser?.email && isAuthorOfFirebase(profileUser.email)
   );
 
   // Handle endorsing individual profile data points
@@ -1367,8 +1367,8 @@ export const UserProfile = () => {
                     transition: 'all 0.2s ease'
                   }}
                 >
-                  {copiedProfile ? <Check size={15} /> : <Share2 size={15} />}
-                  {copiedProfile ? '¡Copiado!' : 'Compartir Perfil'}
+                  <CopyCheckMorph isCopied={copiedProfile} size={15} color={copiedProfile ? '#4ADE80' : '#FFFFFF'} spring="bouncy" />
+                  <span>{copiedProfile ? 'Copiado' : 'Compartir Perfil'}</span>
                 </button>
 
                 <button
@@ -1607,7 +1607,7 @@ export const UserProfile = () => {
                         alignItems: 'center',
                         gap: '6px'
                       }}>
-                        🏛️ Estudiante UNSA • Comparte Material
+                        🏛️ Estudiante Universitario • Comparte Material
                       </span>
                     )}
 
@@ -1624,7 +1624,7 @@ export const UserProfile = () => {
                         alignItems: 'center',
                         gap: '6px'
                       }}>
-                        🎓 Cachimbo UNSA
+                        🎓 Cachimbo Ingresante
                       </span>
                     )}
 
@@ -1664,61 +1664,22 @@ export const UserProfile = () => {
                   </>
                 )}
 
-                {/* Role Badges (Administrador, Aliado, Creador) */}
-                {(profileUser.showRoleBadges !== false && showRoleBadges) && (
-                  <>
-                    {isUserAdmin && (
-                      <span style={{
-                        padding: '5px 14px',
-                        borderRadius: '12px',
-                        background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(99, 102, 241, 0.25))',
-                        border: '1.5px solid #A855F7',
-                        color: '#A855F7',
-                        fontWeight: 800,
-                        fontSize: '0.8rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        👑 ADMINISTRADOR
-                      </span>
-                    )}
-
-                    {profileUser.isAlly && (
-                      <span style={{
-                        padding: '5px 14px',
-                        borderRadius: '12px',
-                        background: 'rgba(52, 168, 83, 0.15)',
-                        border: '1.5px solid #34A853',
-                        color: '#34A853',
-                        fontWeight: 800,
-                        fontSize: '0.8rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        🌟 ALIADO OFICIAL
-                      </span>
-                    )}
-
-                    {/* El aviso en pantalla es privado para el usuario o admin, no cierra el perfil ni se expone a visitantes */}
-                    {(isOwnProfile || isAdmin) && profileUser.hasWarning && (
-                      <span style={{
-                        padding: '5px 14px',
-                        borderRadius: '12px',
-                        background: 'rgba(245, 158, 11, 0.18)',
-                        border: '1.5px solid #F59E0B',
-                        color: '#D97706',
-                        fontWeight: 800,
-                        fontSize: '0.8rem',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        ⚠️ AVISO DE MODERACIÓN ACTIVO
-                      </span>
-                    )}
-                  </>
+                {/* Aviso de moderación — solo visible para el propio usuario o el admin */}
+                {(isOwnProfile || isAdmin) && profileUser.hasWarning && (
+                  <span style={{
+                    padding: '5px 14px',
+                    borderRadius: '12px',
+                    background: 'rgba(245, 158, 11, 0.18)',
+                    border: '1.5px solid #F59E0B',
+                    color: '#D97706',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    ⚠️ AVISO DE MODERACIÓN ACTIVO
+                  </span>
                 )}
 
                 {/* Insignia Personalizada elegida por el Usuario */}
@@ -1809,7 +1770,7 @@ export const UserProfile = () => {
                           gap: '4px'
                         }}
                       >
-                        🎯 {endorsements.universidad?.count || 0}
+                        <GraduationCap size={13} /> {endorsements.universidad?.count || 0}
                       </button>
                     </div>
                   )}
@@ -2191,7 +2152,7 @@ export const UserProfile = () => {
                 onClick={() => setShowRankingModal(true)}
                 whileHover={{ y: -2, scale: 1.03 }}
                 whileTap={{ y: 1, scale: 0.96 }}
-                title="Ver Ranking Oficial de Simulacros UNSA"
+                title="Ver Ranking Oficial de Simulacros"
                 className="duo-btn-3d"
                 style={{
                   display: 'flex',
@@ -2343,60 +2304,95 @@ export const UserProfile = () => {
 
           {/* ──────────────── CONTENEDOR Y TABS DEL PERFIL ──────────────── */}
         <div style={{ maxWidth: '880px', margin: '0 auto', padding: '0 12px', width: '100%', boxSizing: 'border-box' }}>
-          {/* Tab Switcher — solo Muros y aportes + Guardados */}
+          {/* Tab Switcher — Muros y aportes + Guardados con Spring Physics de Emil Kowalski */}
           <div style={{
             display: 'flex',
             gap: '8px',
             justifyContent: 'center',
             marginBottom: '20px',
-            flexWrap: 'wrap'
+            background: 'var(--card-bg, rgba(15, 23, 42, 0.6))',
+            padding: '6px',
+            borderRadius: '16px',
+            border: '1px solid var(--card-border)',
+            maxWidth: '440px',
+            margin: '0 auto 20px',
+            position: 'relative'
           }}>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => setActiveTab('muro')}
               style={{
                 flex: 1,
-                maxWidth: '200px',
-                justifyContent: 'center',
+                position: 'relative',
                 padding: '10px 14px',
                 borderRadius: '12px',
                 fontWeight: 800,
                 fontSize: '0.84rem',
-                border: activeTab === 'muro' ? 'none' : '1px solid var(--card-border)',
-                background: activeTab === 'muro' ? 'linear-gradient(135deg, #007AFF 0%, #00C6FF 100%)' : 'var(--card-bg)',
-                color: activeTab === 'muro' ? '#FFFFFF' : 'var(--text-main)',
+                border: 'none',
+                background: 'transparent',
+                color: activeTab === 'muro' ? '#FFFFFF' : 'var(--text-secondary)',
                 cursor: 'pointer',
-                boxShadow: activeTab === 'muro' ? '0 4px 12px rgba(0, 122, 255, 0.3)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '6px',
-                transition: 'all 0.2s ease'
+                zIndex: 2,
+                transition: 'color 0.2s ease'
               }}
             >
+              {activeTab === 'muro' && (
+                <motion.div
+                  layoutId="profileTabHighlight"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #007AFF 0%, #00C6FF 100%)',
+                    boxShadow: '0 4px 14px rgba(0, 122, 255, 0.35)',
+                    zIndex: -1
+                  }}
+                />
+              )}
               <BookOpen size={15} /> Muros y aportes ({userUploads.length})
             </motion.button>
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => setActiveTab('guardados')}
               style={{
-                padding: '8px 14px',
+                flex: 1,
+                position: 'relative',
+                padding: '10px 14px',
                 borderRadius: '12px',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                border: activeTab === 'guardados' ? 'none' : '1px solid var(--card-border)',
-                background: activeTab === 'guardados' ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' : 'var(--card-bg)',
-                color: activeTab === 'guardados' ? '#FFFFFF' : 'var(--text-main)',
+                fontWeight: 800,
+                fontSize: '0.84rem',
+                border: 'none',
+                background: 'transparent',
+                color: activeTab === 'guardados' ? '#FFFFFF' : 'var(--text-secondary)',
                 cursor: 'pointer',
-                boxShadow: activeTab === 'guardados' ? '0 4px 12px rgba(245, 158, 11, 0.3)' : 'none',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '6px',
-                transition: 'all 0.2s ease'
+                zIndex: 2,
+                transition: 'color 0.2s ease'
               }}
             >
+              {activeTab === 'guardados' && (
+                <motion.div
+                  layoutId="profileTabHighlight"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.35)',
+                    zIndex: -1
+                  }}
+                />
+              )}
               <Bookmark size={15} /> Guardados ({savedMaterials.length})
             </motion.button>
           </div>
@@ -2410,7 +2406,7 @@ export const UserProfile = () => {
                   <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
                   <input
                     type="text"
-                    placeholder="🔍 Buscar en mis guardados por título o descripción..."
+                    placeholder="Buscar en mis guardados por título o descripción..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     style={{
@@ -2427,14 +2423,13 @@ export const UserProfile = () => {
                   />
                 </div>
 
-                {/* Category Filter Pills */}
+                {/* Category Filter Pills (Zero Emojis, Clean Typography) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {/* Main filters */}
                   <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px', scrollbarWidth: 'none' }}>
                     {[
                       { id: 'todos', label: 'Todos' },
-                      { id: 'videos', label: '🎬 Videos' },
-                      { id: 'material', label: '📚 Material' }
+                      { id: 'material', label: 'Material' }
                     ].map(cat => (
                       <button
                         key={cat.id}
@@ -2458,51 +2453,18 @@ export const UserProfile = () => {
                     ))}
                   </div>
 
-                  {/* Sub-filters for Videos */}
-                  {selectedCategory === 'videos' && (
-                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', alignSelf: 'center', marginRight: '4px' }}>Filtrar:</span>
-                      {[
-                        { id: null, label: 'Todas' },
-                        { id: 'briceno', label: '🎓 Briceño' },
-                        { id: 'kelsen', label: '🎓 Kelsen' },
-                        { id: 'esparta', label: '🎓 Esparta' }
-                      ].map(sub => (
-                        <button
-                          key={sub.id || 'all'}
-                          onClick={() => setSelectedSubCategory(sub.id)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            border: selectedSubCategory === sub.id ? '1.5px solid var(--accent-color)' : '1px solid var(--card-border)',
-                            background: selectedSubCategory === sub.id ? 'rgba(0, 122, 255, 0.12)' : 'var(--card-bg)',
-                            color: selectedSubCategory === sub.id ? '#007AFF' : 'var(--text-secondary)',
-                            fontWeight: 700,
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                            flexShrink: 0,
-                            transition: 'all 0.2s ease'
-                          }}
-                        >
-                          {sub.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
                   {/* Sub-filters for Material */}
                   {selectedCategory === 'material' && (
                     <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '4px', scrollbarWidth: 'none' }}>
                       <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--text-secondary)', alignSelf: 'center', marginRight: '4px' }}>Filtrar:</span>
                       {[
                         { id: null, label: 'Todo' },
-                        { id: 'teoria', label: '📕 Teoría / Tomos' },
-                        { id: 'practicas', label: '📗 Prácticas' },
-                        { id: 'examenes', label: '📘 Exámenes' },
-                        { id: 'briceno', label: '🎓 Briceño' },
-                        { id: 'kelsen', label: '🎓 Kelsen' },
-                        { id: 'esparta', label: '🎓 Esparta' }
+                        { id: 'teoria', label: 'Teoría / Tomos' },
+                        { id: 'practicas', label: 'Prácticas' },
+                        { id: 'examenes', label: 'Exámenes' },
+                        { id: 'briceno', label: 'Briceño' },
+                        { id: 'kelsen', label: 'Kelsen' },
+                        { id: 'esparta', label: 'Esparta' }
                       ].map(sub => (
                         <button
                           key={sub.id || 'all'}
@@ -2566,9 +2528,12 @@ export const UserProfile = () => {
                                   color: '#007AFF',
                                   fontWeight: 800,
                                   fontSize: '0.74rem',
-                                  textTransform: 'uppercase'
+                                  textTransform: 'uppercase',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}>
-                                  🎓 {item.academyName}
+                                  <GraduationCap size={12} /> {item.academyName}
                                 </span>
                               )}
                               {item.area && (
@@ -2579,9 +2544,12 @@ export const UserProfile = () => {
                                   color: '#10B981',
                                   fontWeight: 800,
                                   fontSize: '0.74rem',
-                                  textTransform: 'uppercase'
+                                  textTransform: 'uppercase',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}>
-                                  📚 {item.area}
+                                  <BookOpen size={12} /> {item.area}
                                 </span>
                               )}
                               {item.weekNum && (
@@ -2592,9 +2560,12 @@ export const UserProfile = () => {
                                   color: '#8B5CF6',
                                   fontWeight: 800,
                                   fontSize: '0.74rem',
-                                  textTransform: 'uppercase'
+                                  textTransform: 'uppercase',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}>
-                                  📅 Semana {item.weekNum}
+                                  <Calendar size={12} /> Semana {item.weekNum}
                                 </span>
                               )}
                               {!isAcademy && (
@@ -2605,9 +2576,12 @@ export const UserProfile = () => {
                                   color: '#D97706',
                                   fontWeight: 800,
                                   fontSize: '0.74rem',
-                                  textTransform: 'uppercase'
+                                  textTransform: 'uppercase',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}>
-                                  ⚡ {item.category || 'MATERIAL GUARDADO'}
+                                  <Sparkles size={12} /> {item.category || 'MATERIAL GUARDADO'}
                                 </span>
                               )}
                               {item.author && !isAcademy && (
@@ -2625,8 +2599,8 @@ export const UserProfile = () => {
                               </p>
                             )}
                             {isAcademy && item.videoCount && (
-                              <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'var(--accent-color)', fontWeight: 700 }}>
-                                🎬 {item.videoCount} videos incluidos
+                              <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'var(--accent-color)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <PlayCircle size={13} /> {item.videoCount} videos incluidos
                               </p>
                             )}
                           </div>
@@ -2641,11 +2615,11 @@ export const UserProfile = () => {
                               onClick={() => setExpandedPreviews(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
                               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', marginBottom: expandedPreviews[item.id] ? '8px' : 0 }}
                             >
-                              <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
-                                🎬 {item.videos.length} videos incluidos
+                              <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <PlayCircle size={13} /> {item.videos.length} videos incluidos
                               </p>
                               <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--accent-color)' }}>
-                                {expandedPreviews[item.id] ? 'Ocultar ▲' : 'Ver lista ▼'}
+                                {expandedPreviews[item.id] ? 'Ocultar' : 'Ver lista'}
                               </span>
                             </div>
                             {expandedPreviews[item.id] && (
@@ -2665,7 +2639,9 @@ export const UserProfile = () => {
                                           onClick={() => setExpandedPreviews(prev => ({ ...prev, [`${item.id}-${area}`]: !prev[`${item.id}-${area}`] }))}
                                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '4px 6px', borderRadius: '8px', background: 'rgba(0, 122, 255, 0.06)', marginBottom: '4px' }}
                                         >
-                                          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--accent-color)' }}>📚 {area} ({vids.length})</span>
+                                          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--accent-color)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                            <BookOpen size={12} /> {area} ({vids.length})
+                                          </span>
                                           <span style={{ fontSize: '0.7rem', color: 'var(--accent-color)' }}>{expandedPreviews[`${item.id}-${area}`] ? '▲' : '▼'}</span>
                                         </div>
                                         {expandedPreviews[`${item.id}-${area}`] && vids.map((v, idx) => (
@@ -2799,25 +2775,13 @@ export const UserProfile = () => {
                   })}
                 </div>
               ) : (
-                <div className="ios-glass-card" style={{ padding: '48px 24px', textAlign: 'center', borderRadius: '28px' }}>
-                  <div style={{
-                    width: '64px',
-                    height: '64px',
-                    borderRadius: '50%',
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    color: '#F59E0B',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '16px'
-                  }}>
-                    <Bookmark size={32} />
-                  </div>
-                  <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
+                <div className="ios-glass-card" style={{ padding: '40px 24px', textAlign: 'center', borderRadius: '28px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <DynamicMascot prefer="artyon" size={88} mood="pensativo" />
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', margin: '14px 0 8px' }}>
                     No tienes materiales guardados
                   </h3>
                   <p style={{ color: 'var(--text-secondary)', maxWidth: '480px', margin: '0 auto 20px', lineHeight: 1.5, fontSize: '0.92rem' }}>
-                    Puedes guardar cualquier libro, resumen o examen de la comunidad o la biblioteca haciendo clic en el botón 🔖 <strong>Guardar</strong> para tener tu propia colección personalizada.
+                    Puedes guardar cualquier libro, resumen o examen de la comunidad o la biblioteca haciendo clic en el botón <strong>Guardar</strong> para tener tu propia colección personalizada.
                   </p>
                   <Link
                     to="/biblioteca"
@@ -4079,7 +4043,7 @@ export const UserProfile = () => {
                 rows={3}
                 value={editBio}
                 onChange={(e) => setEditBio(e.target.value)}
-                placeholder="Ej. Preparándome para ingresar a la UNSA 🩺🎯 Compartiendo resúmenes agustinos."
+                placeholder="Ej. Preparándome para el examen de admisión 🩺🎯 Compartiendo resúmenes y apuntes."
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -4153,7 +4117,7 @@ export const UserProfile = () => {
                 type="text"
                 value={editUniversidad}
                 onChange={(e) => setEditUniversidad(e.target.value)}
-                placeholder="Ej. UNSA (Arequipa), UNMSM, UNI..."
+                placeholder="Ej. Universidad Nacional, UNMSM, UNI..."
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -4363,8 +4327,8 @@ export const UserProfile = () => {
                 }}
               >
                 <option value="postulante">🔥 Postulante Preuniversitario</option>
-                <option value="estudiante_unsa">🏛️ Estudiante UNSA • Comparte Material</option>
-                <option value="cachimbo">🎓 Cachimbo UNSA</option>
+                <option value="estudiante_unsa">🏛️ Estudiante Universitario • Comparte Material</option>
+                <option value="cachimbo">🎓 Cachimbo Ingresante</option>
                 <option value="egresado">💼 Egresado / Profesional</option>
               </select>
             </div>
@@ -4387,7 +4351,7 @@ export const UserProfile = () => {
                 cursor: 'pointer'
               }}>
                 <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                  🏛️ Mostrar Insignia de Estado Académico (UNSA, Postulante, etc.)
+                  🏛️ Mostrar Insignia de Estado Académico (Estudiante, Postulante, etc.)
                 </span>
                 <input
                   type="checkbox"
@@ -4725,7 +4689,7 @@ export const UserProfile = () => {
                   Rango en la Plataforma
                 </div>
                 <div style={{ color: 'var(--accent-color)', fontSize: '0.95rem', fontWeight: 800, marginTop: '2px' }}>
-                  {isUserAdmin ? '👑 Administrador Principal' : (profileUser.isAlly ? '🌟 Aliado Oficial Verificado' : '🎓 Estudiante RUMBO')}
+                  {isProfileAdmin ? '👑 Administrador Principal' : (profileUser.isAlly ? '🌟 Aliado Oficial Verificado' : '🎓 Estudiante RUMBO')}
                 </div>
               </div>
             </div>
@@ -4833,7 +4797,7 @@ export const UserProfile = () => {
           </div>
 
           {/* Admin Button */}
-          {isUserAdmin && (
+          {isAdmin && (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

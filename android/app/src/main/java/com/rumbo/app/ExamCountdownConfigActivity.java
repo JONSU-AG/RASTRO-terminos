@@ -1,6 +1,6 @@
 package com.rumbo.app;
 
-import android.app.Activity;
+import androidx.appcompat.app.AppCompatActivity;
 import android.app.DatePickerDialog;
 import android.appwidget.AppWidgetManager;
 import android.content.Context;
@@ -17,7 +17,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class ExamCountdownConfigActivity extends Activity {
+public class ExamCountdownConfigActivity extends AppCompatActivity {
 
     private int mAppWidgetId = AppWidgetManager.INVALID_APPWIDGET_ID;
     private EditText mEditExamName;
@@ -58,7 +58,7 @@ public class ExamCountdownConfigActivity extends Activity {
         btnPreset1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mEditExamName.setText("CEPRUNSA I FASE 2027");
+                mEditExamName.setText("Admisión Primera Opción");
                 mEditExamDate.setText("2026-07-05");
             }
         });
@@ -67,8 +67,8 @@ public class ExamCountdownConfigActivity extends Activity {
         btnPreset2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mEditExamName.setText("CEPRUNSA II FASE 2027");
-                mEditExamDate.setText("2026-10-18");
+                mEditExamName.setText("Admisión Ordinario / Regular");
+                mEditExamDate.setText("2026-08-30");
             }
         });
 
@@ -76,8 +76,8 @@ public class ExamCountdownConfigActivity extends Activity {
         btnPreset3.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mEditExamName.setText("ORDINARIO I FASE 2027");
-                mEditExamDate.setText("2026-08-30");
+                mEditExamName.setText("Simulacro Nacional de Admisión");
+                mEditExamDate.setText("2026-10-18");
             }
         });
 
@@ -124,42 +124,47 @@ public class ExamCountdownConfigActivity extends Activity {
     }
 
     private void saveAndFinish() {
-        String name = mEditExamName.getText().toString().trim();
-        String date = mEditExamDate.getText().toString().trim();
+        try {
+            String name = mEditExamName.getText().toString().trim();
+            String date = mEditExamDate.getText().toString().trim();
 
-        if (name.isEmpty()) {
-            name = "EXAMEN DE ADMISIÓN";
+            if (name.isEmpty()) {
+                name = "EXAMEN DE ADMISIÓN";
+            }
+            if (date.isEmpty()) {
+                date = WidgetHelper.DEFAULT_EXAM_DATE;
+            }
+
+            Context context = ExamCountdownConfigActivity.this;
+            SharedPreferences.Editor editor = WidgetHelper.getPrefs(context).edit();
+            
+            // Save widget-specific and global
+            if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                editor.putString(WidgetHelper.KEY_EXAM_NAME + "_" + mAppWidgetId, name);
+                editor.putString(WidgetHelper.KEY_EXAM_DATE + "_" + mAppWidgetId, date);
+            }
+            editor.putString(WidgetHelper.KEY_EXAM_NAME, name);
+            editor.putString(WidgetHelper.KEY_EXAM_DATE, date);
+            editor.apply();
+
+            // Update the widget
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+            if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                WidgetHelper.updateExamCountdown(context, appWidgetManager, mAppWidgetId);
+            } else {
+                WidgetHelper.refreshAllWidgets(context);
+            }
+
+            Toast.makeText(context, "Fecha de examen guardada en el widget", Toast.LENGTH_SHORT).show();
+
+            // Make sure we pass back the original appWidgetId
+            Intent resultValue = new Intent();
+            resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
+            setResult(RESULT_OK, resultValue);
+        } catch (Throwable t) {
+            setResult(RESULT_OK);
+        } finally {
+            finish();
         }
-        if (date.isEmpty()) {
-            date = WidgetHelper.DEFAULT_EXAM_DATE;
-        }
-
-        Context context = ExamCountdownConfigActivity.this;
-        SharedPreferences.Editor editor = WidgetHelper.getPrefs(context).edit();
-        
-        // Save widget-specific and global
-        if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            editor.putString(WidgetHelper.KEY_EXAM_NAME + "_" + mAppWidgetId, name);
-            editor.putString(WidgetHelper.KEY_EXAM_DATE + "_" + mAppWidgetId, date);
-        }
-        editor.putString(WidgetHelper.KEY_EXAM_NAME, name);
-        editor.putString(WidgetHelper.KEY_EXAM_DATE, date);
-        editor.apply();
-
-        // Update the widget
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        if (mAppWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
-            WidgetHelper.updateExamCountdown(context, appWidgetManager, mAppWidgetId);
-        } else {
-            WidgetHelper.refreshAllWidgets(context);
-        }
-
-        Toast.makeText(context, "¡Fecha de examen guardada en el widget!", Toast.LENGTH_SHORT).show();
-
-        // Make sure we pass back the original appWidgetId
-        Intent resultValue = new Intent();
-        resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, mAppWidgetId);
-        setResult(RESULT_OK, resultValue);
-        finish();
     }
 }

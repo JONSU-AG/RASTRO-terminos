@@ -19,8 +19,13 @@ import {
   MessageSquare,
   X,
   Trash2,
-  BookOpen
+  BookOpen,
+  Pencil
 } from 'lucide-react';
+import { getObrasLiterarias } from '../lib/literaturaService';
+import { LiteraturaViewerModal } from '../components/LiteraturaViewerModal';
+import { LiteraturaEditModal } from '../components/LiteraturaEditModal';
+import { LITERATURA_CATEGORIAS, LITERATURA_OBRAS } from '../data/literaturaData';
 import { ReportModal } from '../components/ReportModal';
 import { UploadModal } from '../components/UploadModal';
 import { SuccessModal } from '../components/SuccessModal';
@@ -62,6 +67,22 @@ export const Biblioteca = () => {
   useEffect(()=>{ try{ const q=query(collection(db,'oficiales'), orderBy('createdAt','desc')); const unsub=onSnapshot(q,(s)=> setCustomOficiales(s.docs.map(d=>({id:d.id,...d.data()})))); return ()=>unsub(); }catch{} },[]);
 
   const [activeDocTab, setActiveDocTab] = useState('tomos'); // 'tomos' | 'practicas'
+
+  // Sección de Obras Literarias y Apuntes de Repaso
+  const [obrasLiterarias, setObrasLiterarias] = useState(() => LITERATURA_OBRAS);
+  const [selectedObra, setSelectedObra] = useState(null);
+  const [selectedCategoriaLit, setSelectedCategoriaLit] = useState('Todas');
+  const [isLitEditOpen, setIsLitEditOpen] = useState(false);
+  const [obraToEdit, setObraToEdit] = useState(null);
+
+  const loadObras = () => {
+    getObrasLiterarias().then(setObrasLiterarias).catch(console.warn);
+  };
+
+  useEffect(() => {
+    loadObras();
+  }, []);
+
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState({ id: null, title: '' });
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -81,6 +102,8 @@ export const Biblioteca = () => {
   useEffect(() => {
     if (location.state?.tab === 'comunidad' || location.search.includes('tab=comunidad')) {
       setMainTab('comunidad');
+    } else if (location.state?.tab === 'obras' || location.state?.tab === 'literatura' || location.search.includes('tab=obras') || location.search.includes('tab=literatura')) {
+      setMainTab('literatura');
     }
   }, [location]);
 
@@ -259,9 +282,9 @@ export const Biblioteca = () => {
         <div 
           style={{ 
             display: 'grid', 
-            gridTemplateColumns: hideLibrosTab ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', 
+            gridTemplateColumns: hideLibrosTab ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)', 
             gap: '8px', 
-            maxWidth: '680px', 
+            maxWidth: '720px', 
             margin: '20px auto 0',
             width: '100%'
           }}
@@ -271,10 +294,10 @@ export const Biblioteca = () => {
             whileTap={{ scale: 0.98 }}
             onClick={() => setMainTab('documentos')}
             style={{ 
-              padding: '10px 8px', 
+              padding: '10px 6px', 
               borderRadius: '16px', 
               fontWeight: 800, 
-              fontSize: 'clamp(0.74rem, 2.2vw, 0.86rem)',
+              fontSize: 'clamp(0.72rem, 2vw, 0.84rem)',
               border: mainTab === 'documentos' ? 'none' : '1.5px solid var(--card-border)',
               background: mainTab === 'documentos' ? 'linear-gradient(135deg, #007AFF 0%, #34C759 100%)' : 'var(--card-bg)',
               color: mainTab === 'documentos' ? '#FFFFFF' : 'var(--text-main)',
@@ -298,10 +321,10 @@ export const Biblioteca = () => {
             whileTap={{ scale: 0.98 }}
             onClick={() => setMainTab('comunidad')}
             style={{ 
-              padding: '10px 8px', 
+              padding: '10px 6px', 
               borderRadius: '16px', 
               fontWeight: 800, 
-              fontSize: 'clamp(0.74rem, 2.2vw, 0.86rem)',
+              fontSize: 'clamp(0.72rem, 2vw, 0.84rem)',
               border: mainTab === 'comunidad' ? 'none' : '1.5px solid var(--card-border)',
               background: mainTab === 'comunidad' ? 'linear-gradient(135deg, #F59E0B 0%, #EC4899 100%)' : 'var(--card-bg)',
               color: mainTab === 'comunidad' ? '#FFFFFF' : 'var(--text-main)',
@@ -326,10 +349,10 @@ export const Biblioteca = () => {
               whileTap={{ scale: 0.98 }} 
               onClick={() => setMainTab('libros')} 
               style={{ 
-                padding: '10px 8px', 
+                padding: '10px 6px', 
                 borderRadius: '16px', 
                 fontWeight: 800, 
-                fontSize: 'clamp(0.74rem, 2.2vw, 0.86rem)', 
+                fontSize: 'clamp(0.72rem, 2vw, 0.84rem)', 
                 border: mainTab === 'libros' ? 'none' : '1.5px solid var(--card-border)', 
                 background: mainTab === 'libros' ? 'linear-gradient(135deg, #A855F7, #6366F1)' : 'var(--card-bg)', 
                 color: mainTab === 'libros' ? '#fff' : 'var(--text-main)', 
@@ -347,6 +370,33 @@ export const Biblioteca = () => {
               <span style={{ fontSize: '0.68rem', opacity: 0.85, fontWeight: 600 }}>({libros.reduce((acc, l) => acc + (l.recursos?.length || 0), 0)})</span>
             </motion.button>
           )}
+
+          {/* Nueva Pestaña Obras Literarias y Apuntes */}
+          <motion.button 
+            whileHover={{ scale: 1.02 }} 
+            whileTap={{ scale: 0.98 }} 
+            onClick={() => setMainTab('literatura')} 
+            style={{ 
+              padding: '10px 6px', 
+              borderRadius: '16px', 
+              fontWeight: 800, 
+              fontSize: 'clamp(0.72rem, 2vw, 0.84rem)', 
+              border: mainTab === 'literatura' ? 'none' : '1.5px solid var(--card-border)', 
+              background: mainTab === 'literatura' ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)' : 'var(--card-bg)', 
+              color: mainTab === 'literatura' ? '#FFFFFF' : 'var(--text-main)', 
+              cursor: 'pointer', 
+              boxShadow: mainTab === 'literatura' ? '0 6px 18px rgba(16, 185, 129, 0.35)' : 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              lineHeight: '1.2'
+            }}
+          >
+            <span>📖 Obras</span>
+            <span style={{ fontSize: '0.68rem', opacity: 0.85, fontWeight: 600 }}>({obrasLiterarias.length})</span>
+          </motion.button>
         </div>
 
         {/* Global Accent-Insensitive Search Bar */}
@@ -1404,6 +1454,346 @@ export const Biblioteca = () => {
             })()
           )}
         </section>
+      )}
+
+      {/* SECCIÓN DE OBRAS LITERARIAS Y APUNTES DE REPASO */}
+      {mainTab === 'literatura' && (
+        <section style={{ maxWidth: '1080px', margin: '0 auto', width: '100%' }}>
+          {/* Barra de Filtros por Categoría y Botón Admin */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px',
+              marginBottom: '20px',
+              padding: '0 4px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {LITERATURA_CATEGORIAS.map((cat) => {
+                const isSelected = selectedCategoriaLit === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategoriaLit(cat)}
+                    style={{
+                      padding: '7px 14px',
+                      borderRadius: '12px',
+                      border: isSelected ? '1.5px solid #10B981' : '1px solid var(--card-border)',
+                      background: isSelected ? 'rgba(16, 185, 129, 0.16)' : 'var(--card-bg)',
+                      color: isSelected ? '#10B981' : 'var(--text-main)',
+                      fontWeight: 800,
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.18s ease'
+                    }}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setObraToEdit(null);
+                  setIsLitEditOpen(true);
+                }}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                }}
+              >
+                <Plus size={15} strokeWidth={2.5} />
+                <span>Nueva Obra</span>
+              </button>
+            )}
+          </div>
+
+          {/* Lista Filtrada de Obras */}
+          {(() => {
+            const filteredObras = obrasLiterarias.filter((obra) => {
+              const matchesCat = selectedCategoriaLit === 'Todas' || obra.categoria === selectedCategoriaLit;
+              if (!matchesCat) return false;
+              if (!searchQuery.trim()) return true;
+              return searchMatches([
+                obra.titulo,
+                obra.autor,
+                obra.genero,
+                obra.especie,
+                obra.corriente,
+                obra.temaPrincipal,
+                obra.resumenDetallado?.sinopsis,
+                obra.apunteRepaso?.sintesisExpress
+              ], searchQuery);
+            });
+
+            if (filteredObras.length === 0) {
+              return (
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: '48px 16px',
+                    background: 'var(--card-bg)',
+                    borderRadius: '20px',
+                    border: '1px solid var(--card-border)'
+                  }}
+                >
+                  <BookOpen size={40} color="var(--text-muted)" style={{ margin: '0 auto 12px', opacity: 0.6 }} />
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 800, color: 'var(--text-main)' }}>
+                    No se encontraron obras literarias
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-muted)' }}>
+                    {searchQuery ? 'Prueba con otro término de búsqueda.' : 'No hay obras en esta categoría.'}
+                  </p>
+                </div>
+              );
+            }
+
+            return (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '16px'
+                }}
+              >
+                {filteredObras.map((obra) => (
+                  <motion.div
+                    key={obra.id}
+                    whileHover={{ y: -4, scale: 1.01 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                    style={{
+                      borderRadius: '22px',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.06)',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      position: 'relative'
+                    }}
+                  >
+                    {/* Portada Decorativa con Efecto Lomo de Libro */}
+                    <div
+                      style={{
+                        height: '140px',
+                        background: obra.portadaGradiente || 'linear-gradient(145deg, #065f46 0%, #047857 50%, #022c22 100%)',
+                        padding: '14px 16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between',
+                        position: 'relative',
+                        color: '#FFFFFF'
+                      }}
+                    >
+                      {/* Lomo simulado en el borde izquierdo */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          top: 0,
+                          bottom: 0,
+                          width: '10px',
+                          background: 'linear-gradient(90deg, rgba(0,0,0,0.35) 0%, rgba(255,255,255,0.15) 60%, transparent 100%)',
+                          borderRight: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                      />
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingLeft: '6px' }}>
+                        <span
+                          style={{
+                            fontSize: '0.64rem',
+                            fontWeight: 900,
+                            letterSpacing: '0.05em',
+                            textTransform: 'uppercase',
+                            padding: '2px 7px',
+                            borderRadius: '6px',
+                            background: 'rgba(255, 255, 255, 0.18)',
+                            backdropFilter: 'blur(6px)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)'
+                          }}
+                        >
+                          {obra.categoria}
+                        </span>
+
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setObraToEdit(obra);
+                              setIsLitEditOpen(true);
+                            }}
+                            title="Editar esta obra"
+                            style={{
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '8px',
+                              border: '1px solid rgba(255, 255, 255, 0.25)',
+                              background: 'rgba(0, 0, 0, 0.35)',
+                              color: '#FFFFFF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Pencil size={12} />
+                          </button>
+                        )}
+                      </div>
+
+                      <div style={{ paddingLeft: '6px' }}>
+                        <h3
+                          style={{
+                            margin: 0,
+                            fontSize: '1.18rem',
+                            fontWeight: 900,
+                            lineHeight: 1.25,
+                            letterSpacing: '-0.02em',
+                            textShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                          }}
+                        >
+                          {obra.titulo}
+                        </h3>
+                        <span style={{ fontSize: '0.78rem', opacity: 0.9, fontWeight: 700 }}>
+                          {obra.autor} ({obra.año})
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Cuerpo de la tarjeta con metadatos y síntesis */}
+                    <div
+                      style={{
+                        padding: '14px 16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1,
+                        gap: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            padding: '2px 8px',
+                            borderRadius: '8px',
+                            background: 'rgba(0, 122, 255, 0.12)',
+                            color: 'var(--accent, #007AFF)'
+                          }}
+                        >
+                          {obra.especie}
+                        </span>
+                        {obra.corriente && (
+                          <span
+                            style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              padding: '2px 8px',
+                              borderRadius: '8px',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              color: '#10B981'
+                            }}
+                          >
+                            {obra.corriente}
+                          </span>
+                        )}
+                      </div>
+
+                      <p
+                        style={{
+                          margin: '2px 0 0',
+                          fontSize: '0.8rem',
+                          color: 'var(--text-muted)',
+                          lineHeight: 1.45,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {obra.temaPrincipal || obra.resumenDetallado?.sinopsis}
+                      </p>
+
+                      <div style={{ marginTop: 'auto', paddingTop: '10px' }}>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => setSelectedObra(obra)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 12px',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                            color: '#FFFFFF',
+                            fontSize: '0.82rem',
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.28)'
+                          }}
+                        >
+                          <BookOpen size={14} />
+                          <span>Leer Resumen y Apunte</span>
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            );
+          })()}
+        </section>
+      )}
+
+      {/* Modal Digital de Lectura de Obra y Apunte de Repaso */}
+      {selectedObra && (
+        <LiteraturaViewerModal
+          obra={selectedObra}
+          isOpen={!!selectedObra}
+          onClose={() => setSelectedObra(null)}
+        />
+      )}
+
+      {/* Modal de Edición de Obra (Admin) */}
+      {isLitEditOpen && (
+        <LiteraturaEditModal
+          obra={obraToEdit}
+          isOpen={isLitEditOpen}
+          onClose={() => {
+            setIsLitEditOpen(false);
+            setObraToEdit(null);
+          }}
+          onSaved={() => {
+            loadObras();
+            setIsSuccessOpen(true);
+            setSuccessContent({
+              title: 'Obra Guardada',
+              message: 'Los datos y apuntes de la obra se guardaron correctamente.'
+            });
+          }}
+        />
       )}
 
       {/* Modal interactivo de Contenedor de Colección de Libros */}

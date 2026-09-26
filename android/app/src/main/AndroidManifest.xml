@@ -31,9 +31,14 @@
                 <data android:scheme="https" android:host="rumbo-jonsu.web.app" />
             </intent-filter>
 
+            <!-- Shortcuts del launcher (menú al mantener presionado el ícono) -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+
         </activity>
 
-        <!-- TEMP-DISABLED-WIDGETS: Configuración de Fecha Elegible para el Widget de Examen
+        <!-- Configuración de Fecha Elegible para el Widget de Examen -->
         <activity
             android:name=".ExamCountdownConfigActivity"
             android:label="Elegir Fecha de Examen"
@@ -43,7 +48,6 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
             </intent-filter>
         </activity>
-        -->
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -56,10 +60,9 @@
         </provider>
 
         <!-- Widget 1: Contador de Examen con Fecha Elegible -->
-        <!-- TEMP-DISABLED-WIDGETS
         <receiver
             android:name=".ExamCountdownWidget"
-            android:label="RASTRO • Contador Examen (Fecha Elegible)"
+            android:label="RASTRO • Contador Examen"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -68,10 +71,8 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_exam_countdown_info" />
         </receiver>
-        -->
 
         <!-- Widget 2: Racha Semanal -->
-        <!-- TEMP-DISABLED-WIDGETS
         <receiver
             android:name=".WeeklyStreakWidget"
             android:label="RASTRO • Racha Semanal"
@@ -83,10 +84,8 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_weekly_streak_info" />
         </receiver>
-        -->
 
-        <!-- Widget 3: Racha Diaria -->
-        <!-- TEMP-DISABLED-WIDGETS
+        <!-- Widget 3: Racha Diaria (Duolingo Style) -->
         <receiver
             android:name=".DailyStreakWidget"
             android:label="RASTRO • Racha Diaria"
@@ -98,10 +97,8 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_daily_streak_info" />
         </receiver>
-        -->
 
         <!-- Widget 4: Recordatorio de Estudio -->
-        <!-- TEMP-DISABLED-WIDGETS
         <receiver
             android:name=".StudyReminderWidget"
             android:label="RASTRO • Recordatorio de Estudio"
@@ -113,10 +110,8 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_study_reminder_info" />
         </receiver>
-        -->
 
         <!-- Widget 5: Temporizador Pomodoro -->
-        <!-- TEMP-DISABLED-WIDGETS
         <receiver
             android:name=".PomodoroWidget"
             android:label="RASTRO • Temporizador Pomodoro"
@@ -128,10 +123,8 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_pomodoro_info" />
         </receiver>
-        -->
 
         <!-- Legacy MiniStreak Widget -->
-        <!-- TEMP-DISABLED-WIDGETS
         <receiver
             android:name=".MiniStreakWidget"
             android:label="RASTRO • Racha Rápida"
@@ -143,7 +136,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_mini_streak_info" />
         </receiver>
-        -->
     </application>
 
     <!-- Permissions -->

@@ -21,19 +21,21 @@ export function FloatingWhatsApp() {
       whileTap={{ scale: 0.92 }}
       style={{
         position: 'fixed',
-        right: '18px',
-        bottom: '88px',
+        right: '16px',
+        bottom: 'calc(94px + env(safe-area-inset-bottom, 0px))',
         zIndex: 9999,
-        width: '46px',
-        height: '46px',
+        width: '44px',
+        height: '44px',
         borderRadius: '50%',
         background: 'linear-gradient(135deg, #25D366, #128C7E)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         color: '#FFFFFF',
-        boxShadow: '0 6px 20px rgba(37, 211, 102, 0.5)',
-        textDecoration: 'none'
+        boxShadow: '0 8px 24px rgba(37, 211, 102, 0.45)',
+        textDecoration: 'none',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       }}
     >
       <svg

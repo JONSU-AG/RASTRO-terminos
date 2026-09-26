@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePomodoro } from '../context/PomodoroContext';
-import { Play, Pause, X } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Maximize2, Brain, Coffee, Sparkles, X, ArrowLeftRight } from 'lucide-react';
+import { PlayPauseMorph } from './common/MorphIcon';
 
 /**
- * Temporizador Flotante Pro: "La Bolita"
- * Ultra-compacta, no estorbosa, circular, con anillo de progreso SVG,
- * tiempo en vivo de alta legibilidad y arrastre 100% fluido en cualquier pantalla.
+ * Píldora de Pomodoro Flotante Exclusiva en Bordes Laterales (Screen Recorder Style)
+ * - Anclada estrictamente a los bordes laterales (izquierdo o derecho).
+ * - Movimiento vertical seguro a lo largo del borde (drag="y") delimitado entre el header y la barra inferior.
+ * - Siempre visible al minimizar el modal de Pomodoro, sin saltos fuera de la pantalla.
+ * - Cero emojis (iconos SVG de lucide-react).
  */
 export const PomodoroFloatingPill = () => {
   const {
@@ -14,235 +18,368 @@ export const PomodoroFloatingPill = () => {
     isOpen,
     isMinimized,
     timeLeft,
+    activeModeKey,
     activeMode,
     openModal,
     togglePlay,
-    closeAndStop,
-    progressRatio
+    addSeconds,
+    closeAndStop
   } = usePomodoro();
 
-  const [isHovered, setIsHovered] = useState(false);
+  const { isLight } = useTheme();
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [dockSide, setDockSide] = useState(() => {
+    try {
+      return localStorage.getItem('rastro_pomodoro_dock_side') || 'right';
+    } catch {
+      return 'right';
+    }
+  });
 
-  // Si el modal está abierto o no está activo, no se muestra
-  if (isOpen || (!isRunning && !isMinimized)) {
-    return null;
-  }
+  // Posición vertical segura (por defecto a 140px desde arriba)
+  const [pillY, setPillY] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem('rastro_pomodoro_y'));
+      return (!isNaN(saved) && saved >= 76) ? saved : 140;
+    } catch {
+      return 140;
+    }
+  });
 
+  const pillRef = useRef(null);
+  const isDraggingRef = useRef(false);
+
+  // Si el modal está abierto o el temporizador no está corriendo ni minimizado, no se muestra
+  const shouldShow = !isOpen && (isRunning || isMinimized);
+
+  // Persistir configuración en localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('rastro_pomodoro_dock_side', dockSide);
+      localStorage.setItem('rastro_pomodoro_y', String(pillY));
+    } catch {}
+  }, [dockSide, pillY]);
+
+  // Cerrar expansión si se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (pillRef.current && !pillRef.current.contains(e.target)) {
+        setIsExpanded(false);
+      }
+    };
+    if (isExpanded) {
+      document.addEventListener('pointerdown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside);
+    };
+  }, [isExpanded]);
+
+  // Formato mm:ss
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const formattedTime = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-  // Geometría del anillo circular
-  const size = 58;
-  const strokeWidth = 3.5;
-  const center = size / 2;
-  const radius = center - strokeWidth - 1; // 24.5px
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference * (1 - Math.max(0, Math.min(1, progressRatio)));
+  const modeColor = activeMode?.color || '#A855F7';
+  const ModeIcon = activeModeKey === 'shortBreak' 
+    ? Coffee 
+    : activeModeKey === 'longBreak' 
+      ? Sparkles 
+      : Brain;
+
+  const modeLabel = activeModeKey === 'shortBreak' 
+    ? 'Descanso' 
+    : activeModeKey === 'longBreak' 
+      ? 'Pausa' 
+      : 'Estudio';
+
+  // Alternar lado entre izquierda y derecha
+  const toggleDockSide = (e) => {
+    if (e) e.stopPropagation();
+    setDockSide(prev => (prev === 'right' ? 'left' : 'right'));
+  };
+
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+  };
+
+  const handleDragEnd = (_e, info) => {
+    if (typeof window === 'undefined') return;
+    const screenH = window.innerHeight;
+    const minY = 64;                           // respetar navbar superior
+    const maxY = Math.max(minY, screenH - 80); // respetar navbar inferior
+    const newY = Math.max(minY, Math.min(pillY + info.offset.y, maxY));
+    setPillY(newY);
+
+    // Cambio de borde si arrastró horizontalmente con fuerza
+    if (Math.abs(info.offset.x) > 60) {
+      if (dockSide === 'right' && info.offset.x < -60) {
+        setDockSide('left');
+      } else if (dockSide === 'left' && info.offset.x > 60) {
+        setDockSide('right');
+      }
+    }
+
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
+  };
+
+  const handlePillClick = () => {
+    if (isDraggingRef.current) return;
+    setIsExpanded(prev => !prev);
+  };
 
   return (
     <AnimatePresence>
-      <motion.div
-        drag
-        dragMomentum={false}
-        dragElastic={0.06}
-        whileDrag={{ scale: 1.1, cursor: 'grabbing', zIndex: 999999 }}
-        initial={{ opacity: 0, scale: 0.6, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.5, y: 20 }}
-        transition={{ type: 'spring', stiffness: 450, damping: 26 }}
-        style={{
-          position: 'fixed',
-          bottom: '92px',
-          right: '20px',
-          zIndex: 89900,
-          cursor: 'grab',
-          userSelect: 'none',
-          touchAction: 'none'
-        }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        title="Arrastra para mover a donde quieras • Clic para abrir el temporizador"
-      >
-        {/* LA BOLITA FLOTANTE CIRCULAR */}
-        <div
-          onClick={openModal}
+      {shouldShow && (
+        <motion.div
+          key="pomodoro-floating-pill"
+          ref={pillRef}
+          initial={{ opacity: 0, x: dockSide === 'right' ? 40 : -40 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: dockSide === 'right' ? 40 : -40 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+          drag="y"
+          dragMomentum={false}
+          dragElastic={0}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
           style={{
-            position: 'relative',
-            width: `${size}px`,
-            height: `${size}px`,
-            borderRadius: '50%',
-            background: 'linear-gradient(145deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 27, 75, 0.98) 100%)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            boxShadow: `0 10px 28px rgba(0, 0, 0, 0.75), 0 0 18px ${activeMode.color}45`,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            cursor: 'pointer',
-            transition: 'box-shadow 0.2s ease, transform 0.15s ease'
+            position: 'fixed',
+            top: `${pillY}px`,
+            // Semi-oculta cuando compacta: asoma solo el borde redondeado
+            // Se desliza a 8px visible cuando está expandida
+            [dockSide === 'right' ? 'right' : 'left']: isExpanded ? '8px' : '-22px',
+            transition: 'right 0.22s ease, left 0.22s ease',
+            zIndex: 99990,
+            userSelect: 'none',
+            touchAction: 'none'
           }}
         >
-          {/* Anillo de progreso SVG alrededor de la bolita */}
-          <svg
-            width={size}
-            height={size}
+          <motion.div
+            layout
+            transition={{ type: 'spring', stiffness: 450, damping: 32 }}
             style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              transform: 'rotate(-90deg)',
-              pointerEvents: 'none'
-            }}
-          >
-            {/* Pista de fondo */}
-            <circle
-              cx={center}
-              cy={center}
-              r={radius}
-              stroke="rgba(255, 255, 255, 0.12)"
-              strokeWidth={strokeWidth}
-              fill="transparent"
-            />
-            {/* Progreso activo */}
-            <circle
-              cx={center}
-              cy={center}
-              r={radius}
-              stroke={activeMode.color}
-              strokeWidth={strokeWidth}
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              fill="transparent"
-              style={{
-                filter: `drop-shadow(0 0 4px ${activeMode.color})`,
-                transition: 'stroke-dashoffset 0.4s ease'
-              }}
-            />
-          </svg>
-
-          {/* Contenido interior de la bolita: Emoji + Tiempo mm:ss */}
-          <div
-            style={{
+              background: 'var(--card-bg, #0F172A)',
+              backdropFilter: 'blur(24px) saturate(190%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(190%)',
+              borderRadius: '999px',
+              border: `1.5px solid ${modeColor}88`,
+              boxShadow: `0 8px 24px rgba(0, 0, 0, ${isLight ? '0.14' : '0.55'}), 0 0 14px ${modeColor}40`,
+              color: 'var(--text-main, #FFFFFF)',
+              overflow: 'hidden',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2,
-              lineHeight: 1
+              cursor: 'pointer',
+              boxSizing: 'border-box'
             }}
+            onClick={handlePillClick}
           >
-            <motion.span
-              animate={isRunning ? { scale: [1, 1.15, 1] } : { scale: 1 }}
-              transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-              style={{ fontSize: '0.85rem', marginBottom: '2px' }}
-            >
-              {activeMode.iconEmoji || '🧠'}
-            </motion.span>
-            <span
-              style={{
-                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-                fontSize: '0.68rem',
-                fontWeight: 900,
-                letterSpacing: '-0.02em',
-                color: '#FFFFFF',
-                textShadow: '0 1px 3px rgba(0, 0, 0, 0.8)'
-              }}
-            >
-              {formattedTime}
-            </span>
-          </div>
+            {/* ESTADO 1: PÍLDORA LATERAL COMPACTA — solo MM:SS, sin iconos SVG */}
+            {!isExpanded ? (
+              <motion.div
+                layout="position"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '5px 10px',
+                  height: '34px',
+                  boxSizing: 'border-box'
+                }}
+                title="Toca para expandir controles de Pomodoro"
+              >
+                {/* Solo el tiempo — cero SVG, cero punto pulsante */}
+                <span
+                  style={{
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                    fontSize: '0.78rem',
+                    fontWeight: 900,
+                    letterSpacing: '-0.03em',
+                    color: modeColor,
+                    lineHeight: 1
+                  }}
+                >
+                  {formattedTime}
+                </span>
+              </motion.div>
+            ) : (
+              /* ESTADO 2: PÍLDORA EXPANDIDA (CONTROLES RÁPIDOS) */
+              <motion.div
+                layout="position"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.16 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '6px 10px 6px 14px',
+                  height: '44px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* Modo y Tiempo */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginRight: '4px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ModeIcon size={12} color={modeColor} strokeWidth={2.5} />
+                    <span
+                      style={{
+                        fontSize: '0.64rem',
+                        fontWeight: 900,
+                        color: modeColor,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em'
+                      }}
+                    >
+                      {modeLabel}
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                      fontSize: '0.92rem',
+                      fontWeight: 900,
+                      letterSpacing: '-0.02em',
+                      color: 'var(--text-main, currentColor)',
+                      lineHeight: 1
+                    }}
+                  >
+                    {formattedTime}
+                  </span>
+                </div>
 
-          {/* Punto de estado pulsante (verde = activo / ámbar = pausado) */}
-          <span
-            style={{
-              position: 'absolute',
-              top: '2px',
-              right: '2px',
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              background: isRunning ? '#10B981' : '#F59E0B',
-              boxShadow: `0 0 6px ${isRunning ? '#10B981' : '#F59E0B'}`,
-              border: '1.5px solid #0F172A',
-              zIndex: 3
-            }}
-          />
+                {/* Botón Play / Pausa */}
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePlay();
+                  }}
+                  title={isRunning ? 'Pausar' : 'Iniciar'}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    background: isRunning ? 'rgba(239, 68, 68, 0.2)' : `${modeColor}30`,
+                    border: isRunning ? '1px solid #EF4444' : `1px solid ${modeColor}`,
+                    color: isRunning ? '#EF4444' : modeColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <PlayPauseMorph isPlaying={isRunning} size={14} color="currentColor" spring="bouncy" />
+                </motion.button>
 
-          {/* Botón rápido Play/Pausa al pasar el ratón */}
-          {isHovered && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                  navigator.vibrate(10);
-                }
-                togglePlay();
-              }}
-              title={isRunning ? 'Pausar' : 'Reanudar'}
-              style={{
-                position: 'absolute',
-                bottom: '-6px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '20px',
-                height: '20px',
-                borderRadius: '50%',
-                background: isRunning ? '#EF4444' : '#10B981',
-                border: '1.5px solid #0F172A',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 4,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.6)'
-              }}
-            >
-              {isRunning ? <Pause size={9} fill="#FFF" /> : <Play size={9} fill="#FFF" style={{ marginLeft: '1px' }} />}
-            </motion.button>
-          )}
+                {/* Botón +5 min */}
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addSeconds(300);
+                  }}
+                  title="Sumar 5 minutos"
+                  style={{
+                    padding: '4px 8px',
+                    borderRadius: '8px',
+                    background: 'rgba(120, 120, 128, 0.12)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
+                    color: 'var(--text-main, currentColor)',
+                    fontSize: '0.72rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  +5m
+                </motion.button>
 
-          {/* Botón rápido de cerrar (X) al pasar el ratón */}
-          {isHovered && (
-            <motion.button
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                closeAndStop();
-              }}
-              title="Cerrar temporizador"
-              style={{
-                position: 'absolute',
-                top: '-5px',
-                left: '-5px',
-                width: '18px',
-                height: '18px',
-                borderRadius: '50%',
-                background: 'rgba(239, 68, 68, 0.9)',
-                border: '1.5px solid #0F172A',
-                color: '#FFFFFF',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                zIndex: 4,
-                boxShadow: '0 2px 6px rgba(0,0,0,0.6)'
-              }}
-            >
-              <X size={10} strokeWidth={3} />
-            </motion.button>
-          )}
-        </div>
-      </motion.div>
+                {/* Botón Cambiar de Borde Lateral (Izquierda / Derecha) */}
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  type="button"
+                  onClick={toggleDockSide}
+                  title={dockSide === 'right' ? 'Mover al borde izquierdo' : 'Mover al borde derecho'}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    background: 'rgba(120, 120, 128, 0.12)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
+                    color: 'var(--text-secondary, currentColor)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <ArrowLeftRight size={12} />
+                </motion.button>
+
+                {/* Botón Abrir Reloj Completo */}
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(false);
+                    openModal();
+                  }}
+                  title="Abrir temporizador completo"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    background: 'rgba(120, 120, 128, 0.12)',
+                    border: '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
+                    color: 'var(--text-secondary, currentColor)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Maximize2 size={12} />
+                </motion.button>
+
+                {/* Botón Detener / Cerrar */}
+                <motion.button
+                  whileTap={{ scale: 0.88 }}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeAndStop();
+                  }}
+                  title="Detener y cerrar Pomodoro"
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '8px',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                    color: '#EF4444',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <X size={13} />
+                </motion.button>
+              </motion.div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 };
+
+export default PomodoroFloatingPill;

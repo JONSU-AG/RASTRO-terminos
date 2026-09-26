@@ -8,9 +8,12 @@ public class DailyStreakWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        for (int appWidgetId : appWidgetIds) {
-            WidgetHelper.updateDailyStreak(context, appWidgetManager, appWidgetId);
-        }
+        try {
+            if (context == null || appWidgetManager == null || appWidgetIds == null) return;
+            for (int appWidgetId : appWidgetIds) {
+                WidgetHelper.updateDailyStreak(context, appWidgetManager, appWidgetId);
+            }
+        } catch (Throwable ignored) {}
     }
 
     @Override

@@ -50,8 +50,21 @@ export async function syncWidgetsData({ streak, weeklyDays, examName, examDate, 
     }
 
     await Promise.all(tasks);
+
+    // Si estamos en Android nativo, actualizar los widgets inmediatamente
+    triggerNativeWidgetRefresh();
   } catch (err) {
     // Falla silenciosa si no está en entorno nativo
     console.debug('Widget sync notice (normal on web):', err);
+  }
+}
+
+export function triggerNativeWidgetRefresh(theme) {
+  try {
+    if (window.NativeWidgetBridge && typeof window.NativeWidgetBridge.refreshWidgets === 'function') {
+      window.NativeWidgetBridge.refreshWidgets(theme || '');
+    }
+  } catch (err) {
+    // Normal en web
   }
 }

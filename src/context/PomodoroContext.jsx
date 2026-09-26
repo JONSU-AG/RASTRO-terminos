@@ -41,9 +41,9 @@ export const POMODORO_MODES = {
 
 export const DEFAULT_SOUNDS_BY_MODE = {
   study: 'campana_zen',
-  shortBreak: 'pajaros_bosque',
-  longBreak: 'piano_cosmico',
-  custom: 'flauta_andina'
+  shortBreak: 'campanillas_viento',
+  longBreak: 'acordes_piano',
+  custom: 'flauta_melodica'
 };
 
 const SOUNDS_STORAGE_KEY = 'rastro_pomodoro_sounds_by_mode_v1';
@@ -77,6 +77,31 @@ export const PomodoroProvider = ({ children }) => {
       localStorage.setItem('rastro_pomo_cycles', String(customCyclesBeforeLongBreak));
     } catch {}
   }, [customStudyMinutes, customShortBreakMinutes, customLongBreakMinutes, customCyclesBeforeLongBreak]);
+
+  // Seguimiento de minutos de estudio completados hoy
+  const getTodayDateKey = () => {
+    const d = new Date();
+    return `rastro_pomodoro_today_${d.getFullYear()}_${d.getMonth() + 1}_${d.getDate()}`;
+  };
+
+  const [todayStudiedMinutes, setTodayStudiedMinutes] = useState(() => {
+    try {
+      return parseInt(localStorage.getItem(getTodayDateKey()), 10) || 0;
+    } catch {
+      return 0;
+    }
+  });
+
+  const addStudiedMinutes = useCallback((mins) => {
+    if (!mins || mins <= 0) return;
+    setTodayStudiedMinutes((prev) => {
+      const next = prev + mins;
+      try {
+        localStorage.setItem(getTodayDateKey(), String(next));
+      } catch {}
+      return next;
+    });
+  }, []);
 
   // Compatibilidad con segundos personalizados para pruebas
   const [customMinutes, setCustomMinutes] = useState(0);
@@ -133,23 +158,38 @@ export const PomodoroProvider = ({ children }) => {
   const switchMode = useCallback((modeKey) => {
     setActiveModeKey(modeKey);
     setIsRunning(false);
-    if (modeKey === 'custom') {
-      const duration = (customStudyMinutes || 25) * 60;
-      setTimeLeft(duration > 0 ? duration : 60);
+    if (modeKey === 'study') {
+      setTimeLeft((customStudyMinutes || 25) * 60);
+    } else if (modeKey === 'shortBreak') {
+      setTimeLeft((customShortBreakMinutes || 5) * 60);
+    } else if (modeKey === 'longBreak') {
+      setTimeLeft((customLongBreakMinutes || 15) * 60);
     } else {
-      setTimeLeft(POMODORO_MODES[modeKey]?.duration || 25 * 60);
+      setTimeLeft((customStudyMinutes || 25) * 60);
     }
-  }, [customStudyMinutes]);
+  }, [customStudyMinutes, customShortBreakMinutes, customLongBreakMinutes]);
 
   const resetTimer = useCallback(() => {
     setIsRunning(false);
-    if (activeModeKey === 'custom') {
-      const duration = (customStudyMinutes || 25) * 60;
-      setTimeLeft(duration > 0 ? duration : 60);
+    if (activeModeKey === 'study') {
+      setTimeLeft((customStudyMinutes || 25) * 60);
+    } else if (activeModeKey === 'shortBreak') {
+      setTimeLeft((customShortBreakMinutes || 5) * 60);
+    } else if (activeModeKey === 'longBreak') {
+      setTimeLeft((customLongBreakMinutes || 15) * 60);
     } else {
-      setTimeLeft(POMODORO_MODES[activeModeKey]?.duration || 25 * 60);
+      setTimeLeft((customStudyMinutes || 25) * 60);
     }
-  }, [activeModeKey, customStudyMinutes]);
+  }, [activeModeKey, customStudyMinutes, customShortBreakMinutes, customLongBreakMinutes]);
+
+  const setPresetDuration = useCallback((minutes) => {
+    const validMins = Math.max(1, Math.min(120, minutes));
+    setCustomStudyMinutes(validMins);
+    if (activeModeKey === 'study' || activeModeKey === 'custom') {
+      setTimeLeft(validMins * 60);
+      setIsRunning(false);
+    }
+  }, [activeModeKey]);
 
   const togglePlay = useCallback(() => {
     setIsRunning(prev => !prev);
@@ -191,6 +231,17 @@ export const PomodoroProvider = ({ children }) => {
     });
   }, []);
 
+  // Escuchar eventos globales (Widget de Android o App Shortcuts) para abrir el Pomodoro
+  useEffect(() => {
+    const handleOpen = () => openModal();
+    window.addEventListener('rastro_open_pomodoro', handleOpen);
+    window.addEventListener('rumbo_open_pomodoro', handleOpen);
+    return () => {
+      window.removeEventListener('rastro_open_pomodoro', handleOpen);
+      window.removeEventListener('rumbo_open_pomodoro', handleOpen);
+    };
+  }, [openModal]);
+
   // Tick principal del temporizador persistente en segundo plano
   useEffect(() => {
     if (!isRunning) return;
@@ -203,6 +254,7 @@ export const PomodoroProvider = ({ children }) => {
 
           if (autoCycle) {
             if (activeModeKey === 'study' || activeModeKey === 'custom') {
+              addStudiedMinutes(customStudyMinutes || 25);
               const nextCycles = completedCycles + 1;
               setCompletedCycles(nextCycles);
               const targetCycles = activeModeKey === 'custom' ? (customCyclesBeforeLongBreak || 4) : 4;
@@ -217,9 +269,12 @@ export const PomodoroProvider = ({ children }) => {
               // Fin de descanso -> volver a Estudio o Personalizado
               const nextMode = 'study';
               setActiveModeKey(nextMode);
-              return POMODORO_MODES.study.duration;
+              return (customStudyMinutes || 25) * 60;
             }
           } else {
+            if (activeModeKey === 'study' || activeModeKey === 'custom') {
+              addStudiedMinutes(customStudyMinutes || 25);
+            }
             setIsRunning(false);
             return 0;
           }
@@ -237,7 +292,9 @@ export const PomodoroProvider = ({ children }) => {
     customCyclesBeforeLongBreak,
     customLongBreakMinutes,
     customShortBreakMinutes,
-    playSoundForMode
+    customStudyMinutes,
+    playSoundForMode,
+    addStudiedMinutes
   ]);
 
   // Sincronizar tiempo de Pomodoro con el Widget de Android
@@ -290,6 +347,8 @@ export const PomodoroProvider = ({ children }) => {
         autoCycle,
         setAutoCycle,
         completedCycles,
+        todayStudiedMinutes,
+        setPresetDuration,
         soundEnabled,
         setSoundEnabled,
         soundsByMode,

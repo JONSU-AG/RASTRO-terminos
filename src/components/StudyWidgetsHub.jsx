@@ -15,14 +15,14 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { useGamification } from '../context/GamificationContext';
 import { MiRachaModal } from './MiRachaModal';
-import { OrsttyMascot } from './Mascots';
+import { OrsttyMascot, DynamicMascot, DualMascotDuo } from './Mascots';
 import { DuolingoFlameIcon } from './DuolingoFlameIcon';
 
-// CRONOGRAMA OFICIAL DE ADMISIÓN UNSA 2026-2027
+// CRONOGRAMA DE EVALUACIONES Y ADMISIÓN
 export const EXAM_SCHEDULE = [
   {
-    id: 'ceprunsa_1',
-    name: 'CEPREUNSA I FASE',
+    id: 'fase_1',
+    name: 'EVALUACIÓN I FASE',
     subtitle: 'Evaluación de Conocimientos',
     targetDate: '2026-07-05T08:00:00',
     tagColor: '#10B981',
@@ -30,26 +30,26 @@ export const EXAM_SCHEDULE = [
     badge: 'Oficial'
   },
   {
-    id: 'ordinario_1',
-    name: 'ORDINARIO I FASE',
-    subtitle: 'Evaluación General',
+    id: 'admision_1',
+    name: 'EXAMEN DE ADMISIÓN I FASE',
+    subtitle: 'Evaluación Principal',
     targetDate: '2026-08-09T08:00:00',
     tagColor: '#3B82F6',
     tagBg: 'rgba(59, 130, 246, 0.12)',
-    badge: 'UNSA'
+    badge: 'Principal'
   },
   {
     id: 'quintos',
-    name: 'CICLO QUINTOS',
-    subtitle: 'Examen de Escolares',
+    name: 'CICLO ESCOLARES',
+    subtitle: 'Admisión Preferencial',
     targetDate: '2026-11-01T08:00:00',
     tagColor: '#F59E0B',
     tagBg: 'rgba(245, 158, 11, 0.12)',
     badge: 'Escolares'
   },
   {
-    id: 'ceprunsa_2',
-    name: 'CEPREUNSA II FASE',
+    id: 'fase_2',
+    name: 'EVALUACIÓN II FASE',
     subtitle: 'Evaluación de Conocimientos',
     targetDate: '2027-01-24T08:00:00',
     tagColor: '#8B5CF6',
@@ -57,13 +57,13 @@ export const EXAM_SCHEDULE = [
     badge: 'Fase II'
   },
   {
-    id: 'ordinario_2',
-    name: 'ORDINARIO II FASE',
-    subtitle: 'Admisión General UNSA',
+    id: 'admision_2',
+    name: 'EXAMEN DE ADMISIÓN II FASE',
+    subtitle: 'Evaluación de Ingreso',
     targetDate: '2027-03-14T08:00:00',
     tagColor: '#EC4899',
     tagBg: 'rgba(236, 72, 153, 0.12)',
-    badge: 'General'
+    badge: 'Ingreso'
   }
 ];
 
@@ -455,9 +455,9 @@ export const StudyWidgetsHub = () => {
             overflow: 'hidden'
           }}
         >
-          {/* Mascota Oficial ORSTTY en esquina superior con flotación suave y lenta */}
+          {/* Mascota Oficial en esquina superior con flotación suave y lenta */}
           <div style={{ position: 'absolute', top: '10px', right: '14px', zIndex: 2 }}>
-            <OrsttyMascot mood="cheering" size={64} slow={true} />
+            <DynamicMascot mood="cheering" size={64} slow={true} />
           </div>
 
           {/* Cabecera de la Racha */}
@@ -466,8 +466,18 @@ export const StudyWidgetsHub = () => {
               <span style={{ fontSize: '0.7rem', fontWeight: 900, color: '#EA580C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 HÁBITO DE ESTUDIO
               </span>
-              <span style={{ fontSize: '0.68rem', background: 'rgba(249, 115, 22, 0.2)', color: '#C2410C', padding: '2px 8px', borderRadius: '6px', fontWeight: 800 }}>
-                {streakFreeze > 0 ? `🛡️ ${streakFreeze} escudo` : '🔥 Racha activa'}
+              <span style={{ fontSize: '0.68rem', background: 'rgba(249, 115, 22, 0.2)', color: '#C2410C', padding: '2px 8px', borderRadius: '6px', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                {streakFreeze > 0 ? (
+                  <>
+                    <ShieldCheck size={12} />
+                    <span>{streakFreeze} {streakFreeze === 1 ? 'escudo' : 'escudos'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Flame size={12} />
+                    <span>Racha activa</span>
+                  </>
+                )}
               </span>
             </div>
 

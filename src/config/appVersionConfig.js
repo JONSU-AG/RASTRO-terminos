@@ -10,10 +10,13 @@ import { Capacitor } from '@capacitor/core';
  */
 export const VERSION_CONFIG = {
   // Versión del paquete
-  version: '1.0.0-playstore',
+  version: '1.0.1',
   
   // Desconectar academias base de terceros (Esparta, Kelsen, Briceño)
   disconnectThirdPartyAcademies: true,
+
+  // Desconectar cursos y videos privados de Firebase hasta obtener autorización oficial
+  disconnectFirebaseVideos: true,
 
   // Desconectar colecciones de libros y tomos editoriales
   disconnectLibros: true,

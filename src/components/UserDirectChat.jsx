@@ -19,11 +19,8 @@ import {
   ThumbsUp,
   Heart,
   Flame,
-  Image as ImageIcon,
   Loader2,
-  X,
-  Crop,
-  Download
+  X
 } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { 
@@ -42,50 +39,6 @@ import { useAuth, ADMIN_EMAILS } from '../context/AuthContext';
 import { LiveUserAvatar, LiveUserName } from './LiveUserAvatar';
 import { ConfirmModal, NoticeModal } from './ConfirmModal';
 import { Link } from 'react-router-dom';
-import { uploadFileReliable, getDirectImageUrl, getDriveThumbnailUrl, getDriveExportUrl } from '../lib/storageHelper';
-
-// Canvas-based client-side image compression for chats (max 1000px, quality 0.72)
-// Compresses 5-15MB camera photos down to lightweight ~50-90KB strings
-// Guarantees 100% upload reliability for all users without Firestore 1MB document limit or admin restrictions
-const compressImageForChat = (fileOrDataUrl, maxWidth = 1000, maxHeight = 1000, quality = 0.72) => {
-  return new Promise((resolve) => {
-    if (!fileOrDataUrl) return resolve(null);
-
-    const processSrc = (src) => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > maxWidth || height > maxHeight) {
-          if (width > height) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const compressed = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressed);
-      };
-      img.onerror = () => resolve(src);
-      img.src = src;
-    };
-
-    if (typeof fileOrDataUrl === 'string') {
-      processSrc(fileOrDataUrl);
-    } else {
-      const reader = new FileReader();
-      reader.onload = (e) => processSrc(e.target.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(fileOrDataUrl);
-    }
-  });
-};
 
 export const UserDirectChat = ({ 
   profileUid, 
@@ -111,18 +64,13 @@ export const UserDirectChat = ({
   const [activeMessages, setActiveMessages] = useState([]);
   
   const [newMessage, setNewMessage] = useState('');
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imageUploading, setImageUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [activeActionMsg, setActiveActionMsg] = useState(null); // Message selected for long-press/click options modal
-  const [fullViewImageUrl, setFullViewImageUrl] = useState(null); // Fullscreen image viewer pop-up
-  const [imagePreviewModal, setImagePreviewModal] = useState({ isOpen: false, file: null, previewUrl: null, isCropped: false }); // Send/Preview/Crop modal
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [noticeModal, setNoticeModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   
   const chatBottomRef = useRef(null);
-  const fileInputRef = useRef(null);
 
   // Buscar usuarios (CHAT 2) — reutiliza usuarios existentes + switch Mostrar usuarios actuales
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -136,10 +84,10 @@ export const UserDirectChat = ({
     const q = query(collection(db, 'usuarios'));
     const unsub = onSnapshot(q, (snap) => {
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.id !== user?.uid).slice(0,12);
-      // Sort: admin users first
+      // Sort: owner admin users first
       all.sort((a, b) => {
-        const aIsAdmin = ADMIN_EMAILS.includes(a.email?.toLowerCase()) || a.role === 'admin' || a.isAdmin === true;
-        const bIsAdmin = ADMIN_EMAILS.includes(b.email?.toLowerCase()) || b.role === 'admin' || b.isAdmin === true;
+        const aIsAdmin = Boolean(a.email && ADMIN_EMAILS.includes(a.email.toLowerCase()));
+        const bIsAdmin = Boolean(b.email && ADMIN_EMAILS.includes(b.email.toLowerCase()));
         if (aIsAdmin && !bIsAdmin) return -1;
         if (!aIsAdmin && bIsAdmin) return 1;
         return 0;
@@ -156,10 +104,10 @@ export const UserDirectChat = ({
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const term = userSearchQuery.toLowerCase();
       const filtered = all.filter(u => u.id !== user?.uid && ((u.displayName||'').toLowerCase().includes(term) || (u.email||'').toLowerCase().includes(term) || u.id.toLowerCase().includes(term))).slice(0,12);
-      // Sort: admin users first
+      // Sort: owner admin users first
       filtered.sort((a, b) => {
-        const aIsAdmin = ADMIN_EMAILS.includes(a.email?.toLowerCase()) || a.role === 'admin' || a.isAdmin === true;
-        const bIsAdmin = ADMIN_EMAILS.includes(b.email?.toLowerCase()) || b.role === 'admin' || b.isAdmin === true;
+        const aIsAdmin = Boolean(a.email && ADMIN_EMAILS.includes(a.email.toLowerCase()));
+        const bIsAdmin = Boolean(b.email && ADMIN_EMAILS.includes(b.email.toLowerCase()));
         if (aIsAdmin && !bIsAdmin) return -1;
         if (!aIsAdmin && bIsAdmin) return 1;
         return 0;
@@ -319,27 +267,16 @@ export const UserDirectChat = ({
     }
   }, [activeMessages.length]);
 
-  // Send a private 1-on-1 message (WhatsApp style)
+  // Send a private 1-on-1 message (Strictly text / permissions)
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if ((!newMessage.trim() && !selectedImage) || !user || submitting || !currentPartnerUid) return;
+    if (!newMessage.trim() || !user || submitting || !currentPartnerUid) return;
 
     setSubmitting(true);
     const text = newMessage.trim();
     const now = Date.now();
 
     try {
-      let imageUrl = null;
-      if (selectedImage) {
-        setImageUploading(true);
-        // Guarantee lightweight canvas-compressed Base64 for instant upload and rendering on any device
-        if (typeof selectedImage === 'string' && selectedImage.startsWith('data:image')) {
-          imageUrl = selectedImage;
-        } else {
-          imageUrl = await compressImageForChat(selectedImage);
-        }
-      }
-
       const participants = [user.uid, currentPartnerUid].sort();
       const conversationId = participants.join('_');
 
@@ -357,7 +294,6 @@ export const UserDirectChat = ({
         recipientName: targetPartnerName,
         recipientPhoto: targetPartnerPhoto,
         text: text,
-        imageUrl: imageUrl,
         createdAt: serverTimestamp(),
         timestamp: now,
         read: false
@@ -375,9 +311,7 @@ export const UserDirectChat = ({
             conversationId: conversationId,
             targetPath: `/chats?with=${user.uid}`,
             text: text ? text.trim() : '',
-            message: imageUrl 
-              ? (text ? `📷 Te envió una foto: "${text.slice(0, 160)}"` : '📷 Te envió una imagen') 
-              : `te envió un mensaje: "${text.slice(0, 180)}"`,
+            message: `te envió un mensaje: "${text.slice(0, 180)}"`,
             read: false,
             createdAt: serverTimestamp(),
             timestamp: now
@@ -388,8 +322,6 @@ export const UserDirectChat = ({
       }
 
       setNewMessage('');
-      setSelectedImage(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       console.error("Error sending private message:", err);
       setNoticeModal({ 
@@ -400,7 +332,6 @@ export const UserDirectChat = ({
       });
     } finally {
       setSubmitting(false);
-      setImageUploading(false);
     }
   };
 
@@ -832,7 +763,7 @@ export const UserDirectChat = ({
                       flex: 1
                     }}>
                       {group.lastMsg?.senderUid === user.uid ? 'Tú: ' : ''}
-                      {group.lastMsg?.imageUrl ? (group.lastMsg?.text ? `📷 ${group.lastMsg.text}` : '📷 Foto') : (group.lastMsg?.text || 'Mensaje')}
+                      {group.lastMsg?.imageUrl ? (group.lastMsg?.text ? `[Foto] ${group.lastMsg.text}` : '[Foto]') : (group.lastMsg?.text || 'Mensaje')}
                     </p>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
@@ -903,7 +834,7 @@ export const UserDirectChat = ({
             <div style={{ display:'flex', flexDirection:'column', gap:'8px', maxHeight:'420px', overflowY:'auto' }}>
               {userSearchQuery.trim() ? (
                 userSearchResults.length===0 ? <span style={{ fontSize:'0.82rem', color:'var(--text-secondary)', textAlign:'center', padding:'12px' }}>Sin resultados</span> : userSearchResults.map(u=> {
-                  const isUserAdmin = ADMIN_EMAILS.includes(u.email?.toLowerCase()) || u.role === 'admin' || u.isAdmin === true;
+                  const isUserAdmin = Boolean(u.email && ADMIN_EMAILS.includes(u.email.toLowerCase()));
                   const isHiddenAdmin = HIDDEN_ADMINS.some(h => (u.displayName || '').toLowerCase().includes(h) || (u.id || '').toLowerCase().includes(h));
                   const showBadge = isUserAdmin && !isHiddenAdmin;
                   return (
@@ -911,7 +842,7 @@ export const UserDirectChat = ({
                     <LiveUserAvatar uid={u.id} fallbackName={u.displayName} fallbackPhoto={u.photoURL} size={36} />
                     <div style={{ display:'flex', flexDirection:'column', flex:1, minWidth:0 }}>
                       <span style={{ fontWeight:700, fontSize:'0.86rem', color:'var(--text-main)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{u.displayName || 'Estudiante'}</span>
-                      {showBadge && <span style={{ padding:'1px 7px', borderRadius:'6px', background:'linear-gradient(135deg, #F59E0B, #D97706)', color:'#fff', fontSize:'0.65rem', fontWeight:800, whiteSpace:'nowrap', marginTop:'2px', alignSelf:'flex-start' }}>👑 Admin - Soporte</span>}
+                      {showBadge && <span style={{ padding:'1px 7px', borderRadius:'6px', background:'linear-gradient(135deg, #F59E0B, #D97706)', color:'#fff', fontSize:'0.65rem', fontWeight:800, whiteSpace:'nowrap', marginTop:'2px', alignSelf:'flex-start', display:'inline-flex', alignItems:'center', gap:'3px' }}><ShieldCheck size={11} /> Admin - Soporte</span>}
                       {u.carrera && !u.carrera.toLowerCase().includes('fundador') && !u.carrera.toLowerCase().includes('creador') && <span style={{ fontSize:'0.72rem', color:'var(--text-secondary)' }}>{u.carrera}</span>}
                     </div>
                     <span style={{ padding:'4px 10px', borderRadius:'8px', background:'rgba(16,185,129,0.14)', color:'#059669', fontSize:'0.74rem', fontWeight:800, display:'inline-flex', alignItems:'center', gap:'4px' }}>
@@ -922,7 +853,7 @@ export const UserDirectChat = ({
                 })
               ) : showCurrentUsers ? (
                 currentUsers.length===0 ? <span style={{ fontSize:'0.78rem', color:'var(--text-secondary)', textAlign:'center', padding:'12px' }}>No hay usuarios para mostrar</span> : currentUsers.map(u=> {
-                  const isUserAdmin = ADMIN_EMAILS.includes(u.email?.toLowerCase()) || u.role === 'admin' || u.isAdmin === true;
+                  const isUserAdmin = Boolean(u.email && ADMIN_EMAILS.includes(u.email.toLowerCase()));
                   const isHiddenAdmin = HIDDEN_ADMINS.some(h => (u.displayName || '').toLowerCase().includes(h) || (u.id || '').toLowerCase().includes(h));
                   const showBadge = isUserAdmin && !isHiddenAdmin;
                   return (
@@ -930,7 +861,7 @@ export const UserDirectChat = ({
                     <LiveUserAvatar uid={u.id} fallbackName={u.displayName} fallbackPhoto={u.photoURL} size={36} />
                     <div style={{ display:'flex', flexDirection:'column', flex:1, minWidth:0 }}>
                       <span style={{ fontWeight:700, fontSize:'0.86rem', color:'var(--text-main)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{u.displayName || 'Estudiante'}</span>
-                      {showBadge && <span style={{ padding:'1px 7px', borderRadius:'6px', background:'linear-gradient(135deg, #F59E0B, #D97706)', color:'#fff', fontSize:'0.65rem', fontWeight:800, whiteSpace:'nowrap', marginTop:'2px', alignSelf:'flex-start' }}>👑 Admin - Soporte</span>}
+                      {showBadge && <span style={{ padding:'1px 7px', borderRadius:'6px', background:'linear-gradient(135deg, #F59E0B, #D97706)', color:'#fff', fontSize:'0.65rem', fontWeight:800, whiteSpace:'nowrap', marginTop:'2px', alignSelf:'flex-start', display:'inline-flex', alignItems:'center', gap:'3px' }}><ShieldCheck size={11} /> Admin - Soporte</span>}
                       {u.carrera && !u.carrera.toLowerCase().includes('fundador') && !u.carrera.toLowerCase().includes('creador') && <span style={{ fontSize:'0.72rem', color:'var(--text-secondary)' }}>{u.carrera}</span>}
                     </div>
                     <span style={{ padding:'4px 10px', borderRadius:'8px', background:'rgba(16,185,129,0.14)', color:'#059669', fontSize:'0.74rem', fontWeight:800, display:'inline-flex', alignItems:'center', gap:'4px' }}>
@@ -1190,57 +1121,6 @@ export const UserDirectChat = ({
                     userSelect: 'none'
                   }}
                 >
-                  {/* Message Image Attachment */}
-                  {msg.imageUrl && (
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setFullViewImageUrl(getDirectImageUrl(msg.imageUrl));
-                      }}
-                      style={{ 
-                        marginBottom: msg.text ? '6px' : '0', 
-                        borderRadius: '12px', 
-                        overflow: 'hidden', 
-                        border: '1px solid rgba(255,255,255,0.25)', 
-                        cursor: 'pointer',
-                        background: 'rgba(0,0,0,0.15)',
-                        minWidth: '160px',
-                        minHeight: '100px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <img
-                        src={getDirectImageUrl(msg.imageUrl)}
-                        alt="Imagen adjunta"
-                        onError={(e) => {
-                          e.target.onerror = null; // Prevent infinite error loops
-                          const thumbUrl = getDriveThumbnailUrl(msg.imageUrl, 'w800');
-                          const exportUrl = getDriveExportUrl(msg.imageUrl);
-                          
-                          if (thumbUrl && e.target.src !== thumbUrl) {
-                            e.target.src = thumbUrl;
-                          } else if (exportUrl && e.target.src !== exportUrl) {
-                            e.target.src = exportUrl;
-                          } else {
-                            e.target.style.display = 'none';
-                            if (e.target.parentNode) {
-                              e.target.parentNode.innerHTML = `<div style="padding: 10px; font-size: 0.78rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 6px;">📷 Ver Imagen</div>`;
-                            }
-                          }
-                        }}
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '280px',
-                          objectFit: 'contain',
-                          display: 'block',
-                          borderRadius: '10px'
-                        }}
-                      />
-                    </div>
-                  )}
-
                   {/* Message Text & Timestamp in WhatsApp slim inline layout */}
                   <div style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '8px', justifyContent: 'space-between' }}>
                     {msg.text && (
@@ -1269,38 +1149,6 @@ export const UserDirectChat = ({
         )}
       </div>
 
-      {/* Selected Image Preview Chip */}
-      {selectedImage && (
-        <div style={{
-          padding: '6px 12px',
-          background: 'rgba(16, 185, 129, 0.12)',
-          borderTop: '1px solid var(--card-border)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '0.8rem',
-          color: '#10B981',
-          fontWeight: 700
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
-            <ImageIcon size={14} />
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {selectedImage.name}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedImage(null);
-              if (fileInputRef.current) fileInputRef.current.value = '';
-            }}
-            style={{ border: 'none', background: 'transparent', color: '#EF4444', cursor: 'pointer' }}
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-
       {/* WhatsApp Chat Input Bar */}
       <form onSubmit={handleSendMessage} style={{
         padding: '10px 10px',
@@ -1313,58 +1161,11 @@ export const UserDirectChat = ({
         boxSizing: 'border-box',
         overflow: 'hidden'
       }}>
-        {/* Hidden File Input for Image Attachment */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={async (e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              try {
-                const compressedUrl = await compressImageForChat(file);
-                setImagePreviewModal({ isOpen: true, file: file, previewUrl: compressedUrl, isCropped: false });
-                setSelectedImage(compressedUrl);
-              } catch (err) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setImagePreviewModal({ isOpen: true, file: file, previewUrl: reader.result, isCropped: false });
-                  setSelectedImage(reader.result);
-                };
-                reader.readAsDataURL(file);
-              }
-            }
-          }}
-        />
-
-        {/* Attachment Button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          title="Adjuntar Imagen"
-          style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            border: 'none',
-            background: selectedImage ? 'rgba(16, 185, 129, 0.18)' : 'rgba(120, 120, 128, 0.12)',
-            color: selectedImage ? '#10B981' : 'var(--text-secondary)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0
-          }}
-        >
-          <ImageIcon size={17} />
-        </button>
-
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          placeholder={`Escribe a ${displayPartnerName}...`}
+          placeholder={`Escribe a ${displayPartnerName} para coordinar permisos...`}
           style={{
             flex: 1,
             minWidth: 0,
@@ -1383,7 +1184,7 @@ export const UserDirectChat = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           type="submit"
-          disabled={(!newMessage.trim() && !selectedImage) || submitting || imageUploading}
+          disabled={!newMessage.trim() || submitting}
           style={{
             width: '42px',
             height: '42px',
@@ -1540,232 +1341,7 @@ export const UserDirectChat = ({
         )}
       </AnimatePresence>
 
-      {/* 1. Fullscreen Image Viewer Pop-up Modal */}
-      <AnimatePresence>
-        {fullViewImageUrl && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setFullViewImageUrl(null)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.92)',
-              backdropFilter: 'blur(10px)',
-              zIndex: 99999,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px'
-            }}
-          >
-            <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '10px' }}>
-              <a
-                href={fullViewImageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={e => e.stopPropagation()}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '12px',
-                  background: 'rgba(255,255,255,0.15)',
-                  color: '#FFF',
-                  textDecoration: 'none',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <Download size={14} /> Abrir original
-              </a>
-              <button
-                type="button"
-                onClick={() => setFullViewImageUrl(null)}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  border: 'none',
-                  background: 'rgba(255,255,255,0.2)',
-                  color: '#FFFFFF',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
 
-            <motion.img
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              src={fullViewImageUrl}
-              alt="Vista completa"
-              onError={(e) => {
-                const thumbUrl = getDriveThumbnailUrl(fullViewImageUrl, 'w1600');
-                const exportUrl = getDriveExportUrl(fullViewImageUrl);
-                if (e.target.src !== thumbUrl && e.target.src !== exportUrl) {
-                  e.target.src = thumbUrl;
-                } else if (e.target.src === thumbUrl && thumbUrl !== exportUrl) {
-                  e.target.src = exportUrl;
-                }
-              }}
-              onClick={e => e.stopPropagation()}
-              style={{
-                maxWidth: '94vw',
-                maxHeight: '85vh',
-                objectFit: 'contain',
-                borderRadius: '16px',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
-              }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* 2. Send Image Preview & Crop Modal */}
-      <AnimatePresence>
-        {imagePreviewModal.isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => {
-              setImagePreviewModal({ isOpen: false, file: null, previewUrl: null, isCropped: false });
-              setSelectedImage(null);
-            }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.85)',
-              backdropFilter: 'blur(8px)',
-              zIndex: 1000150,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '16px'
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 15 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 15 }}
-              onClick={e => e.stopPropagation()}
-              style={{
-                width: '100%',
-                maxWidth: '420px',
-                borderRadius: '24px',
-                background: 'var(--card-bg)',
-                border: '1.5px solid var(--card-border)',
-                padding: '20px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.4)'
-              }}
-            >
-              {/* Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ImageIcon size={18} style={{ color: '#10B981' }} /> Vista Previa de Imagen
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setImagePreviewModal({ isOpen: false, file: null, previewUrl: null, isCropped: false });
-                    setSelectedImage(null);
-                  }}
-                  style={{ border: 'none', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
-              {/* Image Box */}
-              <div style={{
-                width: '100%',
-                maxHeight: '320px',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                background: '#000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <img
-                  src={imagePreviewModal.previewUrl}
-                  alt="Vista previa"
-                  style={{
-                    maxWidth: '100%',
-                    maxHeight: '320px',
-                    objectFit: 'contain'
-                  }}
-                />
-              </div>
-
-              {/* Controls & Actions */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setImagePreviewModal({ isOpen: false, file: null, previewUrl: null, isCropped: false });
-                      setSelectedImage(null);
-                      if (fileInputRef.current) fileInputRef.current.value = '';
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      borderRadius: '14px',
-                      border: '1px solid var(--card-border)',
-                      background: 'transparent',
-                      color: '#EF4444',
-                      fontSize: '0.88rem',
-                      fontWeight: 800,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancelar
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      setImagePreviewModal({ isOpen: false, file: null, previewUrl: null, isCropped: false });
-                      handleSendMessage(e);
-                    }}
-                    style={{
-                      flex: 1.5,
-                      padding: '12px',
-                      borderRadius: '14px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
-                      color: '#FFF',
-                      fontSize: '0.88rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: '0 4px 14px rgba(16, 185, 129, 0.4)'
-                    }}
-                  >
-                    <Send size={16} /> Enviar Foto
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <ConfirmModal
         isOpen={confirmModal.isOpen}

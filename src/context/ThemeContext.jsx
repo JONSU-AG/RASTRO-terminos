@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { Preferences } from '@capacitor/preferences';
+import { triggerNativeWidgetRefresh } from '../lib/widgetSync';
 
 const ThemeContext = createContext();
 
@@ -10,6 +12,10 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('rumbo-theme', theme);
+    try {
+      Preferences.set({ key: 'rumbo_active_theme', value: theme }).catch(() => {});
+      triggerNativeWidgetRefresh(theme);
+    } catch {}
 
     // Update PWA Status Bar theme-color dynamically to match the exact background of each user theme
     const themeColors = {

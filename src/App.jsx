@@ -8,7 +8,6 @@ import { LiquidNavbar } from './components/LiquidNavbar';
 import { CookieBanner } from './components/CookieBanner';
 import { IOSModal } from './components/IOSModal';
 import { TermsModal } from './components/TermsModal';
-import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 import { GuestSaveBanner } from './components/GuestSaveBanner';
 import { WarningBanner } from './components/WarningBanner';
 import { ChooseUsernameModal } from './components/ChooseUsernameModal';
@@ -146,6 +145,7 @@ export function App() {
     window.addEventListener('rastro_open_terms', handleOpenTerms);
     // Botón atrás de Android: navega dentro de la app; solo minimiza si ya está en el inicio
     let backBtnListener = null;
+    let urlOpenListener = null;
     (async () => {
       try {
         if (!Capacitor.isNativePlatform()) return;
@@ -156,12 +156,32 @@ export function App() {
             CapApp.minimizeApp();
           }
         });
+
+        // Manejo de deep links y apertura desde widgets/accesos directos
+        urlOpenListener = await CapApp.addListener('appUrlOpen', (data) => {
+          if (!data?.url) return;
+          const urlStr = data.url;
+          if (urlStr.includes('pomodoro')) {
+            window.dispatchEvent(new CustomEvent('rastro_open_pomodoro'));
+          } else if (urlStr.includes('#/')) {
+            const hash = urlStr.substring(urlStr.indexOf('#'));
+            window.location.hash = hash;
+          } else {
+            try {
+              const parsed = new URL(urlStr);
+              if (parsed.pathname && parsed.pathname !== '/') {
+                window.location.hash = '#' + parsed.pathname;
+              }
+            } catch {}
+          }
+        });
       } catch {}
     })();
     return () => {
       window.removeEventListener('rumbo_open_terms', handleOpenTerms);
       window.removeEventListener('rastro_open_terms', handleOpenTerms);
       try { backBtnListener?.remove(); } catch {}
+      try { urlOpenListener?.remove(); } catch {}
     };
   }, []);
 
@@ -203,11 +223,11 @@ export function App() {
                 {/* Liquid Floating Navbar */}
                 <LiquidNavbar />
 
-                {/* Dynamic Island Pomodoro Floating Pill (Visible solo cuando el temporizador está activo en segundo plano) */}
-                <PomodoroFloatingPill />
-
-                {/* Global Pomodoro Modal */}
-                <PomodoroModal />
+                {/* Dynamic Island Pomodoro Floating Pill & Modal */}
+                <ErrorBoundary>
+                  <PomodoroFloatingPill />
+                  <PomodoroModal />
+                </ErrorBoundary>
 
                 {/* Native Device & Push Notification Listener */}
                 <DeviceNotificationsListener />
@@ -220,9 +240,6 @@ export function App() {
 
                 {/* In-App On-Screen Notice Banner (Llamado de atención de moderación) */}
                 <WarningBanner />
-
-                {/* Floating Elements */}
-                <FloatingWhatsApp />
 
                 {/* Cookie & Terms Banner */}
                 <CookieBanner onOpenTerms={() => setIsTermsOpen(true)} />

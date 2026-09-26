@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { toggleSaveMaterialItem, getLocalSavedMaterials, isItemSavedInList } from '../lib/savedHelper';
+import { toggleSaveMaterialItem, isItemSavedInList } from '../lib/savedHelper';
+import { BookmarkCheckMorph } from './common/MorphIcon';
 
 export const BookmarkButton = ({ item, size = 'normal', showText = true, onToggle = null }) => {
   const { user } = useAuth();
@@ -53,11 +53,12 @@ export const BookmarkButton = ({ item, size = 'normal', showText = true, onToggl
         boxShadow: isSaved ? '0 2px 8px rgba(245, 158, 11, 0.25)' : 'none'
       }}
     >
-      {isSaved ? (
-        <BookmarkCheck size={isSmall ? 15 : 18} style={{ color: '#F59E0B' }} />
-      ) : (
-        <Bookmark size={isSmall ? 15 : 18} />
-      )}
+      <BookmarkCheckMorph
+        isSaved={isSaved}
+        size={isSmall ? 15 : 18}
+        color={isSaved ? '#F59E0B' : 'currentColor'}
+        spring="snappy"
+      />
       {showText && (
         <span>{isSaved ? 'Guardado' : 'Guardar'}</span>
       )}

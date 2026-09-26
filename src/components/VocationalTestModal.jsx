@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Compass, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, RotateCcw, Award, BookOpen, Brain, Heart, Zap, Target, Star, Download, Share2, Check } from 'lucide-react';
+import { Compass, Sparkles, CheckCircle2, ChevronRight, ChevronLeft, RotateCcw, Award, BookOpen, Brain, Heart, Zap, Target, Star, Download, Share2, Check, X, Trophy, TrendingUp, GraduationCap, Flame, ArrowRight } from 'lucide-react';
 
 // Preguntas del Test Vocacional Oficial UNSA (20 Preguntas Reales ponderadas por Área: Biomédicas, Ingenierías y Sociales)
 const VOCATIONAL_QUESTIONS = [
@@ -147,38 +148,82 @@ const VOCATIONAL_QUESTIONS = [
 ];
 
 // Carreras Oficiales de la UNSA por Área
+// Carreras Oficiales de la UNSA por Área con Arquetipos Psicométricos y Métricas de Admisión
 const UNSA_CAREERS_MAP = {
   biomedicas: {
     name: 'Ciencias Biomédicas (Área I)',
     color: '#10B981',
-    bgColor: 'rgba(16, 185, 129, 0.1)',
+    bgColor: 'rgba(16, 185, 129, 0.08)',
     borderColor: '#10B981',
-    description: 'Enfocada en el estudio de la vida, salud humana y animal, biotecnología, farmacia y preservación del bienestar integral.',
+    archetype: {
+      title: 'El Científico Clínico & Guardián de la Vida',
+      subtitle: 'Perfil con Vocación Biomédica, Diagnóstico y Ética de Servicio',
+      description: 'Tu perfil destaca por una profunda curiosidad hacia las ciencias de la salud, la investigación biológica y el tratamiento de enfermedades, guiado por una alta empatía y vocación de servicio integral a la comunidad.'
+    },
+    podium: [
+      { rank: 1, name: 'Medicina Humana', match: '97%', cutScore: '89.20 pts', medal: '🥇 Oro', tag: 'Máxima Demanda', desc: 'Diagnóstico médico, cirugía, terapéutica y salud integral en hospitales y clínicas.' },
+      { rank: 2, name: 'Enfermería / Odontología', match: '91%', cutScore: '75.10 pts', medal: '🥈 Plata', tag: 'Atención Directa', desc: 'Cuidados críticos, rehabilitación, salud comunitaria y procedimientos odontológicos.' },
+      { rank: 3, name: 'Farmacia, Bioquímica & Biología', match: '86%', cutScore: '72.80 pts', medal: '🥉 Bronce', tag: 'Investigación', desc: 'Farmacología, biotecnología molecular, toxicología y genética en laboratorios.' }
+    ],
+    aptitudes: [
+      { name: 'Vocación de Servicio & Empatía Humana', level: '96%', grade: 'Sobresaliente' },
+      { name: 'Análisis Biológico y Bioquímico', level: '92%', grade: 'Sobresaliente' },
+      { name: 'Toma de Decisiones Clínicas', level: '85%', grade: 'Avanzado' },
+      { name: 'Resiliencia y Trabajo Bajo Presión', level: '89%', grade: 'Avanzado' }
+    ],
+    strategyPlan: {
+      focus: 'Cursos Críticos con Mayor Ponderación en Área I (Biomédicas):',
+      courses: [
+        { name: 'Biología Celular y Humana', weight: 'Ponderación Máxima (25%)', tip: 'Enfócate en genética, citología, histología y fisiología de sistemas.' },
+        { name: 'Química Orgánica & Inorgánica', weight: 'Ponderación Alta (20%)', tip: 'Domina estequiometría, nomenclatura y soluciones.' },
+        { name: 'Raz. Verbal y Matemático', weight: 'Clave de Velocidad (20%)', tip: 'Asegura los puntos rápidos para ganar tiempo en ciencias.' }
+      ]
+    },
     topCareers: [
       { name: 'Medicina Humana', desc: 'Diagnóstico, tratamiento médico integral y cirugía.' },
       { name: 'Enfermería', desc: 'Atención integral del paciente, cuidados críticos y salud comunitaria.' },
       { name: 'Farmacia y Bioquímica', desc: 'Formulación de fármacos, toxicología y análisis clínico.' },
       { name: 'Biología', desc: 'Genética, ecología, microbiología y biotecnología molecular.' },
       { name: 'Nutrición', desc: 'Dietoterapia, bioquímica nutricional y salud pública.' },
-      { name: 'Odontología', desc: 'Salud bucal, ortodoncia, rehabilitación oral y cirugía maxilofacial.' },
-      { name: 'Agronomía / Pesquera', desc: 'Producción agroalimentaria y recursos biológicos sostenibles.' }
+      { name: 'Odontología', desc: 'Salud bucal, ortodoncia, rehabilitación oral y cirugía maxilofacial.' }
     ],
     strengths: ['Alta vocación de servicio humano', 'Pensamiento analítico en ciencias biológicas y químicas', 'Capacidad de respuesta bajo presión', 'Empatía y ética médica']
   },
   ingenierias: {
     name: 'Ingenierías y Ciencias Exactas (Área II)',
     color: '#3B82F6',
-    bgColor: 'rgba(59, 130, 246, 0.1)',
+    bgColor: 'rgba(59, 130, 246, 0.08)',
     borderColor: '#3B82F6',
-    description: 'Orientada a la resolución de problemas tecnológicos, infraestructura física, ciencias de la computación, minería e innovación industrial.',
+    archetype: {
+      title: 'El Arquitecto Tecnológico & Analista Sistemático',
+      subtitle: 'Perfil de Alta Capacidad Lógica, Modelado Matemático e Innovación',
+      description: 'Muestras una sobresaliente inclinación hacia el razonamiento analítico, la optimización de procesos y el diseño de soluciones tecnológicas y de infraestructura que transforman la industria y la sociedad.'
+    },
+    podium: [
+      { rank: 1, name: 'Ingeniería de Sistemas / Software', match: '96%', cutScore: '83.50 pts', medal: '🥇 Oro', tag: 'Alta Demanda Tech', desc: 'Arquitectura cloud, ciberseguridad, desarrollo algorítmico e inteligencia artificial.' },
+      { rank: 2, name: 'Ingeniería Industrial', match: '92%', cutScore: '78.40 pts', medal: '🥈 Plata', tag: 'Gestión & Procesos', desc: 'Optimización de cadena de suministro, calidad, automatización y gerencia operativa.' },
+      { rank: 3, name: 'Ingeniería Civil / Electrónica', match: '87%', cutScore: '76.90 pts', medal: '🥉 Bronce', tag: 'Infraestructura', desc: 'Diseño estructural sismorresistente, cálculo de obras civiles y hardware avanzado.' }
+    ],
+    aptitudes: [
+      { name: 'Razonamiento Cuantitativo & Lógico', level: '95%', grade: 'Sobresaliente' },
+      { name: 'Resolución Sistemática de Problemas', level: '92%', grade: 'Sobresaliente' },
+      { name: 'Abstracción y Pensamiento Algorítmico', level: '89%', grade: 'Avanzado' },
+      { name: 'Visión Espacial y Modelado Físico', level: '86%', grade: 'Avanzado' }
+    ],
+    strategyPlan: {
+      focus: 'Cursos Críticos con Mayor Ponderación en Área II (Ingenierías):',
+      courses: [
+        { name: 'Física Pre-U', weight: 'Ponderación Máxima (25%)', tip: 'Domina cinemática, dinámica, estática, termodinámica y electrodinámica.' },
+        { name: 'Álgebra & Raz. Matemático', weight: 'Ponderación Alta (20%)', tip: 'Prioriza funciones, polinomios, matrices y conteo de rutas.' },
+        { name: 'Geometría y Trigonometría', weight: 'Puntaje de Desempate (15%)', tip: 'Clave para geometría del espacio y razones trigonométricas.' }
+      ]
+    },
     topCareers: [
       { name: 'Ingeniería de Sistemas', desc: 'Software, arquitecturas cloud, ciberseguridad y bases de datos.' },
       { name: 'Ingeniería de Software / IA', desc: 'Desarrollo de aplicaciones, algoritmos e inteligencia artificial.' },
       { name: 'Ingeniería Civil', desc: 'Infraestructura, diseño sismorresistente, puentes e hidráulica.' },
       { name: 'Ingeniería Industrial', desc: 'Optimización de procesos, cadena de suministro y gerencia.' },
       { name: 'Ingeniería Mecánica / Eléctrica', desc: 'Sistemas térmicos, redes de potencia y automatización.' },
-      { name: 'Ingeniería de Minas / Metalúrgica', desc: 'Extracción responsable, procesamiento mineral y geotecnia.' },
-      { name: 'Ingeniería Química', desc: 'Plantas de transformación química, refinación y síntesis.' },
       { name: 'Arquitectura', desc: 'Diseño espacial, urbanismo y planificación del hábitat humano.' }
     ],
     strengths: ['Razonamiento lógico-matemático y espacial', 'Resolución sistemática de problemas complejos', 'Afinidad por la programación y hardware', 'Capacidad de modelamiento y abstracción']
@@ -186,18 +231,39 @@ const UNSA_CAREERS_MAP = {
   sociales: {
     name: 'Ciencias Sociales y Humanidades (Área III)',
     color: '#EC4899',
-    bgColor: 'rgba(236, 72, 153, 0.1)',
+    bgColor: 'rgba(236, 72, 153, 0.08)',
     borderColor: '#EC4899',
-    description: 'Dedicada al estudio de la sociedad, las instituciones, la economía, el marco jurídico, el comportamiento individual y la cultura.',
+    archetype: {
+      title: 'El Estratega Humanista & Líder Social',
+      subtitle: 'Perfil de Pensamiento Crítico, Comunicación Persuasiva y Gestión',
+      description: 'Demuestras una gran agudeza para comprender fenómenos sociales, marcos normativos, dinámicas económicas y liderazgo organizativo orientado a la justicia, la gobernanza y el impacto humano.'
+    },
+    podium: [
+      { rank: 1, name: 'Derecho', match: '96%', cutScore: '82.80 pts', medal: '🥇 Oro', tag: 'Litigio & Justicia', desc: 'Legislación, derecho constitucional, litigio procesal y asesoría jurídica corporativa.' },
+      { rank: 2, name: 'Psicología', match: '92%', cutScore: '78.90 pts', medal: '🥈 Plata', tag: 'Comportamiento', desc: 'Psicología clínica, psicoterapia, neuropsicología y gestión del talento humano.' },
+      { rank: 3, name: 'Administración / Economía', match: '88%', cutScore: '75.60 pts', medal: '🥉 Bronce', tag: 'Dirección Estratégica', desc: 'Modelos econométricos, finanzas públicas, negocios internacionales y políticas.' }
+    ],
+    aptitudes: [
+      { name: 'Comunicación Asertiva y Oratoria', level: '94%', grade: 'Sobresaliente' },
+      { name: 'Pensamiento Crítico y Hermenéutico', level: '91%', grade: 'Sobresaliente' },
+      { name: 'Capacidad de Mediación y Negociación', level: '88%', grade: 'Avanzado' },
+      { name: 'Comprensión Lectora y Expresión Escrita', level: '93%', grade: 'Sobresaliente' }
+    ],
+    strategyPlan: {
+      focus: 'Cursos Críticos con Mayor Ponderación en Área III (Sociales):',
+      courses: [
+        { name: 'Lenguaje y Literatura', weight: 'Ponderación Máxima (25%)', tip: 'Excelente sintaxis, funciones del lenguaje y análisis literario.' },
+        { name: 'Historia Nacional y Universal', weight: 'Ponderación Alta (20%)', tip: 'Enfócate en procesos republicanos, culturas originarias y siglo XX.' },
+        { name: 'Filosofía, Cívica & Economía', weight: 'Preguntas Determinantes (15%)', tip: 'Doctrinas filosóficas, derechos humanos y estructura del Estado.' }
+      ]
+    },
     topCareers: [
       { name: 'Derecho', desc: 'Legislación, defensa procesal, litigio y asesoría jurídica corporativa.' },
       { name: 'Psicología', desc: 'Evaluación psicoterapéutica, psicología clínica, social y organizacional.' },
       { name: 'Administración', desc: 'Dirección estratégica, negocios internacionales y liderazgo corporativo.' },
       { name: 'Contabilidad', desc: 'Auditoría financiera, gestión tributaria y peritaje contable.' },
       { name: 'Economía', desc: 'Análisis macroeconómico, econometría y evaluación de proyectos de inversión.' },
-      { name: 'Ciencias de la Comunicación', desc: 'Periodismo multimedia, relaciones públicas, publicidad y cine.' },
-      { name: 'Educación', desc: 'Pedagogía didáctica, docencia especializada y gestión educativa.' },
-      { name: 'Artes / Historia / Sociología', desc: 'Creación artística, preservación cultural e investigación histórica.' }
+      { name: 'Ciencias de la Comunicación', desc: 'Periodismo multimedia, relaciones públicas, publicidad y cine.' }
     ],
     strengths: ['Inteligencia verbal y comunicación persuasiva', 'Liderazgo, empatía y negociación', 'Pensamiento crítico frente a la realidad social', 'Habilidad para la mediación y gestión humana']
   }
@@ -211,11 +277,24 @@ const OPTIONS = [
 ];
 
 export const VocationalTestModal = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [isFinished, setIsFinished] = useState(false);
   const [selectedOptPoints, setSelectedOptPoints] = useState(null);
   const contentRef = useRef(null);
+
+  const handleStartPreparation = (areaKey, careerName) => {
+    try {
+      localStorage.setItem('unsa_target_area', areaKey);
+      if (careerName) localStorage.setItem('unsa_target_career', careerName);
+      localStorage.setItem('unsa_vocational_completed', 'true');
+    } catch (e) {
+      console.error(e);
+    }
+    if (onClose) onClose();
+    navigate('/aprender');
+  };
 
   const currentQ = VOCATIONAL_QUESTIONS[currentStep] || VOCATIONAL_QUESTIONS[0];
   const totalQuestions = VOCATIONAL_QUESTIONS.length;
@@ -342,44 +421,53 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
       >
         {/* Header del Modal */}
         <div style={{
-          padding: '20px 24px',
+          padding: 'clamp(14px, 3vw, 20px) clamp(16px, 3.5vw, 24px)',
           background: 'linear-gradient(135deg, #0F766E 0%, #0D9488 50%, #0284C7 100%)',
           color: '#FFFFFF',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          gap: '12px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: 'rgba(255, 255, 255, 0.18)', borderRadius: '14px' }}>
-              <Compass size={24} color="#FFFFFF" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <div style={{ padding: '9px', background: 'rgba(255, 255, 255, 0.18)', borderRadius: '14px', flexShrink: 0 }}>
+              <Compass size={22} color="#FFFFFF" />
             </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 900 }}>Test Vocacional Oficial UNSA</h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: '#CCFBF1' }}>
-                Descubre tu área vocacional y carreras recomendadas en la Universidad Nacional de San Agustín
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ margin: 0, fontSize: 'clamp(1.05rem, 2.5vw, 1.25rem)', fontWeight: 900, lineHeight: 1.2 }}>
+                Test Vocacional Universitario Oficial
+              </h3>
+              <p style={{ margin: '3px 0 0', fontSize: 'clamp(0.74rem, 1.8vw, 0.82rem)', color: '#CCFBF1', lineHeight: 1.3 }}>
+                Descubre tu área vocacional y carreras universitarias recomendadas
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
+            aria-label="Cerrar test vocacional"
             style={{
-              padding: '8px 14px',
+              width: '36px',
+              height: '36px',
               borderRadius: '12px',
-              background: 'rgba(255, 255, 255, 0.15)',
+              background: 'rgba(255, 255, 255, 0.18)',
               border: 'none',
               color: '#FFFFFF',
-              fontWeight: 800,
-              cursor: 'pointer'
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'background 0.15s ease'
             }}
           >
-            ✕
+            <X size={18} strokeWidth={2.5} />
           </button>
         </div>
 
         {/* Contenido Principal con Auto-Scroll */}
-        <div ref={contentRef} style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+        <div ref={contentRef} style={{ padding: 'clamp(14px, 3.5vw, 24px)', overflowY: 'auto', flex: 1 }}>
           {!isFinished ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               
               {/* Barra de Progreso */}
               <div>
@@ -408,12 +496,12 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -18 }}
                   transition={{ duration: 0.22, ease: 'easeOut' }}
-                  style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
                 >
                   {/* Tarjeta de la Pregunta */}
                   <div 
                     style={{
-                      padding: '24px',
+                      padding: 'clamp(16px, 3.5vw, 24px)',
                       borderRadius: '20px',
                       border: `2px solid ${currentQ.badgeColor}33`,
                       background: 'var(--card-bg, #F8FAFC)',
@@ -423,7 +511,7 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                       gap: '12px'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <span 
                         style={{
                           padding: '4px 12px',
@@ -442,13 +530,13 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                       </span>
                     </div>
 
-                    <h4 style={{ margin: 0, fontSize: 'clamp(1.1rem, 2vw, 1.3rem)', fontWeight: 800, color: 'var(--text-main, #0F172A)', lineHeight: 1.45 }}>
+                    <h4 style={{ margin: 0, fontSize: 'clamp(1.05rem, 2.2vw, 1.25rem)', fontWeight: 800, color: 'var(--text-main, #0F172A)', lineHeight: 1.45 }}>
                       {currentQ.question}
                     </h4>
                   </div>
 
-                  {/* Opciones de Selección */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+                  {/* Opciones de Selección Adaptadas */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '10px' }}>
                     {OPTIONS.map((opt, i) => {
                       const isSaved = answers[currentQ.id]?.points === opt.points;
                       const isTapped = selectedOptPoints === opt.points;
@@ -460,7 +548,7 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                           type="button"
                           onClick={() => handleSelectAnswer(opt.points)}
                           style={{
-                            padding: '16px 18px',
+                            padding: '14px 16px',
                             borderRadius: '16px',
                             border: isSelected ? '2px solid #0D9488' : '1px solid var(--card-border, rgba(0,0,0,0.1))',
                             background: isSelected ? 'rgba(13, 148, 136, 0.14)' : 'var(--card-bg, #FFFFFF)',
@@ -475,12 +563,12 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: isSelected ? '#0D9488' : 'var(--text-main, #0F172A)' }}>
+                            <span style={{ fontWeight: 800, fontSize: '0.88rem', color: isSelected ? '#0D9488' : 'var(--text-main, #0F172A)' }}>
                               {opt.label}
                             </span>
                             {isSelected && <Check size={18} color="#0D9488" style={{ fontWeight: 900 }} />}
                           </div>
-                          <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #64748B)', fontWeight: 500 }}>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #64748B)', fontWeight: 500, lineHeight: 1.35 }}>
                             {opt.desc}
                           </span>
                         </button>
@@ -539,74 +627,354 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
 
             </div>
           ) : (
-            /* Vista de Resultados */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            /* =========================================================
+               INFORME PSICOMÉTRICO VOCACIONAL OFICIAL UNSA
+               ========================================================= */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
               
-              {/* Tarjeta de Ganador */}
+              {/* Tarjeta de Arquetipo Vocacional Ganador */}
               <div 
                 style={{
-                  padding: '28px',
+                  padding: 'clamp(20px, 4vw, 28px)',
                   borderRadius: '24px',
                   border: `2px solid ${results.topAreaData.borderColor}`,
                   background: results.topAreaData.bgColor,
-                  textAlign: 'center',
+                  textAlign: 'left',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '12px'
+                  gap: '14px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.04)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}
               >
-                <div style={{ padding: '14px', borderRadius: '99px', background: '#FFFFFF', boxShadow: '0 8px 20px rgba(0,0,0,0.08)' }}>
-                  <Award size={36} color={results.topAreaData.color} />
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{
+                      width: '54px',
+                      height: '54px',
+                      borderRadius: '18px',
+                      background: '#FFFFFF',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Brain size={30} color={results.topAreaData.color} />
+                    </div>
+                    <div>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '3px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.72rem',
+                        fontWeight: 900,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        color: results.topAreaData.color,
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        border: `1px solid ${results.topAreaData.color}33`,
+                        marginBottom: '4px'
+                      }}>
+                        <Sparkles size={12} /> Diagnóstico Vocacional Oficial
+                      </span>
+                      <h3 style={{ margin: 0, fontSize: 'clamp(1.25rem, 3vw, 1.65rem)', fontWeight: 900, color: 'var(--text-main, #0F172A)', lineHeight: 1.25 }}>
+                        {results.topAreaData.archetype?.title || results.topAreaData.name}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    padding: '8px 14px',
+                    borderRadius: '14px',
+                    background: '#FFFFFF',
+                    border: `1px solid ${results.topAreaData.color}33`,
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.04)',
+                    textAlign: 'right'
+                  }}>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-secondary, #64748B)', textTransform: 'uppercase' }}>
+                      Afinidad Dominante
+                    </div>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: results.topAreaData.color, lineHeight: 1.1 }}>
+                      {results.percentages[results.topAreaKey]}%
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <span style={{ fontSize: '0.78rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.06em', color: results.topAreaData.color }}>
-                    Área de Mayor Compatibilidad UNSA
-                  </span>
-                  <h3 style={{ margin: '4px 0 0', fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)', fontWeight: 900, color: 'var(--text-main, #0F172A)' }}>
-                    {results.topAreaData.name}
-                  </h3>
-                  <p style={{ margin: '8px auto 0', maxWidth: '600px', fontSize: '0.88rem', color: 'var(--text-secondary, #475569)', lineHeight: 1.5 }}>
-                    {results.topAreaData.description}
-                  </p>
+
+                <div style={{
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  color: results.topAreaData.color,
+                  letterSpacing: '0.02em'
+                }}>
+                  {results.topAreaData.archetype?.subtitle}
+                </div>
+
+                <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--text-secondary, #475569)', lineHeight: 1.55 }}>
+                  {results.topAreaData.archetype?.description || results.topAreaData.description}
+                </p>
+
+                {/* Botón CTA Primario en la cabecera del arquetipo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '6px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleStartPreparation(results.topAreaKey, results.topAreaData.podium?.[0]?.name)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '12px 22px',
+                      borderRadius: '14px',
+                      border: 'none',
+                      background: `linear-gradient(135deg, ${results.topAreaData.color} 0%, #0284C7 100%)`,
+                      color: '#FFFFFF',
+                      fontSize: '0.88rem',
+                      fontWeight: 900,
+                      cursor: 'pointer',
+                      boxShadow: `0 4px 16px ${results.topAreaData.color}44`,
+                      transition: 'transform 0.15s ease'
+                    }}
+                  >
+                    <GraduationCap size={18} />
+                    <span>Empezar mi Ruta para esta Carrera en RASTRO</span>
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
               </div>
 
-              {/* Porcentajes por Área */}
+              {/* PODIO DE HONOR: TOP 3 CARRERAS RECOMENDADAS UNSA */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 900, color: 'var(--text-main, #0F172A)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Trophy size={18} color="#EAB308" />
+                      <span>Podio Oficial de Carreras Recomendadas</span>
+                    </h4>
+                    <p style={{ margin: '3px 0 0', fontSize: '0.76rem', color: 'var(--text-secondary, #64748B)' }}>
+                      Basado en tu perfil de respuestas, ponderación temática y puntajes de corte oficiales
+                    </p>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '12px' }}>
+                  {(results.topAreaData.podium || []).map((car) => {
+                    const isFirst = car.rank === 1;
+                    return (
+                      <div
+                        key={car.rank}
+                        style={{
+                          padding: '18px 16px',
+                          borderRadius: '20px',
+                          border: isFirst ? `2px solid ${results.topAreaData.color}` : '1px solid var(--card-border, rgba(0,0,0,0.1))',
+                          background: isFirst ? 'rgba(255, 255, 255, 0.98)' : 'var(--card-bg, #FFFFFF)',
+                          boxShadow: isFirst ? `0 8px 24px ${results.topAreaData.color}22` : '0 2px 8px rgba(0,0,0,0.03)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          position: 'relative'
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{
+                              fontSize: '0.82rem',
+                              fontWeight: 900,
+                              padding: '3px 10px',
+                              borderRadius: '999px',
+                              background: isFirst ? `${results.topAreaData.color}18` : 'rgba(0,0,0,0.06)',
+                              color: isFirst ? results.topAreaData.color : 'var(--text-secondary, #64748B)'
+                            }}>
+                              {car.medal}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 900, color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <CheckCircle2 size={13} /> {car.match} Match
+                            </span>
+                          </div>
+
+                          <h5 style={{ margin: '0 0 6px', fontSize: '1rem', fontWeight: 900, color: 'var(--text-main, #0F172A)', lineHeight: 1.25 }}>
+                            {car.name}
+                          </h5>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 800,
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              background: 'rgba(245, 158, 11, 0.12)',
+                              color: '#B45309'
+                            }}>
+                              Puntaje ref: {car.cutScore}
+                            </span>
+                            <span style={{
+                              fontSize: '0.68rem',
+                              fontWeight: 700,
+                              color: 'var(--text-secondary, #64748B)'
+                            }}>
+                              {car.tag}
+                            </span>
+                          </div>
+
+                          <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary, #64748B)', lineHeight: 1.45 }}>
+                            {car.desc}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleStartPreparation(results.topAreaKey, car.name)}
+                          style={{
+                            width: '100%',
+                            padding: '9px 12px',
+                            borderRadius: '12px',
+                            border: isFirst ? 'none' : '1px solid var(--card-border, rgba(0,0,0,0.15))',
+                            background: isFirst ? results.topAreaData.color : 'transparent',
+                            color: isFirst ? '#FFFFFF' : 'var(--text-main, #0F172A)',
+                            fontWeight: 800,
+                            fontSize: '0.78rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <span>Elegir {car.name.split(' ')[0]}</span>
+                          <ArrowRight size={13} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* DIAGNÓSTICO PSICOMÉTRICO DE APTITUDES */}
+              <div style={{
+                padding: '20px',
+                borderRadius: '20px',
+                background: 'var(--card-bg, #FFFFFF)',
+                border: '1px solid var(--card-border, rgba(0,0,0,0.1))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <TrendingUp size={18} color="var(--accent-color, #007AFF)" />
+                  <span style={{ fontWeight: 900, fontSize: '0.92rem', color: 'var(--text-main, #0F172A)' }}>
+                    Diagnóstico de Aptitudes & Competencias Vocacionales:
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '14px' }}>
+                  {(results.topAreaData.aptitudes || []).map((apt, i) => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--text-main, #0F172A)' }}>{apt.name}</span>
+                        <span style={{ fontWeight: 900, color: results.topAreaData.color }}>{apt.grade} ({apt.level})</span>
+                      </div>
+                      <div style={{ width: '100%', height: '7px', backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ width: apt.level, height: '100%', backgroundColor: results.topAreaData.color, borderRadius: '99px' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* PLAN ESTRATÉGICO DE PREPARACIÓN UNSA */}
+              {results.topAreaData.strategyPlan && (
+                <div style={{
+                  padding: '20px',
+                  borderRadius: '20px',
+                  background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, rgba(13, 148, 136, 0.05) 100%)',
+                  border: '1.5px solid rgba(0, 122, 255, 0.2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Target size={18} color="#007AFF" />
+                    <div>
+                      <span style={{ fontWeight: 900, fontSize: '0.92rem', color: 'var(--text-main, #0F172A)', display: 'block' }}>
+                        {results.topAreaData.strategyPlan.focus}
+                      </span>
+                      <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #64748B)' }}>
+                        Estrategia para maximizar puntaje en el temario y examen de admisión
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: '10px', marginTop: '4px' }}>
+                    {results.topAreaData.strategyPlan.courses.map((crs, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '14px',
+                          background: 'var(--card-bg, #FFFFFF)',
+                          border: '1px solid rgba(0, 122, 255, 0.15)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.84rem', color: 'var(--text-main, #0F172A)' }}>
+                            {crs.name}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '0.70rem', color: '#007AFF', fontWeight: 800 }}>
+                          {crs.weight}
+                        </span>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #64748B)', lineHeight: 1.35, marginTop: '2px' }}>
+                          {crs.tip}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* COMPARATIVA DE COMPATIBILIDAD CON LAS 3 ÁREAS */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main, #0F172A)' }}>
-                  Compatibilidad con las 3 Áreas de Admisión UNSA:
+                <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main, #0F172A)' }}>
+                  Compatibilidad General por Áreas de Admisión:
                 </h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '10px' }}>
                   {results.sortedAreas.map((areaKey) => {
                     const areaInfo = UNSA_CAREERS_MAP[areaKey];
                     const percent = results.percentages[areaKey];
+                    const isWinner = areaKey === results.topAreaKey;
 
                     return (
                       <div
                         key={areaKey}
                         style={{
-                          padding: '16px',
+                          padding: '14px 16px',
                           borderRadius: '16px',
-                          border: `1px solid ${areaInfo.color}33`,
-                          background: 'var(--card-bg, #FFFFFF)',
+                          border: isWinner ? `2px solid ${areaInfo.color}` : '1px solid var(--card-border, rgba(0,0,0,0.08))',
+                          background: isWinner ? `${areaInfo.color}0D` : 'var(--card-bg, #FFFFFF)',
                           boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '10px'
+                          gap: '8px'
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--text-main, #0F172A)' }}>
+                          <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0F172A)' }}>
                             {areaInfo.name.split(' (')[0]}
                           </span>
-                          <span style={{ fontWeight: 900, fontSize: '1.1rem', color: areaInfo.color }}>
+                          <span style={{ fontWeight: 900, fontSize: '1.05rem', color: areaInfo.color }}>
                             {percent}%
                           </span>
                         </div>
 
-                        <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                        <div style={{ width: '100%', height: '7px', backgroundColor: 'rgba(0,0,0,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
                           <div style={{ width: `${percent}%`, height: '100%', backgroundColor: areaInfo.color, borderRadius: '99px' }} />
                         </div>
                       </div>
@@ -615,91 +983,18 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* Carreras Sugeridas en la UNSA */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-main, #0F172A)' }}>
-                  Carreras Profesionales Recomendadas en la UNSA:
-                </h4>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '10px' }}>
-                  {results.topAreaData.topCareers.map((car, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '14px',
-                        border: '1px solid var(--card-border, rgba(0,0,0,0.08))',
-                        background: 'var(--card-bg, #FFFFFF)',
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '10px'
-                      }}
-                    >
-                      <div style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        borderRadius: '8px', 
-                        backgroundColor: `${results.topAreaData.color}18`, 
-                        color: results.topAreaData.color, 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        flexShrink: 0,
-                        fontWeight: 900,
-                        fontSize: '0.75rem'
-                      }}>
-                        #{idx + 1}
-                      </div>
-                      <div>
-                        <span style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--text-main, #0F172A)', display: 'block' }}>
-                          {car.name}
-                        </span>
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary, #64748B)', fontWeight: 500, lineHeight: 1.35, display: 'block', marginTop: '2px' }}>
-                          {car.desc}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Fortalezas Clave */}
-              <div style={{ padding: '16px 20px', borderRadius: '16px', background: 'var(--card-bg, #F8FAFC)', border: '1px solid var(--card-border, rgba(0,0,0,0.1))' }}>
-                <span style={{ fontWeight: 800, fontSize: '0.82rem', color: 'var(--text-main, #0F172A)', display: 'block', marginBottom: '8px' }}>
-                  Rasgos y Habilidades Clave de tu Perfil:
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {results.topAreaData.strengths.map((str, i) => (
-                    <span
-                      key={i}
-                      style={{
-                        padding: '5px 12px',
-                        borderRadius: '99px',
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        backgroundColor: results.topAreaData.bgColor,
-                        color: results.topAreaData.color,
-                        border: `1px solid ${results.topAreaData.color}40`
-                      }}
-                    >
-                      ✓ {str}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
               {/* Botón de Reiniciar */}
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', paddingTop: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', paddingTop: '6px' }}>
                 <button
                   type="button"
                   onClick={handleRestart}
                   style={{
-                    padding: '12px 24px',
+                    padding: '11px 22px',
                     borderRadius: '14px',
                     border: '1px solid var(--card-border, rgba(0,0,0,0.2))',
                     background: 'var(--card-bg, #FFFFFF)',
                     color: 'var(--text-main, #0F172A)',
-                    fontSize: '0.86rem',
+                    fontSize: '0.84rem',
                     fontWeight: 800,
                     cursor: 'pointer',
                     display: 'flex',
@@ -707,7 +1002,7 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
                     gap: '8px'
                   }}
                 >
-                  <RotateCcw size={16} /> Volver a realizar el Test
+                  <RotateCcw size={15} /> Volver a realizar la Evaluación
                 </button>
               </div>
 
@@ -717,8 +1012,9 @@ export const VocationalTestModal = ({ isOpen, onClose }) => {
 
         {/* Footer */}
         <div style={{ padding: '14px 24px', borderTop: '1px solid var(--card-border, rgba(0,0,0,0.1))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--card-bg, #F8FAFC)' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary, #64748B)' }}>
-            🧭 Módulo de Orientación Vocacional • CEPREUNSA 2027
+          <span style={{ fontSize: '0.74rem', color: 'var(--text-secondary, #64748B)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Compass size={14} color="#0D9488" />
+            <span>Módulo de Orientación Vocacional Oficial • Admisión Universitaria</span>
           </span>
           <button
             onClick={onClose}

@@ -9,6 +9,7 @@ import {
   ChevronUp, 
   BookOpen, 
   ArrowRight, 
+  ArrowLeft,
   Clock, 
   Ban, 
   EyeOff, 
@@ -18,10 +19,6 @@ import {
   FileText, 
   Dna, 
   Target,
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
   Radio,
   HelpCircle,
   CheckCircle2,
@@ -35,7 +32,8 @@ import {
   Compass,
   Layers,
   Award,
-  Flag
+  Flag,
+  MessageSquare
 } from 'lucide-react';
 import { deactivateOrstty } from '../../lib/orsttySettings';
 import { IOSModal } from '../../components/IOSModal';
@@ -54,9 +52,6 @@ import { usePomodoro } from '../../context/PomodoroContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
   askOrsttyGemini, 
-  speakOrsttyAlexa, 
-  stopOrsttyAlexaVoice, 
-  createOrsttyVoiceRecognizer,
   PREU_SUBJECTS 
 } from '../../services/orsttyGeminiService';
 
@@ -64,43 +59,36 @@ import {
 registerAllRastroTools();
 
 const QUICK_STARTERS = [
-  { label: '🧭 Test Vocacional UNSA', icon: Compass, query: 'Quiero hacer el test vocacional para saber qué carrera estudiar en la UNSA' },
-  { label: '🧬 Área Biomédicas (Biología)', icon: Dna, query: 'Quiero estudiar el área de Biomédicas, temario de Biología y Medicina' },
-  { label: '⚡ Área Ingenierías (Física/Álgebra)', icon: Zap, query: 'Quiero estudiar el área de Ingenierías, fórmulas de Física y Álgebra' },
-  { label: '🏛️ Área Sociales (Humanidades)', icon: BookOpen, query: 'Quiero estudiar el área de Sociales, temario de Filosofía y Cívica' },
-  { label: '🎯 Simulador Oficial de Examen', icon: Trophy, query: 'Quiero abrir el simulador de examen cronometrado' },
-  { label: '📚 Libros y Separatas PDF', icon: Library, query: 'Quiero ver el material compartido, compendios y tomos de CEPREUNSA' },
-  { label: '⏱️ Pomodoro de 25 min', icon: Clock, query: 'Inicia un cronómetro pomodoro para estudiar' }
+  { label: 'Test Vocacional UNSA', icon: Compass, query: 'Quiero hacer el test vocacional para saber qué carrera estudiar en la UNSA' },
+  { label: 'Área Biomédicas (Biología)', icon: Dna, query: 'Quiero estudiar el área de Biomédicas, temario de Biología y Medicina' },
+  { label: 'Área Ingenierías (Física/Álgebra)', icon: Zap, query: 'Quiero estudiar el área de Ingenierías, fórmulas de Física y Álgebra' },
+  { label: 'Área Sociales (Humanidades)', icon: BookOpen, query: 'Quiero estudiar el área de Sociales, temario de Filosofía y Cívica' },
+  { label: 'Simulador Oficial de Examen', icon: Trophy, query: 'Quiero abrir el simulador de examen cronometrado' },
+  { label: 'Libros y Separatas PDF', icon: Library, query: 'Quiero ver el material compartido, compendios y tomos de CEPREUNSA' },
+  { label: 'Pomodoro de 25 min', icon: Clock, query: 'Inicia un cronómetro pomodoro para estudiar' }
 ];
 
 const INITIAL_MESSAGE = {
   id: 'welcome',
   sender: 'orstty',
-  text: '¡Hola! Soy **ORSTTY**, tu asistente y tutor inteligente para el examen de admisión UNSA. Si tienes dudas sobre qué carrera elegir o quieres que te oriente por área (**Biomédicas**, **Ingenierías**, **Sociales**), o si quieres ir al origen de cualquier materia, dímelo y te enviaré una **tarjeta especial** para enviarte directo al contenido.',
+  text: '¡Hola! Soy **ORSTTY**, tu tutor inteligente para el examen de admisión UNSA. ¿En qué área o tema nos enfocamos hoy? Puedo orientarte con teoría oficial, cursos en video o preguntas tipo examen.',
   suggestions: [
-    'Quiero hacer el Test Vocacional',
-    'Ver Área Biomédicas (Biología)',
-    'Ver Área Ingenierías (Física)',
-    'Ver Área Sociales (Filosofía)',
-    'Abrir Simulador de Examen'
+    'Test Vocacional UNSA',
+    'Biomédicas (Biología)',
+    'Ingenierías (Física)',
+    'Sociales (Filosofía)',
+    'Simulador de Examen'
   ],
-  originCard: {
-    type: 'VOCATIONAL_TEST',
-    title: '🧭 Test Vocacional Oficial UNSA',
-    badge: 'Orientación Vocacional',
-    badgeColor: '#A855F7',
-    target: 'VOCATIONAL_TEST',
-    description: 'Diagnóstico de 20 preguntas reales para identificar tu afinidad profesional y calcular tu perfil para la UNSA.',
-    ctaLabel: '✨ Iniciar Test Vocacional Ahora',
-    previewItems: ['20 Preguntas Oficiales', 'Puntaje Ponderado', 'Diagnóstico de Carrera']
-  },
   timestamp: Date.now()
 };
 
-const STORAGE_KEY = 'rastro_orstty_chat_history';
+const STORAGE_KEY = 'rastro_orstty_chat_history_v4';
 
 export function OrsttyChat({ 
   onClose = null,
+  onBack = null,
+  isAdmin = false,
+  onOpenDeactivate = null,
   isDrawer = false,
   className = '' 
 }) {
@@ -131,20 +119,6 @@ export function OrsttyChat({
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeContext, setActiveContext] = useState(() => getContext());
   
-  // Asistente de Voz estilo Alexa
-  const [isVoiceModeActive, setIsVoiceModeActive] = useState(() => {
-    try {
-      return localStorage.getItem('rastro_orstty_voice_mode') === 'true';
-    } catch {
-      return false;
-    }
-  });
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [currentSpeakingMsgId, setCurrentSpeakingMsgId] = useState(null);
-  const [voiceTranscript, setVoiceTranscript] = useState('');
-  const recognizerRef = useRef(null);
-
   // Selector rápido de Materias
   const [showSubjectDrawer, setShowSubjectDrawer] = useState(false);
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState(null);
@@ -182,23 +156,6 @@ export function OrsttyChat({
     } catch {}
   }, [messages]);
 
-  // Guardar preferencia de modo voz
-  useEffect(() => {
-    try {
-      localStorage.setItem('rastro_orstty_voice_mode', isVoiceModeActive ? 'true' : 'false');
-    } catch {}
-  }, [isVoiceModeActive]);
-
-  // Detener voz al desmontar
-  useEffect(() => {
-    return () => {
-      stopOrsttyAlexaVoice();
-      if (recognizerRef.current) {
-        try { recognizerRef.current.stop(); } catch {}
-      }
-    };
-  }, []);
-
   // Tope de mensajes renderizados: los chats largos no traban el celular.
   // Se muestran los últimos 40 con botón para cargar anteriores.
   const [visibleMsgCount, setVisibleMsgCount] = useState(40);
@@ -212,83 +169,6 @@ export function OrsttyChat({
   useEffect(() => {
     scrollToBottom();
   }, [messages.length, isProcessing]);
-
-  // Reproducir o detener voz para un mensaje específico
-  const toggleSpeechForMessage = (msgId, text) => {
-    if (isSpeaking && currentSpeakingMsgId === msgId) {
-      stopOrsttyAlexaVoice();
-      setIsSpeaking(false);
-      setCurrentSpeakingMsgId(null);
-      return;
-    }
-
-    stopOrsttyAlexaVoice();
-    setIsSpeaking(true);
-    setCurrentSpeakingMsgId(msgId);
-
-    speakOrsttyAlexa(
-      text,
-      () => {
-        setIsSpeaking(true);
-        setCurrentSpeakingMsgId(msgId);
-      },
-      () => {
-        setIsSpeaking(false);
-        setCurrentSpeakingMsgId(null);
-      },
-      () => {
-        setIsSpeaking(false);
-        setCurrentSpeakingMsgId(null);
-      }
-    );
-  };
-
-  // Iniciar / detener escucha por micrófono estilo Alexa
-  const handleToggleVoiceInput = () => {
-    if (isListening) {
-      if (recognizerRef.current) {
-        try { recognizerRef.current.stop(); } catch {}
-      }
-      setIsListening(false);
-      return;
-    }
-
-    const recognizer = createOrsttyVoiceRecognizer(
-      (result) => {
-        setVoiceTranscript(result.text);
-        if (result.isFinal && result.text.trim()) {
-          setIsListening(false);
-          setVoiceTranscript('');
-          handleSendMessage(result.text.trim());
-        }
-      },
-      (status) => {
-        setIsListening(status === 'listening');
-        if (status === 'listening') {
-          setEngineState(ORSTTY_STATES.LISTENING || ORSTTY_STATES.THINKING);
-        } else {
-          setEngineState(ORSTTY_STATES.IDLE);
-        }
-      },
-      (err) => {
-        console.warn('Voice error:', err);
-        setIsListening(false);
-        setEngineState(ORSTTY_STATES.IDLE);
-      }
-    );
-
-    if (recognizer) {
-      recognizerRef.current = recognizer;
-      try {
-        recognizer.start();
-        setIsListening(true);
-      } catch (e) {
-        console.warn('Recognition start failed:', e);
-      }
-    } else {
-      alert('Tu navegador no soporta entrada de voz directa. Puedes escribir tu consulta en el teclado.');
-    }
-  };
 
   // Ejecución de acciones sugeridas por el Asistente
   const handleExecuteAction = (action) => {
@@ -354,10 +234,6 @@ export function OrsttyChat({
           timestamp: Date.now()
         }]);
         setEngineState(ORSTTY_STATES.HAPPY);
-
-        if (isVoiceModeActive) {
-          toggleSpeechForMessage(botMsgId, responseText);
-        }
         return;
       }
 
@@ -374,10 +250,6 @@ export function OrsttyChat({
           timestamp: Date.now()
         }]);
         setEngineState(ORSTTY_STATES.HAPPY);
-
-        if (isVoiceModeActive) {
-          toggleSpeechForMessage(botMsgId, respuestaAvanzada);
-        }
         return;
       }
 
@@ -421,12 +293,6 @@ export function OrsttyChat({
       setMessages(prev => [...prev, botMsg]);
       setEngineState(localItems.length > 0 || geminiResult.isGemini ? ORSTTY_STATES.FOUND : ORSTTY_STATES.HAPPY);
 
-      // Si el modo voz Alexa está encendido, pronunciar la respuesta
-      if (isVoiceModeActive) {
-        const textToSpeak = geminiResult.speechSummary || geminiResult.text;
-        toggleSpeechForMessage(botMsgId, textToSpeak);
-      }
-
       // Volver a IDLE después de unos segundos
       setTimeout(() => {
         setEngineState(prev => (prev === ORSTTY_STATES.FOUND || prev === ORSTTY_STATES.HAPPY ? ORSTTY_STATES.IDLE : prev));
@@ -451,7 +317,6 @@ export function OrsttyChat({
   };
 
   const handleClearChat = () => {
-    stopOrsttyAlexaVoice();
     clearContext();
     setMessages([INITIAL_MESSAGE]);
     setEngineState(ORSTTY_STATES.IDLE);
@@ -471,21 +336,19 @@ export function OrsttyChat({
         width: '100%',
         maxWidth: '100%',
         boxSizing: 'border-box',
-        background: isLight ? '#FFFFFF' : 'var(--bg-main, #0F172A)',
+        background: isLight ? '#FFFFFF' : 'var(--bg-main, #0B0F19)',
         color: isLight ? '#0F172A' : 'var(--text-main, #F8FAFC)',
-        borderRadius: isDrawer ? '24px 24px 0 0' : '20px',
+        borderRadius: isDrawer ? '24px 24px 0 0' : 0,
         overflow: 'hidden',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
-        border: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(124, 58, 237, 0.25)',
         position: 'relative'
       }}
     >
-      {/* Barra de Encabezado con Avatar, Estado y Controles Alexa */}
+      {/* Header Nativo Unificado (56px) */}
       <div 
         style={{
-          padding: '10px 12px',
-          background: isLight ? '#F1F5F9' : 'linear-gradient(135deg, rgba(124, 58, 237, 0.2) 0%, rgba(147, 51, 234, 0.1) 100%)',
-          borderBottom: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(124, 58, 237, 0.2)',
+          padding: '8px 12px',
+          background: isLight ? '#FFFFFF' : 'var(--card-bg, #0F172A)',
+          borderBottom: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -496,67 +359,83 @@ export function OrsttyChat({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-          <OrsttyAvatar state={engineState} size={34} showBadge={false} />
+          {/* Botón Volver */}
+          {(onBack || onClose) && (
+            <button
+              type="button"
+              onClick={onBack || onClose}
+              title="Volver"
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.12)',
+                background: isLight ? '#F8FAFC' : 'rgba(255, 255, 255, 0.05)',
+                color: isLight ? '#1E293B' : '#F8FAFC',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <ArrowLeft size={18} />
+            </button>
+          )}
+
+          {/* Avatar con indicador de presencia */}
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <OrsttyAvatar state={engineState} size={36} showBadge={false} />
+            <span
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                width: '9px',
+                height: '9px',
+                borderRadius: '50%',
+                background: '#10B981',
+                border: isLight ? '2px solid #FFFFFF' : '2px solid #0F172A'
+              }}
+            />
+          </div>
+
+          {/* Identidad de ORSTTY */}
           <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontWeight: 900, fontSize: '0.92rem', color: isLight ? '#7C3AED' : '#A78BFA', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ 
+                fontWeight: 900, 
+                fontSize: '0.98rem', 
+                background: 'linear-gradient(135deg, #7C3AED, #A855F7)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}>
                 {apodoActual}
               </span>
               <span style={{ 
-                fontSize: '0.64rem', 
+                fontSize: '0.62rem', 
                 fontWeight: 800, 
-                padding: '2px 5px', 
-                borderRadius: '6px',
-                background: isLight ? '#EDE9FE' : 'rgba(124, 58, 237, 0.3)',
-                color: isLight ? '#6D28D9' : '#DDD6FE',
+                padding: '1px 6px', 
+                borderRadius: '99px',
+                background: isLight ? '#EDE9FE' : 'rgba(124, 58, 237, 0.25)',
+                color: isLight ? '#6D28D9' : '#C4B5FD',
                 flexShrink: 0
               }}>
-                Gemini AI
+                Tutor IA
               </span>
             </div>
-            <div style={{ fontSize: '0.7rem', color: isLight ? '#475569' : 'var(--text-secondary, #94A3B8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {isListening 
-                ? '🎙️ Escuchando tu voz...' 
-                : isSpeaking 
-                ? '🔊 Hablando...' 
-                : 'Tutor Oficial CEPREUNSA & UNSA'}
+            <div style={{ fontSize: '0.68rem', color: isLight ? '#64748B' : 'var(--text-secondary, #94A3B8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              Orientación y temario oficial UNSA
             </div>
           </div>
         </div>
 
-        {/* Controles: Toggle Modo Voz Alexa + Limpiar */}
+        {/* Acciones del Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-          {/* Botón Modo Voz Alexa ON / OFF */}
-          <button
-            type="button"
-            onClick={() => {
-              const next = !isVoiceModeActive;
-              setIsVoiceModeActive(next);
-              if (!next) stopOrsttyAlexaVoice();
-            }}
-            title={isVoiceModeActive ? 'Modo Voz Alexa Activo (leerá respuestas)' : 'Activar Modo Voz Alexa'}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '5px 8px',
-              borderRadius: '10px',
-              border: isVoiceModeActive 
-                ? '1.5px solid #10B981' 
-                : (isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(124, 58, 237, 0.3)'),
-              background: isVoiceModeActive 
-                ? 'rgba(16, 185, 129, 0.2)' 
-                : (isLight ? '#E2E8F0' : 'rgba(124, 58, 237, 0.1)'),
-              color: isVoiceModeActive ? '#047857' : (isLight ? '#334155' : 'var(--text-secondary, #94A3B8)'),
-              fontSize: '0.7rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              transition: 'all 0.15s ease'
-            }}
-          >
-            {isVoiceModeActive ? <Volume2 size={13} color="#10B981" /> : <VolumeX size={13} />}
-            <span>{isVoiceModeActive ? 'Voz ON' : 'Voz'}</span>
-          </button>
 
           {/* Botón Limpiar Chat */}
           <button
@@ -564,213 +443,45 @@ export function OrsttyChat({
             onClick={handleClearChat}
             title="Limpiar conversación"
             style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '10px',
-              border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(148, 163, 184, 0.2)',
-              background: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.05)',
-              color: isLight ? '#334155' : 'var(--text-secondary, #94A3B8)',
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              border: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.1)',
+              background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.05)',
+              color: isLight ? '#475569' : '#94A3B8',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
             }}
           >
-            <Trash2 size={13} />
+            <Trash2 size={14} />
           </button>
-        </div>
-      </div>
 
-      {/* Barra Rápida de Redirección a Secciones Clave de RASTRO */}
-      <div
-        style={{
-          padding: '6px 10px',
-          background: isLight ? '#F8FAFC' : 'rgba(15, 23, 42, 0.65)',
-          borderBottom: isLight ? '1px solid #CBD5E1' : '1px solid rgba(124, 58, 237, 0.18)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-          width: '100%',
-          boxSizing: 'border-box'
-        }}
-      >
-        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: isLight ? '#6D28D9' : '#A78BFA', textTransform: 'uppercase', marginRight: '2px' }}>
-          Secciones:
-        </span>
-        <button
-          type="button"
-          onClick={() => {
-            if (onClose) onClose();
-            navigate('/aprender');
-          }}
-          style={{
-            padding: '4px 10px',
-            borderRadius: '10px',
-            border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(168, 85, 247, 0.35)',
-            background: isLight ? '#EDE9FE' : 'linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(124, 58, 237, 0.12))',
-            color: isLight ? '#6D28D9' : '#DDD6FE',
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            flexShrink: 0
-          }}
-        >
-          <BookOpen size={13} color={isLight ? '#7C3AED' : '#C084FC'} />
-          <span>Aprender</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (onClose) onClose();
-            navigate('/cursos');
-          }}
-          style={{
-            padding: '4px 10px',
-            borderRadius: '10px',
-            border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(56, 189, 248, 0.35)',
-            background: isLight ? '#E0F2FE' : 'linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(14, 165, 233, 0.12))',
-            color: isLight ? '#0369A1' : '#BAE6FD',
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            flexShrink: 0
-          }}
-        >
-          <Video size={13} color={isLight ? '#0284C7' : '#38BDF8'} />
-          <span>Cursos</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (onClose) onClose();
-            navigate('/biblioteca');
-          }}
-          style={{
-            padding: '4px 10px',
-            borderRadius: '10px',
-            border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(52, 211, 153, 0.35)',
-            background: isLight ? '#DCFCE7' : 'linear-gradient(135deg, rgba(52, 211, 153, 0.18), rgba(16, 185, 129, 0.12))',
-            color: isLight ? '#166534' : '#A7F3D0',
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            flexShrink: 0
-          }}
-        >
-          <Library size={13} color={isLight ? '#16A34A' : '#34D399'} />
-          <span>Material Compartido</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (onClose) onClose();
-            navigate('/simulador');
-          }}
-          style={{
-            padding: '4px 10px',
-            borderRadius: '10px',
-            border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(251, 191, 36, 0.35)',
-            background: isLight ? '#FEF3C7' : 'linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(245, 158, 11, 0.12))',
-            color: isLight ? '#92400E' : '#FDE68A',
-            fontSize: '0.74rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '5px',
-            flexShrink: 0
-          }}
-        >
-          <Trophy size={13} color={isLight ? '#D97706' : '#FBBF24'} />
-          <span>Simulador</span>
-        </button>
-      </div>
-
-      {/* Carrusel de Materias Preuniversitarias (Filtro Rápido) */}
-      <div 
-        style={{
-          padding: '6px 10px',
-          background: isLight ? '#F1F5F9' : 'rgba(0, 0, 0, 0.15)',
-          borderBottom: isLight ? '1px solid #CBD5E1' : '1px solid rgba(124, 58, 237, 0.12)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          whiteSpace: 'nowrap',
-          flexShrink: 0,
-          width: '100%',
-          boxSizing: 'border-box'
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setSelectedSubjectFilter(null)}
-          style={{
-            padding: '4px 10px',
-            borderRadius: '99px',
-            border: selectedSubjectFilter === null ? '1.5px solid #8B5CF6' : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)'),
-            background: selectedSubjectFilter === null ? (isLight ? '#EDE9FE' : 'rgba(139, 92, 246, 0.25)') : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.04)'),
-            color: selectedSubjectFilter === null ? (isLight ? '#6D28D9' : '#DDD6FE') : (isLight ? '#334155' : '#94A3B8'),
-            fontSize: '0.72rem',
-            fontWeight: 800,
-            cursor: 'pointer',
-            flexShrink: 0
-          }}
-        >
-          ✨ Todas las Materias
-        </button>
-
-        {PREU_SUBJECTS.map((subj) => {
-          const isSelected = selectedSubjectFilter?.id === subj.id;
-          return (
+          {/* Botón Admin Desactivar */}
+          {isAdmin && onOpenDeactivate && (
             <button
-              key={subj.id}
               type="button"
-              onClick={() => {
-                if (isSelected) {
-                  setSelectedSubjectFilter(null);
-                } else {
-                  setSelectedSubjectFilter(subj);
-                  handleSendMessage(`¿Qué temas clave entran en el examen para ${subj.name}?`);
-                }
-              }}
+              onClick={onOpenDeactivate}
+              title="Desactivar asistente temporalmente"
               style={{
-                padding: '4px 10px',
-                borderRadius: '99px',
-                border: isSelected ? `1.5px solid ${subj.color}` : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(255, 255, 255, 0.12)'),
-                background: isSelected ? `${subj.color}22` : (isLight ? '#FFFFFF' : 'rgba(255, 255, 255, 0.04)'),
-                color: isSelected ? (isLight ? '#1E293B' : '#FFFFFF') : (isLight ? '#334155' : '#94A3B8'),
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                flexShrink: 0,
-                display: 'inline-flex',
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#EF4444',
+                display: 'flex',
                 alignItems: 'center',
-                gap: '4px'
+                justifyContent: 'center',
+                cursor: 'pointer'
               }}
             >
-              <span>{subj.icon}</span>
-              <span>{subj.name}</span>
+              <EyeOff size={14} />
             </button>
-          );
-        })}
+          )}
+        </div>
       </div>
 
       {/* Contenedor de Mensajes del Chat */}
@@ -780,10 +491,10 @@ export function OrsttyChat({
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
-          padding: '10px 10px',
+          padding: '12px 14px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px',
+          gap: '12px',
           width: '100%',
           maxWidth: '100%',
           boxSizing: 'border-box'
@@ -799,7 +510,6 @@ export function OrsttyChat({
         )}
         {messages.slice(-visibleMsgCount).map((msg) => {
           const isOrstty = msg.sender === 'orstty';
-          const isThisSpeaking = isSpeaking && currentSpeakingMsgId === msg.id;
 
           return (
             <div
@@ -853,83 +563,52 @@ export function OrsttyChat({
                 {/* Burbuja de Texto Principal */}
                 <div
                   style={{
-                    padding: '9px 12px',
-                    borderRadius: isOrstty ? '16px 16px 16px 4px' : '16px 16px 4px 16px',
+                    padding: '10px 14px',
+                    borderRadius: isOrstty ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
                     background: isOrstty
                       ? (isLight ? '#F8FAFC' : 'var(--card-bg, rgba(30, 41, 59, 0.85))')
                       : 'linear-gradient(135deg, #7C3AED 0%, #9333EA 100%)',
                     color: isOrstty ? (isLight ? '#0F172A' : 'var(--text-main, #F8FAFC)') : '#FFFFFF',
-                    border: isOrstty ? (isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(124, 58, 237, 0.25)') : 'none',
-                    fontSize: '0.84rem',
-                    lineHeight: 1.45,
-                    boxShadow: isOrstty ? '0 2px 10px rgba(0, 0, 0, 0.15)' : '0 4px 16px rgba(124, 58, 237, 0.3)',
+                    border: isOrstty ? (isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)') : 'none',
+                    fontSize: '0.86rem',
+                    lineHeight: 1.5,
+                    boxShadow: isOrstty ? '0 1px 4px rgba(0, 0, 0, 0.06)' : '0 2px 10px rgba(124, 58, 237, 0.25)',
                     wordBreak: 'break-word',
                     overflowWrap: 'anywhere',
                     boxSizing: 'border-box',
                     flex: isOrstty ? 1 : 'none',
                     minWidth: 0,
-                    maxWidth: '100%'
+                    maxWidth: isOrstty ? '100%' : '88%'
                   }}
                 >
                   <div style={{ whiteSpace: 'pre-line', wordBreak: 'break-word', overflowWrap: 'anywhere' }}>
                     {msg.text}
                   </div>
 
-                  {/* Botón de reproducción de voz y reporte de contenido de IA para este mensaje */}
+                  {/* Micro-acciones de reporte para la respuesta */}
                   {isOrstty && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                       {/* Botón de reporte de contenido de IA (Google Play Generative AI Policy) */}
                       <button
                         type="button"
                         onClick={() => handleReportAiMessage(msg.id)}
-                        title={reportedMsgIds.has(msg.id) ? 'Respuesta reportada para revisión' : 'Reportar respuesta inadecuada o errónea'}
+                        title={reportedMsgIds.has(msg.id) ? 'Respuesta reportada para revisión' : 'Reportar respuesta inadecuada'}
+                        aria-label="Reportar respuesta"
                         style={{
-                          background: reportedMsgIds.has(msg.id) ? 'rgba(239, 68, 68, 0.2)' : 'rgba(148, 163, 184, 0.1)',
-                          border: reportedMsgIds.has(msg.id) ? '1px solid #EF4444' : '1px solid rgba(148, 163, 184, 0.2)',
-                          color: reportedMsgIds.has(msg.id) ? '#EF4444' : (isLight ? '#64748B' : '#94A3B8'),
-                          borderRadius: '8px',
-                          padding: '3px 7px',
-                          fontSize: '0.68rem',
-                          fontWeight: 600,
+                          background: reportedMsgIds.has(msg.id) ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                          border: 'none',
+                          color: reportedMsgIds.has(msg.id) ? '#EF4444' : (isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.35)'),
+                          borderRadius: '6px',
+                          padding: '3px 5px',
+                          cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px',
-                          cursor: 'pointer'
+                          gap: '3px',
+                          fontSize: '0.66rem'
                         }}
                       >
                         <Flag size={11} />
-                        <span>{reportedMsgIds.has(msg.id) ? 'Reportado' : 'Reportar IA'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleSpeechForMessage(msg.id, msg.speechSummary || msg.text)}
-                        title={isThisSpeaking ? 'Detener lectura de voz' : 'Escuchar respuesta con voz Alexa'}
-                        style={{
-                          background: isThisSpeaking ? 'rgba(239, 68, 68, 0.2)' : 'rgba(124, 58, 237, 0.15)',
-                          border: isThisSpeaking ? '1px solid #EF4444' : '1px solid rgba(124, 58, 237, 0.3)',
-                          color: isThisSpeaking ? '#F87171' : '#DDD6FE',
-                          borderRadius: '8px',
-                          padding: '3px 8px',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {isThisSpeaking ? (
-                          <>
-                            <VolumeX size={12} />
-                            <span>Pausar voz</span>
-                          </>
-                        ) : (
-                          <>
-                            <Volume2 size={12} />
-                            <span>Escuchar</span>
-                          </>
-                        )}
+                        {reportedMsgIds.has(msg.id) && <span>Reportado</span>}
                       </button>
                     </div>
                   )}
@@ -945,6 +624,8 @@ export function OrsttyChat({
                   const isSimulator = card.type === 'SIMULATOR' || card.target === '/simulador';
                   const isLibrary = card.type === 'LIBRARY' || card.target === '/biblioteca';
                   const isPomodoro = card.type === 'POMODORO' || card.target === 'POMODORO';
+                  const isChats = card.type === 'CHATS' || card.target === '/chats';
+                  const isCursos = card.type === 'COURSE_VIDEOS' || card.target === '/cursos';
 
                   // Estilo auténtico de tarjeta de curso de la app (Aprender.jsx)
                   if (isSubject) {
@@ -987,11 +668,15 @@ export function OrsttyChat({
                         {/* Fila Superior: Título de Materia y Badge de Temas */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                            {card.icon && (
-                              <span style={{ fontSize: '1.35rem', lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>
-                                {card.icon}
-                              </span>
-                            )}
+                            {(() => {
+                              const sid = (card.subjectId || '').toLowerCase();
+                              if (sid.includes('bio') || sid.includes('med') || sid.includes('anat')) return <Dna size={20} color="#FFFFFF" />;
+                              if (sid.includes('fis') || sid.includes('qui')) return <Zap size={20} color="#FFFFFF" />;
+                              if (sid.includes('mat') || sid.includes('alg') || sid.includes('rm')) return <Calculator size={20} color="#FFFFFF" />;
+                              if (sid.includes('filo') || sid.includes('psic')) return <Brain size={20} color="#FFFFFF" />;
+                              if (sid.includes('civic') || sid.includes('derech')) return <Scale size={20} color="#FFFFFF" />;
+                              return <BookOpen size={20} color="#FFFFFF" />;
+                            })()}
                             <h3
                               style={{
                                 fontSize: '1.2rem',
@@ -1167,9 +852,9 @@ export function OrsttyChat({
                       >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '1.4rem' }}>🧭</span>
+                            <Compass size={20} color="#FFFFFF" />
                             <h3 style={{ fontSize: '1.15rem', fontWeight: 900, margin: 0, color: '#FFFFFF', textShadow: '0 2px 6px rgba(0, 0, 0, 0.35)' }}>
-                              Test Vocacional UNSA
+                              Test Vocacional Oficial UNSA
                             </h3>
                           </div>
                           <div
@@ -1216,7 +901,7 @@ export function OrsttyChat({
                           }}
                         >
                           <Sparkles size={16} color="#7C3AED" />
-                          <span>✨ Iniciar Test Vocacional Ahora</span>
+                          <span>Iniciar Test Vocacional Ahora</span>
                           <ArrowRight size={15} color="#7C3AED" />
                         </button>
                       </div>
@@ -1246,7 +931,7 @@ export function OrsttyChat({
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {isSimulator ? <Trophy size={18} /> : isLibrary ? <Library size={18} /> : isPomodoro ? <Clock size={18} /> : <BookOpen size={18} />}
+                          {isSimulator ? <Trophy size={18} /> : isLibrary ? <Library size={18} /> : isPomodoro ? <Clock size={18} /> : isCursos ? <Video size={18} /> : isChats ? <MessageSquare size={18} /> : <BookOpen size={18} />}
                           <h3 style={{ fontSize: '1.15rem', fontWeight: 900, margin: 0, color: '#FFFFFF', textShadow: '0 2px 6px rgba(0, 0, 0, 0.35)' }}>
                             {card.title}
                           </h3>
@@ -1302,7 +987,7 @@ export function OrsttyChat({
                         }}
                       >
                         <Sparkles size={16} />
-                        <span>{card.ctaLabel || '🚀 Acceder al Origen'}</span>
+                        <span>{card.ctaLabel ? card.ctaLabel.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() : 'Acceder al Origen'}</span>
                         <ArrowRight size={15} />
                       </button>
                     </div>
@@ -1393,7 +1078,7 @@ export function OrsttyChat({
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, fontSize: '0.78rem' }}>
                               <ActIcon size={13} />
-                              <span>{act.label || 'Abrir sección'}</span>
+                              <span>{act.label ? act.label.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim() : 'Abrir sección'}</span>
                             </div>
                             <ArrowRight size={12} style={{ opacity: 0.8, flexShrink: 0 }} />
                           </div>
@@ -1463,9 +1148,6 @@ export function OrsttyChat({
                           disabled={hasAnswered}
                           onClick={() => {
                             setQuizAnswers(prev => ({ ...prev, [msg.id]: optIdx }));
-                            if (isCorrect && isVoiceModeActive) {
-                              speakOrsttyAlexa('¡Correcto! ' + msg.quizQuestion.explanation);
-                            }
                           }}
                           style={{
                             padding: '8px 10px',
@@ -1503,17 +1185,21 @@ export function OrsttyChat({
                 </div>
               )}
 
-              {/* Botones de Sugerencias de Seguimiento */}
+              {/* Botones de Sugerencias de Seguimiento en Carrusel Horizontal */}
               {isOrstty && Array.isArray(msg.suggestions) && msg.suggestions.length > 0 && (
                 <div
                   style={{
-                    marginTop: '6px',
+                    marginTop: '8px',
                     width: '100%',
                     maxWidth: '100%',
                     boxSizing: 'border-box',
                     display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '5px'
+                    gap: '6px',
+                    overflowX: 'auto',
+                    whiteSpace: 'nowrap',
+                    scrollbarWidth: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                    paddingBottom: '2px'
                   }}
                 >
                   {msg.suggestions.map((sug, sIdx) => (
@@ -1523,14 +1209,15 @@ export function OrsttyChat({
                       onClick={() => handleSendMessage(sug)}
                       disabled={isProcessing}
                       style={{
-                        padding: '4px 10px',
+                        padding: '6px 12px',
                         borderRadius: '99px',
-                        border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(124, 58, 237, 0.3)',
-                        background: isLight ? '#EDE9FE' : 'rgba(124, 58, 237, 0.12)',
-                        color: isLight ? '#6D28D9' : '#C4B5FD',
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
+                        border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(139, 92, 246, 0.35)',
+                        background: isLight ? '#EDE9FE' : 'rgba(124, 58, 237, 0.15)',
+                        color: isLight ? '#6D28D9' : '#DDD6FE',
+                        fontSize: '0.74rem',
+                        fontWeight: 750,
                         cursor: 'pointer',
+                        flexShrink: 0,
                         transition: 'all 0.15s ease'
                       }}
                     >
@@ -1590,8 +1277,8 @@ export function OrsttyChat({
         <div ref={chatBottomRef} style={{ height: '1px' }} />
       </div>
 
-      {/* Sugerencias Rápidas Iniciales */}
-      {messages.length <= 1 && (
+      {/* Sugerencias Rápidas Iniciales (solo si no hay mensajes o no tienen sugerencias internas) */}
+      {(messages.length === 0 || (messages.length === 1 && (!messages[0]?.suggestions || messages[0].suggestions.length === 0))) && (
         <div
           style={{
             padding: '6px 10px',
@@ -1655,102 +1342,84 @@ export function OrsttyChat({
         </div>
       )}
 
-      {/* Barra de Entrada / Formulario con Micrófono Alexa y Envío */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSendMessage();
-        }}
+      {/* Barra de Entrada / Formulario Estilo Cápsula */}
+      <div
         style={{
-          padding: '8px 10px',
-          borderTop: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(124, 58, 237, 0.2)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          background: isLight ? '#F8FAFC' : 'var(--card-bg, rgba(15, 23, 42, 0.95))',
+          padding: '8px 12px max(8px, env(safe-area-inset-bottom))',
+          background: isLight ? '#FFFFFF' : 'var(--bg-main, #0B0F19)',
+          borderTop: isLight ? '1px solid #E2E8F0' : '1px solid rgba(255, 255, 255, 0.08)',
           flexShrink: 0,
           width: '100%',
           boxSizing: 'border-box'
         }}
       >
-        {/* Botón de Micrófono Alexa */}
-        <button
-          type="button"
-          onClick={handleToggleVoiceInput}
-          title={isListening ? 'Detener micrófono' : 'Hablar con ORSTTY por voz estilo Alexa'}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
           style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '12px',
-            border: isListening ? '2px solid #EF4444' : (isLight ? '1px solid #CBD5E1' : '1px solid rgba(124, 58, 237, 0.3)'),
-            background: isListening 
-              ? 'linear-gradient(135deg, #EF4444, #DC2626)' 
-              : (isLight ? '#E2E8F0' : 'rgba(124, 58, 237, 0.15)'),
-            color: isLight ? '#1E293B' : '#FFFFFF',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            flexShrink: 0,
-            boxShadow: isListening ? '0 0 16px rgba(239, 68, 68, 0.6)' : 'none',
-            transition: 'all 0.15s ease'
-          }}
-        >
-          {isListening ? <MicOff size={17} /> : <Mic size={17} color={isLight ? '#7C3AED' : '#A78BFA'} />}
-        </button>
-
-        {/* Input de texto */}
-        <input
-          ref={inputRef}
-          type="text"
-          value={inputVal}
-          onChange={(e) => setInputVal(e.target.value)}
-          placeholder={isListening ? 'Escuchando tu voz...' : `Pregunta a ${apodoActual}...`}
-          disabled={isProcessing}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            padding: '9px 12px',
-            borderRadius: '12px',
-            border: isLight ? '1.5px solid #CBD5E1' : '1.5px solid rgba(124, 58, 237, 0.25)',
-            background: isLight ? '#FFFFFF' : 'rgba(0, 0, 0, 0.25)',
-            color: isLight ? '#0F172A' : 'var(--text-main, #F8FAFC)',
-            fontSize: '0.84rem',
-            outline: 'none',
+            gap: '6px',
+            padding: '4px 6px 4px 12px',
+            borderRadius: '28px',
+            background: isLight ? '#F1F5F9' : 'rgba(255, 255, 255, 0.06)',
+            border: isLight ? '1px solid #CBD5E1' : '1px solid rgba(124, 58, 237, 0.25)',
             boxSizing: 'border-box'
           }}
-        />
-
-        {/* Botón Enviar */}
-        <button
-          type="submit"
-          disabled={!inputVal.trim() || isProcessing}
-          style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: '12px',
-            border: 'none',
-            background: inputVal.trim() && !isProcessing
-              ? 'linear-gradient(135deg, #7C3AED, #9333EA)'
-              : 'rgba(148, 163, 184, 0.2)',
-            color: '#FFFFFF',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: inputVal.trim() && !isProcessing ? 'pointer' : 'not-allowed',
-            flexShrink: 0,
-            boxShadow: inputVal.trim() && !isProcessing ? '0 4px 14px rgba(124, 58, 237, 0.3)' : 'none',
-            transition: 'all 0.15s ease'
-          }}
         >
-          <Send size={16} />
-        </button>
-      </form>
+          {/* Input de texto */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={inputVal}
+            onChange={(e) => setInputVal(e.target.value)}
+            placeholder={`Pregunta a ${apodoActual}...`}
+            disabled={isProcessing}
+            style={{
+              flex: 1,
+              minWidth: 0,
+              padding: '8px 4px',
+              border: 'none',
+              background: 'transparent',
+              color: isLight ? '#0F172A' : 'var(--text-main, #F8FAFC)',
+              fontSize: '0.86rem',
+              outline: 'none'
+            }}
+          />
 
-      {/* Aviso de IA: protege al autor ante respuestas imprecisas y orienta al estudiante */}
-      <p style={{ margin: '8px 4px 0', fontSize: '0.68rem', lineHeight: 1.4, color: 'var(--text-secondary)', opacity: 0.85, textAlign: 'center' }}>
-        ORSTTY es una IA y puede equivocarse. Verifica los datos importantes en tu material oficial.
-      </p>
+          {/* Botón Enviar */}
+          <button
+            type="submit"
+            disabled={!inputVal.trim() || isProcessing}
+            style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              border: 'none',
+              background: inputVal.trim() && !isProcessing
+                ? 'linear-gradient(135deg, #7C3AED, #9333EA)'
+                : (isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.1)'),
+              color: inputVal.trim() && !isProcessing ? '#FFFFFF' : (isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.3)'),
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: inputVal.trim() && !isProcessing ? 'pointer' : 'default',
+              flexShrink: 0,
+              boxShadow: inputVal.trim() && !isProcessing ? '0 2px 8px rgba(124, 58, 237, 0.35)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Send size={15} />
+          </button>
+        </form>
+
+        {/* Disclaimer discreto */}
+        <p style={{ margin: '5px 0 0', fontSize: '0.62rem', color: isLight ? '#94A3B8' : 'rgba(255, 255, 255, 0.45)', textAlign: 'center' }}>
+          ORSTTY es una IA y puede tener imprecisiones. Verifica datos clave en tu material oficial.
+        </p>
+      </div>
 
       {/* Modal interactivo del Test Vocacional Oficial UNSA */}
       <VocationalTestModal 

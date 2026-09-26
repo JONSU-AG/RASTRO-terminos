@@ -25,15 +25,17 @@ public class WidgetHelper {
     public static final String KEY_STUDIED_TODAY = "rumbo_studied_today";
     public static final String KEY_POMODORO_TIME = "rumbo_pomodoro_time";
 
-    // Default Exam: CEPRUNSA I FASE 2027 (05/07/2026)
-    public static final String DEFAULT_EXAM_NAME = "CEPRUNSA I FASE 2027";
-    public static final String DEFAULT_EXAM_DATE = "2026-07-05";
+    // Default Exam: Examen de Admisión general
+    public static final String DEFAULT_EXAM_NAME = "EXAMEN DE ADMISIÓN";
+    public static final String DEFAULT_EXAM_DATE = "2026-08-30";
 
     public static PendingIntent createOpenAppPendingIntent(Context context, String destination) {
-        Intent intent = new Intent(context, MainActivity.class);
-        intent.setAction(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_LAUNCHER);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent intent = context.getPackageManager().getLaunchIntentForPackage(context.getPackageName());
+        if (intent == null) {
+            intent = new Intent(context, MainActivity.class);
+        }
+        intent.setPackage(context.getPackageName());
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.putExtra("from_widget", true);
         if (destination != null) {
             intent.putExtra("widget_destination", destination);
@@ -106,6 +108,59 @@ public class WidgetHelper {
         return DEFAULT_EXAM_NAME;
     }
 
+    // Función para adaptar dinámicamente el tema del widget según la preferencia activa en la App
+    public static void applyThemeToWidget(Context context, RemoteViews views, int rootId, int titleId, int subId) {
+        try {
+            SharedPreferences prefs = getPrefs(context);
+            String theme = prefs.getString("rumbo_active_theme", "dark");
+            if (theme == null) theme = "dark";
+
+            int bgDrawable;
+            int titleColor;
+            int subColor;
+
+            if (theme.contains("light-warm") || theme.contains("beige") || theme.equals("warm")) {
+                bgDrawable = R.drawable.widget_bg_warm;
+                titleColor = 0xFF1E293B;
+                subColor = 0xFF64748B;
+            } else if (theme.contains("guinda-light")) {
+                bgDrawable = R.drawable.widget_bg_light;
+                titleColor = 0xFF4A0E17;
+                subColor = 0xFF7F1D1D;
+            } else if (theme.contains("coraje-dark")) {
+                bgDrawable = R.drawable.widget_bg_coraje;
+                titleColor = 0xFFFFFFFF;
+                subColor = 0xFFCBD5E1;
+            } else if (theme.contains("coraje")) {
+                bgDrawable = R.drawable.widget_bg_warm;
+                titleColor = 0xFF2D1810;
+                subColor = 0xFF5C3828;
+            } else if (theme.contains("light") || theme.contains("google")) {
+                bgDrawable = R.drawable.widget_bg_light;
+                titleColor = 0xFF0F172A;
+                subColor = 0xFF475569;
+            } else if (theme.contains("guinda")) {
+                bgDrawable = R.drawable.widget_bg_guinda;
+                titleColor = 0xFFFFFFFF;
+                subColor = 0xFFCBD5E1;
+            } else {
+                bgDrawable = R.drawable.widget_bg_dark;
+                titleColor = 0xFFFFFFFF;
+                subColor = 0xFF94A3B8;
+            }
+
+            if (rootId != 0) {
+                views.setInt(rootId, "setBackgroundResource", bgDrawable);
+            }
+            if (titleId != 0) {
+                views.setTextColor(titleId, titleColor);
+            }
+            if (subId != 0) {
+                views.setTextColor(subId, subColor);
+            }
+        } catch (Exception ignored) {}
+    }
+
     // 1. Widget de Contador de Examen con Fecha Elegible
     public static void updateExamCountdown(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_exam_countdown);
@@ -115,7 +170,21 @@ public class WidgetHelper {
 
         views.setTextViewText(R.id.widget_exam_name, examName);
         views.setTextViewText(R.id.widget_exam_days, String.valueOf(days));
-        views.setTextViewText(R.id.widget_exam_subtitle, "Toca para entrenar en RASTRO 🚀 (⚙️ para cambiar fecha)");
+        views.setTextViewText(R.id.widget_exam_subtitle, "Toca para practicar en el Simulador (Ajustes para cambiar fecha)");
+
+        // Aplicar tema dinámico
+        applyThemeToWidget(context, views, R.id.widget_countdown_root, R.id.widget_exam_name, R.id.widget_exam_subtitle);
+        SharedPreferences prefs = getPrefs(context);
+        String theme = prefs.getString("rumbo_active_theme", "dark");
+        if (theme != null && (theme.contains("light") || theme.contains("warm") || theme.contains("beige"))) {
+            views.setTextColor(R.id.widget_exam_days, 0xFF0F172A);
+        } else {
+            views.setTextColor(R.id.widget_exam_days, 0xFFF8FAFC);
+        }
+
+        // Alternar mascotas dinámicamente entre Artyon y Orstty
+        int mascotRes = (days % 2 == 0) ? R.drawable.mascot_orstty_study : R.drawable.mascot_artyon_content;
+        views.setImageViewResource(R.id.widget_exam_mascot, mascotRes);
 
         // Click on root opens app (Simulador)
         PendingIntent pendingIntent = createOpenAppPendingIntent(context, "simulador");
@@ -144,13 +213,16 @@ public class WidgetHelper {
 
         String message;
         if (streak >= 7) {
-            message = "¡" + streak + " días sin parar! Tu vacante está cada vez más cerca 🔥";
+            message = streak + " días sin parar. Tu meta de admisión está más cerca";
         } else if (streak >= 3) {
-            message = "¡Gran constancia! Mantén tu racha activa hoy 🚀";
+            message = "Gran constancia. Mantén tu racha activa hoy";
         } else {
-            message = "¡Completa tu lección de hoy para subir tu racha! 🎯";
+            message = "Completa tu lección de hoy para subir tu racha";
         }
         views.setTextViewText(R.id.widget_streak_message, message);
+
+        // Aplicar tema dinámico
+        applyThemeToWidget(context, views, R.id.widget_weekly_root, 0, R.id.widget_streak_message);
 
         Calendar cal = Calendar.getInstance();
         int dayOfWeek = cal.get(Calendar.DAY_OF_WEEK);
@@ -190,6 +262,10 @@ public class WidgetHelper {
             }
         }
 
+        // Mascot icon on weekly widget: alternar entre Orstty y Artyon según racha
+        int mascotRes = (streak % 2 == 0) ? R.drawable.mascot_orstty_happy : R.drawable.mascot_artyon_content;
+        views.setImageViewResource(R.id.widget_weekly_mascot, mascotRes);
+
         PendingIntent pendingIntent = createOpenAppPendingIntent(context, "aprender");
         views.setOnClickPendingIntent(R.id.widget_weekly_root, pendingIntent);
 
@@ -203,17 +279,28 @@ public class WidgetHelper {
         int streak = getStreak(context);
         views.setTextViewText(R.id.widget_daily_streak_number, String.valueOf(streak));
 
+        // Aplicar tema dinámico
+        applyThemeToWidget(context, views, R.id.widget_daily_root, 0, R.id.widget_daily_message);
         SharedPreferences prefs = getPrefs(context);
+        String theme = prefs.getString("rumbo_active_theme", "dark");
+        if (theme != null && (theme.contains("light") || theme.contains("warm") || theme.contains("beige"))) {
+            views.setTextColor(R.id.widget_daily_streak_number, 0xFF0F172A);
+        } else {
+            views.setTextColor(R.id.widget_daily_streak_number, 0xFFFFFFFF);
+        }
+
         boolean studiedToday = prefs.getBoolean(KEY_STUDIED_TODAY, false);
 
         if (studiedToday) {
-            views.setTextViewText(R.id.widget_daily_status_badge, "¡Racha asegurada hoy! ✨");
+            views.setTextViewText(R.id.widget_daily_status_badge, "Racha asegurada hoy");
             views.setTextColor(R.id.widget_daily_status_badge, 0xFF10B981);
-            views.setTextViewText(R.id.widget_daily_message, "¡Excelente constancia! Toca para seguir acumulando XP 🏆");
+            views.setTextViewText(R.id.widget_daily_message, "Excelente constancia. Toca para seguir acumulando progreso");
+            views.setImageViewResource(R.id.widget_daily_mascot, R.drawable.mascot_orstty_happy);
         } else {
-            views.setTextViewText(R.id.widget_daily_status_badge, "Pendiente de hoy ⏳");
+            views.setTextViewText(R.id.widget_daily_status_badge, "En progreso • Falta hoy");
             views.setTextColor(R.id.widget_daily_status_badge, 0xFFF59E0B);
-            views.setTextViewText(R.id.widget_daily_message, "¡Entra a repasar hoy y protege tu racha de estudio! 🔥");
+            views.setTextViewText(R.id.widget_daily_message, "Resuelve una lección hoy en Aprender y asegura tu racha");
+            views.setImageViewResource(R.id.widget_daily_mascot, R.drawable.mascot_artyon_content);
         }
 
         PendingIntent pendingIntent = createOpenAppPendingIntent(context, "aprender");
@@ -222,9 +309,27 @@ public class WidgetHelper {
         appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
-    // Alias para compatibilidad con MiniStreak anterior
+    // Mini Streak con layout propio optimizado
     public static void updateMiniStreak(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
-        updateDailyStreak(context, appWidgetManager, appWidgetId);
+        RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_mini_streak);
+
+        int streak = getStreak(context);
+        views.setTextViewText(R.id.widget_mini_streak_number, String.valueOf(streak));
+        views.setTextViewText(R.id.widget_mini_message, "Entra a practicar hoy y protege tu racha");
+
+        applyThemeToWidget(context, views, R.id.widget_mini_root, 0, R.id.widget_mini_message);
+        SharedPreferences prefs = getPrefs(context);
+        String theme = prefs.getString("rumbo_active_theme", "dark");
+        if (theme != null && (theme.contains("light") || theme.contains("warm") || theme.contains("beige"))) {
+            views.setTextColor(R.id.widget_mini_streak_number, 0xFF0F172A);
+        } else {
+            views.setTextColor(R.id.widget_mini_streak_number, 0xFFFFFFFF);
+        }
+
+        PendingIntent pendingIntent = createOpenAppPendingIntent(context, "aprender");
+        views.setOnClickPendingIntent(R.id.widget_mini_root, pendingIntent);
+
+        appWidgetManager.updateAppWidget(appWidgetId, views);
     }
 
     // 4. Widget de Recordatorio de Estudio
@@ -238,20 +343,23 @@ public class WidgetHelper {
         String body;
 
         if (hour < 12) {
-            title = "¡Buenos días, futuro universitario! ☀️";
-            body = "Meta matutina: Resuelve 10 preguntas de repaso o revisa un resumen clave.";
+            title = "Sesión matutina de estudio";
+            body = "Meta del día: Resuelve 10 preguntas de repaso o revisa un resumen clave.";
         } else if (hour < 19) {
-            title = "¿Momento de estudiar hoy? 🎯";
+            title = "Momento de practicar en Aprender";
             body = "Aprovecha la tarde: Entrena en el simulacro y refuerza tus materias prioritarias.";
         } else {
-            title = "Sesión nocturna de enfoque 🌙";
-            body = "Haz un test rápido de 15 preguntas antes de descansar para afianzar la memoria.";
+            title = "Sesión nocturna de repaso";
+            body = "Haz un test de 15 preguntas antes de descansar para afianzar la memoria.";
         }
 
         views.setTextViewText(R.id.widget_reminder_title, title);
         views.setTextViewText(R.id.widget_reminder_body, body);
 
-        PendingIntent pendingIntent = createOpenAppPendingIntent(context, "cursos");
+        // Aplicar tema dinámico
+        applyThemeToWidget(context, views, R.id.widget_reminder_root, R.id.widget_reminder_title, R.id.widget_reminder_body);
+
+        PendingIntent pendingIntent = createOpenAppPendingIntent(context, "aprender");
         views.setOnClickPendingIntent(R.id.widget_reminder_root, pendingIntent);
 
         appWidgetManager.updateAppWidget(appWidgetId, views);
@@ -265,9 +373,24 @@ public class WidgetHelper {
         String customTime = prefs.getString(KEY_POMODORO_TIME, "25:00");
 
         views.setTextViewText(R.id.widget_pomodoro_time, customTime);
-        views.setTextViewText(R.id.widget_pomodoro_mode, "TIEMPO DE FOCO");
-        views.setTextViewText(R.id.widget_pomodoro_cycles, "🍅 25m Estudio / 5m Pausa");
-        views.setTextViewText(R.id.widget_pomodoro_action, "Toca para abrir Pomodoro y concentrarte ⏱️");
+        views.setTextViewText(R.id.widget_pomodoro_mode, "TÉCNICA POMODORO");
+        views.setTextViewText(R.id.widget_pomodoro_cycles, "25m Estudio • 5m Descanso");
+        views.setTextViewText(R.id.widget_pomodoro_action, "Toca para iniciar sesión Pomodoro");
+
+        // Alternar mascotas entre Artyon y Orstty
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        int mascotRes = (hour % 2 == 0) ? R.drawable.mascot_artyon_content : R.drawable.mascot_orstty_study;
+        views.setImageViewResource(R.id.widget_pomodoro_mascot, mascotRes);
+
+        // Aplicar tema dinámico
+        applyThemeToWidget(context, views, R.id.widget_pomodoro_root, 0, R.id.widget_pomodoro_action);
+        String theme = prefs.getString("rumbo_active_theme", "dark");
+        if (theme != null && (theme.contains("light") || theme.contains("warm") || theme.contains("beige"))) {
+            views.setTextColor(R.id.widget_pomodoro_time, 0xFF0F172A);
+        } else {
+            views.setTextColor(R.id.widget_pomodoro_time, 0xFFFFFFFF);
+        }
 
         PendingIntent pendingIntent = createOpenAppPendingIntent(context, "pomodoro");
         views.setOnClickPendingIntent(R.id.widget_pomodoro_root, pendingIntent);
@@ -277,48 +400,76 @@ public class WidgetHelper {
 
     // Actualizar todos los widgets a la vez
     public static void refreshAllWidgets(Context context) {
-        AppWidgetManager manager = AppWidgetManager.getInstance(context);
+        if (context == null) return;
+        try {
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            if (manager == null) return;
 
-        // 1. Contador Examen
-        ComponentName countdownName = new ComponentName(context, ExamCountdownWidget.class);
-        int[] countdownIds = manager.getAppWidgetIds(countdownName);
-        for (int id : countdownIds) {
-            updateExamCountdown(context, manager, id);
-        }
+            // 1. Contador Examen
+            try {
+                ComponentName countdownName = new ComponentName(context, ExamCountdownWidget.class);
+                int[] countdownIds = manager.getAppWidgetIds(countdownName);
+                if (countdownIds != null) {
+                    for (int id : countdownIds) {
+                        updateExamCountdown(context, manager, id);
+                    }
+                }
+            } catch (Throwable ignored) {}
 
-        // 2. Racha Semanal
-        ComponentName weeklyName = new ComponentName(context, WeeklyStreakWidget.class);
-        int[] weeklyIds = manager.getAppWidgetIds(weeklyName);
-        for (int id : weeklyIds) {
-            updateWeeklyStreak(context, manager, id);
-        }
+            // 2. Racha Semanal
+            try {
+                ComponentName weeklyName = new ComponentName(context, WeeklyStreakWidget.class);
+                int[] weeklyIds = manager.getAppWidgetIds(weeklyName);
+                if (weeklyIds != null) {
+                    for (int id : weeklyIds) {
+                        updateWeeklyStreak(context, manager, id);
+                    }
+                }
+            } catch (Throwable ignored) {}
 
-        // 3. Racha Diaria
-        ComponentName dailyName = new ComponentName(context, DailyStreakWidget.class);
-        int[] dailyIds = manager.getAppWidgetIds(dailyName);
-        for (int id : dailyIds) {
-            updateDailyStreak(context, manager, id);
-        }
+            // 3. Racha Diaria
+            try {
+                ComponentName dailyName = new ComponentName(context, DailyStreakWidget.class);
+                int[] dailyIds = manager.getAppWidgetIds(dailyName);
+                if (dailyIds != null) {
+                    for (int id : dailyIds) {
+                        updateDailyStreak(context, manager, id);
+                    }
+                }
+            } catch (Throwable ignored) {}
 
-        // Mini Streak legacy
-        ComponentName miniName = new ComponentName(context, MiniStreakWidget.class);
-        int[] miniIds = manager.getAppWidgetIds(miniName);
-        for (int id : miniIds) {
-            updateDailyStreak(context, manager, id);
-        }
+            // Mini Streak legacy
+            try {
+                ComponentName miniName = new ComponentName(context, MiniStreakWidget.class);
+                int[] miniIds = manager.getAppWidgetIds(miniName);
+                if (miniIds != null) {
+                    for (int id : miniIds) {
+                        updateMiniStreak(context, manager, id);
+                    }
+                }
+            } catch (Throwable ignored) {}
 
-        // 4. Recordatorio
-        ComponentName reminderName = new ComponentName(context, StudyReminderWidget.class);
-        int[] reminderIds = manager.getAppWidgetIds(reminderName);
-        for (int id : reminderIds) {
-            updateStudyReminder(context, manager, id);
-        }
+            // 4. Recordatorio
+            try {
+                ComponentName reminderName = new ComponentName(context, StudyReminderWidget.class);
+                int[] reminderIds = manager.getAppWidgetIds(reminderName);
+                if (reminderIds != null) {
+                    for (int id : reminderIds) {
+                        updateStudyReminder(context, manager, id);
+                    }
+                }
+            } catch (Throwable ignored) {}
 
-        // 5. Pomodoro
-        ComponentName pomodoroName = new ComponentName(context, PomodoroWidget.class);
-        int[] pomodoroIds = manager.getAppWidgetIds(pomodoroName);
-        for (int id : pomodoroIds) {
-            updatePomodoro(context, manager, id);
-        }
+            // 5. Pomodoro
+            try {
+                ComponentName pomodoroName = new ComponentName(context, PomodoroWidget.class);
+                int[] pomodoroIds = manager.getAppWidgetIds(pomodoroName);
+                if (pomodoroIds != null) {
+                    for (int id : pomodoroIds) {
+                        updatePomodoro(context, manager, id);
+                    }
+                }
+            } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {}
     }
 }

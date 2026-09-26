@@ -114,6 +114,16 @@ export const AuthProvider = ({ children }) => {
               }, { merge: true }).catch(() => {});
             }
 
+            // LIMPIEZA: si NO es autor pero tiene isAdmin:true o role:'admin' en Firestore
+            // (datos contaminados de versiones anteriores), limpiarlos silenciosamente
+            if (!isAuthor && (data.isAdmin === true || data.role === 'admin' || data.isCreator === true)) {
+              setDoc(userRef, { 
+                isAdmin: false, 
+                role: 'estudiante', 
+                isCreator: false 
+              }, { merge: true }).catch(() => {});
+            }
+
             // Aviso en pantalla (no bloqueo)
             const warningActive = Boolean((data.hasWarning || data.banned) && !data.warningDismissed);
             setHasWarning(warningActive);
@@ -417,7 +427,20 @@ export const AuthProvider = ({ children }) => {
     return sendPasswordResetEmail(auth, email.trim());
   };
 
-  const needsUsername = Boolean(!loading && user && userData && userData.hasChosenUsername !== true);
+  // El nombre de usuario solo se pide UNA sola vez si el usuario NO tiene nombre alguno de Google ni local
+  const hasValidName = Boolean(
+    (userData?.displayName && userData.displayName !== 'Estudiante RASTRO') ||
+    (user?.displayName && user.displayName !== 'Estudiante RASTRO')
+  );
+  const needsUsername = Boolean(
+    !loading && 
+    user && 
+    !user.isAnonymous && 
+    userData && 
+    userData.hasChosenUsername !== true && 
+    !hasChosenUsernameLocally(user.uid) &&
+    !hasValidName
+  );
 
   return (
     <AuthContext.Provider value={{ 

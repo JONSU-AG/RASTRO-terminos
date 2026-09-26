@@ -178,12 +178,7 @@ body {
   padding-bottom: 120px; /* Space for mobile navbar */
   font-family: var(--font-sans);
   background-color: var(--bg-main);
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(0, 122, 255, 0.09) 0%, transparent 45%),
-    radial-gradient(circle at 90% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(52, 199, 89, 0.07) 0%, transparent 45%);
-  background-attachment: scroll;
-  background-repeat: no-repeat;
+  background-image: none;
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: clip;
@@ -191,24 +186,15 @@ body {
 }
 
 [data-theme="dark"] body {
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(10, 132, 255, 0.16) 0%, transparent 45%),
-    radial-gradient(circle at 85% 25%, rgba(168, 85, 247, 0.14) 0%, transparent 40%),
-    radial-gradient(circle at 50% 75%, rgba(52, 199, 89, 0.09) 0%, transparent 45%);
+  background-image: none;
 }
 
 [data-theme="light-warm"] body {
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(234, 88, 12, 0.08) 0%, transparent 45%),
-    radial-gradient(circle at 90% 20%, rgba(245, 158, 11, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 45%);
+  background-image: none;
 }
 
 [data-theme="coraje"] body {
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(236, 72, 153, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 85% 25%, rgba(245, 158, 11, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(217, 70, 239, 0.08) 0%, transparent 45%);
+  background-image: none;
 }
 
 /* Guinda Oscuro / Vino Noche Theme Overrides */
@@ -281,39 +267,23 @@ body {
 }
 
 [data-theme="coraje-dark"] body {
-  background-image: 
-    radial-gradient(circle at 20% 12%, rgba(236, 72, 153, 0.22) 0%, transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(139, 92, 246, 0.2) 0%, transparent 40%),
-    radial-gradient(circle at 40% 85%, rgba(244, 63, 94, 0.18) 0%, transparent 55%);
+  background-image: none;
 }
 
 [data-theme="guinda"] body {
-  background-image: 
-    radial-gradient(circle at 20% 12%, rgba(225, 29, 72, 0.28) 0%, transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(147, 51, 234, 0.22) 0%, transparent 40%),
-    radial-gradient(circle at 40% 85%, rgba(251, 113, 133, 0.2) 0%, transparent 55%);
+  background-image: none;
 }
 
 [data-theme="guinda-light"] body {
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(225, 29, 72, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 85% 25%, rgba(251, 113, 133, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(190, 18, 60, 0.08) 0%, transparent 45%);
+  background-image: none;
 }
 
 [data-theme="beige-carmesi"] body {
-  background-image: 
-    radial-gradient(circle at 20% 12%, rgba(159, 18, 57, 0.28) 0%, transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(136, 19, 55, 0.24) 0%, transparent 40%),
-    radial-gradient(circle at 40% 85%, rgba(225, 29, 72, 0.2) 0%, transparent 55%);
+  background-image: none;
 }
 
 [data-theme="google-vibrant"] body {
-  background-image: 
-    radial-gradient(circle at 10% 10%, rgba(66, 133, 244, 0.14) 0%, transparent 45%),
-    radial-gradient(circle at 90% 20%, rgba(234, 67, 53, 0.1) 0%, transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(52, 168, 83, 0.1) 0%, transparent 45%),
-    radial-gradient(circle at 20% 80%, rgba(251, 188, 5, 0.1) 0%, transparent 45%);
+  background-image: none;
 }
 
 @media (min-width: 768px) {

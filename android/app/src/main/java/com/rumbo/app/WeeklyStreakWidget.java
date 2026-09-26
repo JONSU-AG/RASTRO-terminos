@@ -9,19 +9,26 @@ public class WeeklyStreakWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        for (int appWidgetId : appWidgetIds) {
-            WidgetHelper.updateWeeklyStreak(context, appWidgetManager, appWidgetId);
-        }
+        try {
+            if (context == null || appWidgetManager == null || appWidgetIds == null) return;
+            for (int appWidgetId : appWidgetIds) {
+                WidgetHelper.updateWeeklyStreak(context, appWidgetManager, appWidgetId);
+            }
+        } catch (Throwable ignored) {}
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
-        AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-        int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
-                new android.content.ComponentName(context, WeeklyStreakWidget.class));
-        for (int appWidgetId : appWidgetIds) {
-            WidgetHelper.updateWeeklyStreak(context, appWidgetManager, appWidgetId);
-        }
+        try {
+            if (intent != null && "com.rumbo.app.ACTION_UPDATE_WIDGETS".equals(intent.getAction())) {
+                AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+                int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
+                        new android.content.ComponentName(context, WeeklyStreakWidget.class));
+                for (int appWidgetId : appWidgetIds) {
+                    WidgetHelper.updateWeeklyStreak(context, appWidgetManager, appWidgetId);
+                }
+            }
+        } catch (Throwable ignored) {}
     }
 }

@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="16dp"
+    android:padding="14dp"
     android:gravity="center_vertical">
 
     <!-- Header: Flame & Tag -->
@@ -14,11 +14,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="4dp">
 
         <ImageView
-            android:layout_width="22dp"
-            android:layout_height="22dp"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:src="@drawable/ic_flame_vector"
             android:contentDescription="Llama de racha"
             android:layout_marginEnd="6dp" />
@@ -27,74 +27,96 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="RACHA DIARIA"
+            android:text="RACHA DE ESTUDIO"
             android:textColor="#F59E0B"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:letterSpacing="0.06" />
+            android:letterSpacing="0.08" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="RASTRO"
-            android:textColor="#94A3B8"
+            android:textColor="#A855F7"
             android:textSize="10sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:letterSpacing="0.06" />
     </LinearLayout>
 
-    <!-- Big Number Row -->
+    <!-- Main Content Row: Numbers + Mascot -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/widget_daily_streak_number"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="5"
-            android:textColor="#FFFFFF"
-            android:textSize="36sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false" />
-
+        <!-- Left: Streak count + Badge -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="8dp">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="DÍAS ACTIVOS"
-                android:textColor="#F59E0B"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal"
+                android:gravity="bottom">
+
+                <TextView
+                    android:id="@+id/widget_daily_streak_number"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1"
+                    android:textColor="#FFFFFF"
+                    android:textSize="36sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
+                    android:includeFontPadding="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text=" DÍAS"
+                    android:textColor="#F59E0B"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginBottom="4dp" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/widget_daily_status_badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="¡Racha protegida hoy! ✨"
-                android:textColor="#10B981"
-                android:textSize="10sp"
-                android:textStyle="bold" />
+                android:text="En progreso • Falta hoy"
+                android:textColor="#F59E0B"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:layout_marginTop="2dp" />
         </LinearLayout>
+
+        <!-- Right: Animated Mascot Orstty -->
+        <ImageView
+            android:id="@+id/widget_daily_mascot"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/mascot_orstty_happy"
+            android:contentDescription="Mascota ORSTTY"
+            android:layout_marginStart="8dp" />
     </LinearLayout>
 
-    <!-- Motivational Call-to-action message -->
+    <!-- Action Callout Message -->
     <TextView
         android:id="@+id/widget_daily_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="¡Entra a practicar hoy y asegura tu vacante! 🚀"
+        android:text="Resuelve una lección hoy en Aprender y asegura tu racha"
         android:textColor="#CBD5E1"
         android:textSize="11sp"
         android:lineSpacingExtra="1dp"
+        android:layout_marginTop="6dp"
         android:maxLines="2"
         android:ellipsize="end" />
 

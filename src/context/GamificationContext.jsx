@@ -183,13 +183,34 @@ export const GamificationProvider = ({ children }) => {
         const snap = await getDoc(docRef);
         if (snap.exists()) {
           const cloudData = snap.data();
-          setState(prev => ({
-            ...prev,
-            xp: Math.max(prev.xp, cloudData.xp || 0),
-            streak: Math.max(prev.streak, cloudData.streak || 0),
-            completedLessons: { ...cloudData.completedLessons, ...prev.completedLessons },
-            unlockedNodes: Array.from(new Set([...(cloudData.unlockedNodes || []), ...prev.unlockedNodes]))
-          }));
+          setState(prev => {
+            const cloudDate = cloudData.lastActiveDate;
+            const localDate = prev.lastActiveDate;
+            
+            let finalStreak = prev.streak || 0;
+            let finalDate = localDate;
+
+            if (!localDate && cloudDate) {
+              finalStreak = cloudData.streak || 1;
+              finalDate = cloudDate;
+            } else if (cloudDate && localDate) {
+              if (cloudDate > localDate) {
+                finalStreak = cloudData.streak || 1;
+                finalDate = cloudDate;
+              } else if (cloudDate === localDate) {
+                finalStreak = Math.max(prev.streak || 0, cloudData.streak || 0);
+              }
+            }
+
+            return {
+              ...prev,
+              xp: Math.max(prev.xp, cloudData.xp || 0),
+              streak: finalStreak,
+              lastActiveDate: finalDate,
+              completedLessons: { ...cloudData.completedLessons, ...prev.completedLessons },
+              unlockedNodes: Array.from(new Set([...(cloudData.unlockedNodes || []), ...prev.unlockedNodes]))
+            };
+          });
         } else {
           await setDoc(docRef, state, { merge: true });
         }

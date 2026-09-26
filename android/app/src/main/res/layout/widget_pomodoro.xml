@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="16dp"
+    android:padding="14dp"
     android:gravity="center_vertical">
 
     <!-- Header: Timer Icon & Title -->
@@ -14,11 +14,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:layout_marginBottom="4dp">
 
         <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:src="@drawable/ic_timer_vector"
             android:contentDescription="Pomodoro"
             android:layout_marginEnd="6dp" />
@@ -27,8 +27,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="POMODORO • ENFOQUE"
-            android:textColor="#EF4444"
+            android:text="TÉCNICA POMODORO"
+            android:textColor="#A855F7"
             android:textSize="11sp"
             android:textStyle="bold"
             android:letterSpacing="0.06" />
@@ -36,66 +36,79 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="RASTRO"
+            android:text="ESTUDIO"
             android:textColor="#94A3B8"
-            android:textSize="10sp"
+            android:textSize="9sp"
             android:textStyle="bold" />
     </LinearLayout>
 
-    <!-- Big Timer Display -->
+    <!-- Center: Big Timer Display + Mascot Artyon -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="6dp">
+        android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/widget_pomodoro_time"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="25:00"
-            android:textColor="#FFFFFF"
-            android:textSize="36sp"
-            android:textStyle="bold"
-            android:fontFamily="sans-serif-black"
-            android:includeFontPadding="false" />
-
+        <!-- Left: Time + mode tag -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginStart="10dp">
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_pomodoro_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="25:00"
+                android:textColor="#FFFFFF"
+                android:textSize="34sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-black"
+                android:includeFontPadding="false" />
 
             <TextView
                 android:id="@+id/widget_pomodoro_mode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TIEMPO DE FOCO"
-                android:textColor="#EF4444"
+                android:text="SESIÓN POMODORO"
+                android:textColor="#A855F7"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.04" />
-
-            <TextView
-                android:id="@+id/widget_pomodoro_cycles"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🍅 25m Estudio / 5m Pausa"
-                android:textColor="#CBD5E1"
-                android:textSize="10sp" />
         </LinearLayout>
+
+        <!-- Right: Artyon animando -->
+        <ImageView
+            android:id="@+id/widget_pomodoro_mascot"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/mascot_artyon_content"
+            android:contentDescription="Mascota Pomodoro" />
     </LinearLayout>
 
-    <!-- Action Prompt -->
+    <!-- Subtitle info & action -->
+    <TextView
+        android:id="@+id/widget_pomodoro_cycles"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="25m Estudio • 5m Descanso"
+        android:textColor="#C084FC"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:layout_marginTop="3dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
     <TextView
         android:id="@+id/widget_pomodoro_action"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Toca para iniciar sesión de concentración en RASTRO ⏱️"
-        android:textColor="#F87171"
-        android:textSize="11sp"
-        android:textStyle="bold"
+        android:text="Toca para iniciar sesión Pomodoro"
+        android:textColor="#CBD5E1"
+        android:textSize="9sp"
+        android:layout_marginTop="1dp"
         android:maxLines="1"
         android:ellipsize="end" />
 

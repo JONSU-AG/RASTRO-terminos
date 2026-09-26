@@ -24,7 +24,8 @@ import {
   Compass,
   Atom,
   Clock,
-  Eye
+  Eye,
+  Calculator
 } from 'lucide-react';
 
 import { Logo } from './Logo';
@@ -96,6 +97,16 @@ export const LiquidNavbar = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isMobileNav, setIsMobileNav] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [isOrsttyBtnVisible, setIsOrsttyBtnVisible] = useState(() => isOrsttyVisible(isAdmin));
+  const [topActionTooltip, setTopActionTooltip] = useState(null);
+  const tooltipTimeoutRef = useRef(null);
+
+  const triggerTooltip = (text) => {
+    if (tooltipTimeoutRef.current) clearTimeout(tooltipTimeoutRef.current);
+    setTopActionTooltip(text);
+    tooltipTimeoutRef.current = setTimeout(() => {
+      setTopActionTooltip(null);
+    }, 2400);
+  };
 
   useEffect(() => {
     const updateOrstty = () => {
@@ -603,188 +614,276 @@ export const LiquidNavbar = () => {
           }}
         >
 
-          {/* Asistente ORSTTY (Sección superior en teléfonos móviles) */}
+          {/* Asistente ORSTTY */}
           {isOrsttyBtnVisible && (
             <NavLink
               to="/orstty"
               title="Asistente ORSTTY"
-              onMouseEnter={() => prefetchRouteByPath('/orstty')}
-              onTouchStart={() => prefetchRouteByPath('/orstty')}
+              aria-label="Asistente ORSTTY"
+              onMouseEnter={() => {
+                prefetchRouteByPath('/orstty');
+                triggerTooltip('Tutor Virtual Orstty');
+              }}
+              onTouchStart={() => {
+                prefetchRouteByPath('/orstty');
+                triggerTooltip('Tutor Virtual Orstty');
+              }}
               style={{
-                padding: '5px 7px',
-                borderRadius: '10px',
-                border: location.pathname.startsWith('/orstty') ? '1px solid rgba(168, 85, 247, 0.35)' : '1px solid transparent',
+                width: '36px',
+                height: '36px',
+                borderRadius: '12px',
+                border: location.pathname.startsWith('/orstty') 
+                  ? '1.5px solid rgba(168, 85, 247, 0.5)' 
+                  : '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
                 background: location.pathname.startsWith('/orstty')
-                  ? 'rgba(168, 85, 247, 0.15)'
+                  ? 'rgba(168, 85, 247, 0.2)'
                   : 'rgba(120, 120, 128, 0.08)',
-                color: location.pathname.startsWith('/orstty') ? 'var(--accent-color)' : ((isAprender && !themePalette?.isLight) ? '#E2E8F0' : 'var(--text-secondary)'),
+                color: location.pathname.startsWith('/orstty') ? '#A855F7' : 'var(--text-secondary)',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '2px',
-                fontSize: '0.58rem',
-                fontWeight: 800,
                 textDecoration: 'none',
                 cursor: 'pointer',
-                minWidth: '38px',
+                flexShrink: 0,
+                boxShadow: location.pathname.startsWith('/orstty') ? '0 0 12px rgba(168, 85, 247, 0.3)' : 'none',
                 transition: 'all 0.15s ease'
               }}
             >
-              <GeminiStarIcon size={17} active={location.pathname.startsWith('/orstty')} />
-              <span style={{ lineHeight: 1 }}>ORSTTY</span>
+              <GeminiStarIcon size={19} active={location.pathname.startsWith('/orstty')} />
             </NavLink>
           )}
 
-          {/* Mis Chats (Sección superior al lado de ORSTTY en teléfonos móviles) */}
+          {/* Mis Chats */}
           <NavLink
             to="/chats"
             title="Mis Chats"
-            onMouseEnter={() => prefetchRouteByPath('/chats')}
-            onTouchStart={() => prefetchRouteByPath('/chats')}
+            aria-label="Mis Chats"
+            onMouseEnter={() => {
+              prefetchRouteByPath('/chats');
+              triggerTooltip('Comunidad & Chats');
+            }}
+            onTouchStart={() => {
+              prefetchRouteByPath('/chats');
+              triggerTooltip('Comunidad & Chats');
+            }}
             style={{
-              padding: '5px 7px',
-              borderRadius: '10px',
-              border: location.pathname.startsWith('/chats') ? '1px solid rgba(0, 122, 255, 0.35)' : '1px solid transparent',
+              width: '36px',
+              height: '36px',
+              borderRadius: '12px',
+              border: location.pathname.startsWith('/chats') 
+                ? '1.5px solid rgba(0, 122, 255, 0.5)' 
+                : '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
               background: location.pathname.startsWith('/chats')
-                ? 'rgba(0, 122, 255, 0.15)'
+                ? 'rgba(0, 122, 255, 0.2)'
                 : 'rgba(120, 120, 128, 0.08)',
-              color: location.pathname.startsWith('/chats') ? 'var(--accent-color, #007AFF)' : ((isAprender && !themePalette?.isLight) ? '#E2E8F0' : 'var(--text-secondary, #6B7280)'),
+              color: location.pathname.startsWith('/chats') ? 'var(--accent-color, #007AFF)' : 'var(--text-secondary)',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
-              fontSize: '0.58rem',
-              fontWeight: 800,
               textDecoration: 'none',
               cursor: 'pointer',
-              minWidth: '38px',
+              flexShrink: 0,
+              boxShadow: location.pathname.startsWith('/chats') ? '0 0 12px rgba(0, 122, 255, 0.3)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <MessageSquare size={15} />
-            <span style={{ lineHeight: 1 }}>Chats</span>
+            <MessageSquare size={17} />
           </NavLink>
 
-          {/* Notificaciones */}
+          {/* Notificaciones y Avisos */}
           {user && (
             <button
               onClick={() => setIsNotifOpen(true)}
+              onMouseEnter={() => triggerTooltip('Avisos & Notificaciones')}
+              onTouchStart={() => triggerTooltip('Avisos & Notificaciones')}
               title="Notificaciones y Avisos"
+              aria-label="Notificaciones"
               style={{
-                padding: '5px 7px',
-                borderRadius: '10px',
-                border: isNotifOpen ? '1px solid rgba(0, 122, 255, 0.35)' : '1px solid transparent',
+                width: '36px',
+                height: '36px',
+                borderRadius: '12px',
+                border: isNotifOpen 
+                  ? '1.5px solid rgba(0, 122, 255, 0.5)' 
+                  : '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
                 background: isNotifOpen
-                  ? 'rgba(0, 122, 255, 0.15)'
+                  ? 'rgba(0, 122, 255, 0.2)'
                   : 'rgba(120, 120, 128, 0.08)',
-                color: (isAprender && !themePalette?.isLight) ? '#E2E8F0' : 'var(--text-secondary)',
+                color: isNotifOpen ? 'var(--accent-color, #007AFF)' : 'var(--text-secondary)',
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '2px',
-                fontSize: '0.58rem',
-                fontWeight: 800,
                 cursor: 'pointer',
-                minWidth: '38px',
-                position: 'relative'
+                flexShrink: 0,
+                position: 'relative',
+                transition: 'all 0.15s ease'
               }}
             >
-              <Bell size={15} />
-
-              <span style={{ lineHeight: 1 }}>
-                Avisos
-              </span>
+              <Bell size={17} />
 
               {unreadCount > 0 && (
                 <span
                   style={{
                     position: 'absolute',
-                    top: '2px',
-                    right: '4px',
+                    top: '-2px',
+                    right: '-2px',
                     background: '#EF4444',
                     color: '#FFFFFF',
                     fontSize: '0.58rem',
-                    fontWeight: 800,
-                    width: '13px',
-                    height: '13px',
-                    borderRadius: '50%',
+                    fontWeight: 900,
+                    minWidth: '15px',
+                    height: '15px',
+                    borderRadius: '10px',
+                    padding: '0 3px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 6px rgba(239, 68, 68, 0.5)'
                   }}
                 >
-                  {unreadCount > 9
-                    ? '9+'
-                    : unreadCount}
+                  {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </button>
           )}
 
-          {/* Pomodoro Button */}
+          {/* Pomodoro Pro */}
           <button
             onClick={() => {
               if (openPomodoroModal) openPomodoroModal();
             }}
-            title="Temporizador Pomodoro Pro"
+            onMouseEnter={() => triggerTooltip('Temporizador Pomodoro')}
+            onTouchStart={() => triggerTooltip('Temporizador Pomodoro')}
+            title={isPomodoroRunning ? 'Pomodoro Activo (toca para ver)' : 'Temporizador Pomodoro'}
+            aria-label="Temporizador Pomodoro"
             style={{
-              padding: '5px 8px',
-              borderRadius: '10px',
-              border: '1px solid rgba(234, 88, 12, 0.35)',
-              background: 'rgba(234, 88, 12, 0.12)',
-              color: '#EA580C',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '2px',
-              fontSize: '0.58rem',
-              fontWeight: 800,
-              cursor: 'pointer',
-              minWidth: '38px'
-            }}
-          >
-            <Clock size={15} />
-
-            <span style={{ lineHeight: 1 }}>
-              Pomodoro
-            </span>
-          </button>
-
-          {/* Temas (acceso rápido con paleta en la barra superior móvil) */}
-          <button
-            onClick={() => setIsThemeOpen(true)}
-            title="Cambiar Tema"
-            style={{
-              padding: '5px 7px',
-              borderRadius: '10px',
-              border: isThemeOpen ? '1px solid rgba(168, 85, 247, 0.35)' : '1px solid transparent',
-              background: isThemeOpen
-                ? 'rgba(168, 85, 247, 0.15)'
+              width: '36px',
+              height: '36px',
+              borderRadius: '12px',
+              border: isPomodoroRunning 
+                ? '1.5px solid rgba(234, 88, 12, 0.6)' 
+                : '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
+              background: isPomodoroRunning 
+                ? 'rgba(234, 88, 12, 0.18)' 
                 : 'rgba(120, 120, 128, 0.08)',
-              color: isThemeOpen ? 'var(--accent-color)' : ((isAprender && !themePalette?.isLight) ? '#E2E8F0' : 'var(--text-secondary)'),
+              color: isPomodoroRunning ? '#EA580C' : 'var(--text-secondary)',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '2px',
-              fontSize: '0.58rem',
-              fontWeight: 800,
               cursor: 'pointer',
-              minWidth: '38px',
+              flexShrink: 0,
+              position: 'relative',
+              boxShadow: isPomodoroRunning ? '0 0 12px rgba(234, 88, 12, 0.35)' : 'none',
               transition: 'all 0.15s ease'
             }}
           >
-            <Palette size={15} />
+            <Clock size={17} />
+            {isPomodoroRunning && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '5px',
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  background: '#EA580C',
+                  boxShadow: '0 0 6px #EA580C'
+                }}
+              />
+            )}
+          </button>
 
-            <span style={{ lineHeight: 1 }}>
-              Tema
-            </span>
+          {/* Botón Rápido Fórmulas & Truquitos Pre-U */}
+          <NavLink
+            to="/formulario"
+            onMouseEnter={() => triggerTooltip('Fórmulas & Mnemotecnias')}
+            onTouchStart={() => triggerTooltip('Fórmulas & Mnemotecnias')}
+            title="Fórmulas & Mnemotecnias (Truquitos Pre-U)"
+            aria-label="Fórmulas y Mnemotecnias"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '12px',
+              border: isFormulario 
+                ? '1.5px solid rgba(168, 85, 247, 0.6)' 
+                : '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
+              background: isFormulario 
+                ? 'rgba(168, 85, 247, 0.2)' 
+                : 'rgba(120, 120, 128, 0.08)',
+              color: isFormulario ? 'var(--accent-color, #A855F7)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              flexShrink: 0,
+              boxShadow: isFormulario ? '0 0 12px rgba(168, 85, 247, 0.35)' : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Calculator size={17} />
+          </NavLink>
+
+          {/* Selector de Temas */}
+          <button
+            onClick={() => setIsThemeOpen(true)}
+            onMouseEnter={() => triggerTooltip('Personalizar Temas & Colores')}
+            onTouchStart={() => triggerTooltip('Personalizar Temas & Colores')}
+            title="Cambiar Tema de Color"
+            aria-label="Cambiar Tema"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '12px',
+              border: isThemeOpen 
+                ? '1.5px solid rgba(168, 85, 247, 0.5)' 
+                : '1px solid var(--card-border, rgba(120, 120, 128, 0.2))',
+              background: isThemeOpen
+                ? 'rgba(168, 85, 247, 0.2)'
+                : 'rgba(120, 120, 128, 0.08)',
+              color: isThemeOpen ? 'var(--accent-color, #A855F7)' : 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <Palette size={17} />
           </button>
         </div>
+
+        {/* Tooltip flotante instantáneo para que nuevos usuarios sepan qué es cada SVG */}
+        <AnimatePresence>
+          {topActionTooltip && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.94 }}
+              transition={{ duration: 0.16 }}
+              style={{
+                position: 'fixed',
+                top: '50px',
+                right: '12px',
+                zIndex: 9999999,
+                background: 'rgba(15, 23, 42, 0.92)',
+                color: '#F8FAFC',
+                padding: '5px 12px',
+                borderRadius: '10px',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.35)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                pointerEvents: 'none'
+              }}
+            >
+              {topActionTooltip}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* ======================================================
@@ -1547,6 +1646,47 @@ export const LiquidNavbar = () => {
 
                     {/* Línea divisoria */}
                     <div style={{ height: '1px', background: 'var(--card-border)', margin: '4px 0' }} />
+
+                    {/* Fórmulas & Truquitos Pre-U */}
+                    <motion.div whileHover={{ x: 3, scale: 1.01 }} whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
+                      <NavLink
+                        to="/formulario"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="nav-popover-item"
+                        style={{
+                          padding: '10px 14px',
+                          borderRadius: '14px',
+                          border: isFormulario 
+                            ? '1.5px solid rgba(168, 85, 247, 0.45)' 
+                            : '1px solid rgba(168, 85, 247, 0.22)',
+                          background: isFormulario 
+                            ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(99, 102, 241, 0.22))' 
+                            : 'rgba(168, 85, 247, 0.08)',
+                          color: themePalette.isLight ? '#1E293B' : '#F8FAFC',
+                          fontSize: '0.84rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          width: '100%',
+                          textAlign: 'left',
+                          textDecoration: 'none',
+                          boxSizing: 'border-box',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Calculator size={17} style={{ color: '#A855F7', flexShrink: 0 }} />
+                        <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                          <span style={{ fontWeight: 800, color: themePalette.isLight ? '#1E293B' : '#F8FAFC' }}>
+                            Fórmulas & Truquitos Pre-U
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary, #94A3B8)' }}>
+                            Cara A Fórmulas • Cara B Mnemotecnias
+                          </span>
+                        </div>
+                      </NavLink>
+                    </motion.div>
 
                     {/* Temporizador Pomodoro */}
                     <motion.button

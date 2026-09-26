@@ -8,6 +8,14 @@
     <string name="widget_weekly_streak_desc">Seguimiento semanal de tus días de estudio en RASTRO</string>
     <string name="widget_daily_streak_desc">Racha diaria activa y estado de estudio de hoy</string>
     <string name="widget_study_reminder_desc">Recordatorio diario con objetivos de estudio y motivación</string>
-    <string name="widget_pomodoro_desc">Temporizador Pomodoro para tus sesiones de estudio y enfoque</string>
+    <string name="widget_pomodoro_desc">Temporizador Pomodoro para tus sesiones de estudio y concentración</string>
     <string name="widget_mini_streak_desc">Acceso rápido a tu racha de estudio en RASTRO</string>
+    <string name="shortcut_dont_leave_short">¿Nos dejas?</string>
+    <string name="shortcut_dont_leave_long">¿Nos dejas? ¡5 min hoy!</string>
+    <string name="shortcut_streak_short">¿Nos dejas?</string>
+    <string name="shortcut_streak_long">¡Aún no te rindas! Salva tu racha</string>
+    <string name="shortcut_pomodoro_short">Técnica Pomodoro</string>
+    <string name="shortcut_pomodoro_long">Pomodoro de concentración (25m)</string>
+    <string name="shortcut_simulador_short">Simulacro</string>
+    <string name="shortcut_simulador_long">Entrenar en el Simulacro</string>
 </resources>

@@ -8,9 +8,12 @@ public class StudyReminderWidget extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        for (int appWidgetId : appWidgetIds) {
-            WidgetHelper.updateStudyReminder(context, appWidgetManager, appWidgetId);
-        }
+        try {
+            if (context == null || appWidgetManager == null || appWidgetIds == null) return;
+            for (int appWidgetId : appWidgetIds) {
+                WidgetHelper.updateStudyReminder(context, appWidgetManager, appWidgetId);
+            }
+        } catch (Throwable ignored) {}
     }
 
     @Override

@@ -25,11 +25,46 @@ const cleanUniversalText = (text) => {
     .replace(/criterio\s+de\s+admisi[oó]n/gi, 'criterio clave');
 };
 
+const CURSOS_LETRAS = [
+  'literatura', 'filosofia', 'filosofía', 'lenguaje', 'historia',
+  'civica', 'cívica', 'geografia', 'geografía', 'psicologia', 'psicología',
+  'razonamiento verbal', 'raz. verbal', 'rv'
+];
+
+const isLetrasSubject = (subjectStr) => {
+  if (!subjectStr || typeof subjectStr !== 'string') return false;
+  const s = subjectStr.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+  return CURSOS_LETRAS.some(c => {
+    const cNorm = c.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.includes(cNorm);
+  });
+};
+
 export const LessonEngine = ({ lesson, themePalette: passedPalette, onComplete, onExit }) => {
   const { hearts, loseHeart, triggerSuccessFeedback, recordLessonCompletion } = useGamification();
   const { theme } = useTheme();
   const themePalette = passedPalette || getThemePalette(theme);
   const isLight = Boolean(themePalette?.isLight);
+
+  const esCursoLetras = isLetrasSubject(lesson?.subject) || isLetrasSubject(lesson?.theory?.asignatura) || isLetrasSubject(lesson?.category);
+
+  // Sanitizador pedagógico: elimina cualquier distractor o pregunta de física/matemática (unidades S.I., fórmulas) en cursos de humanidades
+  const sanitizeHumanitiesList = (list) => {
+    if (!esCursoLetras || !Array.isArray(list)) return list || [];
+    return list.filter(c => {
+      const text = `${c.statement || ''} ${JSON.stringify(c.options || [])} ${c.explanation || ''}`.toLowerCase();
+      if (
+        text.includes('unidades en el s.i') ||
+        text.includes('sistema internacional de unidades') ||
+        text.includes('coherencia dimensional') ||
+        text.includes('m/s²') ||
+        text.includes('newton')
+      ) {
+        return false;
+      }
+      return true;
+    });
+  };
 
   // Ocultar barras de navegación globales mientras la lección esté abierta
   useEffect(() => {
@@ -43,7 +78,7 @@ export const LessonEngine = ({ lesson, themePalette: passedPalette, onComplete, 
   // Paso 0: Teoría explicativa previa obligatoria (Regla de oro)
   // Pasos 1..N: Retos interactivos (Opción múltiple, match_pairs, cloze)
   const [currentStep, setCurrentStep] = useState(0);
-  const [challenges, setChallenges] = useState(lesson.challenges || []);
+  const [challenges, setChallenges] = useState(() => sanitizeHumanitiesList(lesson.challenges || []));
 
   // Cargar dinámicamente preguntas extra del banco para aumentar variedad y evitar repetición
   useEffect(() => {
@@ -90,8 +125,9 @@ export const LessonEngine = ({ lesson, themePalette: passedPalette, onComplete, 
           const currentStatements = new Set(prev.map(c => c.statement?.toLowerCase().trim()));
           const uniqueNewChallenges = newChallenges.filter(c => !currentStatements.has(c.statement?.toLowerCase().trim()));
           
-          if (uniqueNewChallenges.length === 0) return prev;
-          return [...prev, ...uniqueNewChallenges];
+          const cleanNewChallenges = sanitizeHumanitiesList(uniqueNewChallenges);
+          if (cleanNewChallenges.length === 0) return prev;
+          return [...prev, ...cleanNewChallenges];
         });
 
       } catch (err) {
@@ -658,8 +694,8 @@ export const LessonEngine = ({ lesson, themePalette: passedPalette, onComplete, 
                   />
                 )}
 
-                {/* 2. Pizarra de Fórmulas y Teoremas Canónicos con KaTeX */}
-                {(lesson.theory?.formula_data || lesson.theory?.mecanismos) && (
+                {/* 2. Pizarra de Fórmulas y Teoremas Canónicos con KaTeX (solo ciencias y matemáticas) */}
+                {!esCursoLetras && (lesson.theory?.formula_data || lesson.theory?.mecanismos) && (
                   <FormulaDisplay
                     formulaData={lesson.theory?.formula_data}
                     rawMecanismos={lesson.theory?.mecanismos}
@@ -726,7 +762,7 @@ export const LessonEngine = ({ lesson, themePalette: passedPalette, onComplete, 
                           isLight={isLight}
                         />
                       )}
-                      {sec.pedagogical_table && (
+                      {!esCursoLetras && sec.pedagogical_table && (
                          <PedagogicalFormulaTable data={sec.pedagogical_table} />
                       )}
                     </div>
