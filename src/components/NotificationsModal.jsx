@@ -682,12 +682,12 @@ export const NotificationsModal = ({ isOpen, onClose }) => {
                             </div>
                             <div>
                               <h4 style={{ margin: 0, fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-main)' }}>
-                                Pop-ups en el Teléfono (Android)
+                                Notificaciones
                               </h4>
                               <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                                 {systemNotifState.isEnabled
-                                  ? 'Activo: recibirás alertas emergentes en la barra de Android.'
-                                  : 'Permite avisos flotantes de clases y simulacros.'}
+                                  ? 'Activas: recibirás avisos de clases y simulacros.'
+                                  : 'Permite avisos de clases y simulacros.'}
                               </p>
                             </div>
                           </div>

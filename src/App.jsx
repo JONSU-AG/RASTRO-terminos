@@ -12,6 +12,7 @@ import { GuestSaveBanner } from './components/GuestSaveBanner';
 import { WarningBanner } from './components/WarningBanner';
 import { ChooseUsernameModal } from './components/ChooseUsernameModal';
 import { DeviceNotificationsListener } from './components/DeviceNotificationsListener';
+import { NotifWelcomeModal } from './components/NotifWelcomeModal';
 import { PomodoroFloatingPill } from './components/PomodoroFloatingPill';
 import { PomodoroModal } from './components/PomodoroModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -231,6 +232,9 @@ export function App() {
 
                 {/* Native Device & Push Notification Listener */}
                 <DeviceNotificationsListener />
+
+                {/* Ventanita inicial de mascotas: permiso de notificaciones (1 sola vez) */}
+                <NotifWelcomeModal />
 
                 {/* Mandatory Choose Username Flow for Users */}
                 <ChooseUsernameModal />

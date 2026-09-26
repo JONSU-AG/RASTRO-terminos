@@ -256,7 +256,7 @@ export const SettingsModal = ({ isOpen, onClose, onOpenTerms }) => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
                 <div>
                   <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)', display: 'block' }}>
-                    Alertas en el Teléfono (Pop-ups)
+                    Notificaciones
                   </span>
                   <span style={{ fontSize: '0.76rem', color: 'var(--text-secondary)' }}>
                     {notificationsEnabled ? '🔔 Notificaciones generales activadas' : '🔕 Notificaciones inactivas'}

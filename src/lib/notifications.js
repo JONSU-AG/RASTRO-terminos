@@ -362,7 +362,36 @@ export async function triggerSystemNotification({
   return shown;
 }
 
-// Programador de recordatorios nativos inteligentes estilo Duolingo / Knowunity
+// Programador de recordatorios por HORA DE REGIÓN (America/Lima), SIN alarmas exactas.
+// No usa `schedule: { at }`: en Android 12+ eso invoca el permiso del sistema de
+// "alarmas y recordatorios" (somos notificaciones, no alarma). Solo muestra avisos
+// inmediatos cuando la app está abierta. Sin costo, sin claves.
+function getLimaParts() {
+  try {
+    const fmt = new Intl.DateTimeFormat('es-PE', {
+      timeZone: 'America/Lima',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    const parts = Object.fromEntries(fmt.formatToParts(new Date()).map((p) => [p.type, p.value]));
+    const h = Number(parts.hour === '24' ? 0 : parts.hour);
+    return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: h };
+  } catch {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return { date: `${d.getFullYear()}-${m}-${day}`, hour: d.getHours() };
+  }
+}
+
+// Ventanas del día en hora Lima: mañana 7-11, tarde 15-19, noche 19-24.
+function limaWindow(hour) {
+  if (hour >= 7 && hour < 11) return 'morning';
+  if (hour >= 15 && hour < 19) return 'afternoon';
+  if (hour >= 19 && hour < 24) return 'night';
+  return null;
+}
+
 export async function scheduleDailyStudyReminder({ streak = 0 }) {
   if (!isNativeApp()) return;
   try {
@@ -373,71 +402,45 @@ export async function scheduleDailyStudyReminder({ streak = 0 }) {
     const perm = await LocalNotifications.checkPermissions();
     if (perm.display !== 'granted') return;
 
-    // 1. Notificación Nocturna: Salvar Racha Diaria (8:30 PM)
-    const nightDate = new Date();
-    nightDate.setHours(20, 30, 0, 0);
-    if (nightDate.getTime() <= Date.now()) {
-      nightDate.setDate(nightDate.getDate() + 1);
+    const { date, hour } = getLimaParts();
+    const win = limaWindow(hour);
+    if (!win) return;
+
+    // 1 aviso por ventana y día (hora Lima), para no spamear al abrir la app.
+    const flagKey = `rastro_lima_reminder_${win}_${date}`;
+    if (localStorage.getItem(flagKey) === '1') return;
+
+    let id = 77777;
+    let title = '';
+    let body = '';
+    let url = '/aprender';
+
+    if (win === 'night') {
+      id = 77777;
+      title = streak > 0
+        ? `🔥 ¡Salva tu racha de ${streak} ${streak === 1 ? 'día' : 'días'}!`
+        : '✨ Orstty y Artyon te están esperando...';
+      body = streak > 0
+        ? 'Solo 2 minutos: resuelve una lección en Aprender antes de medianoche y protege tu racha.'
+        : 'Tu preparación universitaria se construye día a día. Entra a resolver el reto de hoy en Aprender.';
+      url = '/aprender';
+    } else if (win === 'afternoon') {
+      id = 77778;
+      title = '🍅 Sesión con Técnica Pomodoro';
+      body = 'Aprovecha la tarde: 25 minutos de estudio concentrado y 5 minutos de descanso. ¡Máxima retención!';
+      url = '/pomodoro';
+    } else {
+      id = 77779;
+      title = '☀️ Reto del día en Aprender';
+      body = 'Comienza con la mente fresca. Supera un nuevo nivel de práctica y suma puntos a tu meta.';
+      url = '/aprender';
     }
 
-    const nightTitle = streak > 0
-      ? `🔥 ¡Salva tu racha de ${streak} ${streak === 1 ? 'día' : 'días'}!`
-      : '✨ Orstty y Artyon te están esperando...';
-    const nightBody = streak > 0
-      ? 'Solo 2 minutos: resuelve una lección en Aprender antes de medianoche y protege tu racha.'
-      : 'Tu preparación universitaria se construye día a día. Entra a resolver el reto de hoy en Aprender.';
-
-    // 2. Notificación Tarde: Técnica Pomodoro (4:30 PM)
-    const afternoonDate = new Date();
-    afternoonDate.setHours(16, 30, 0, 0);
-    if (afternoonDate.getTime() <= Date.now()) {
-      afternoonDate.setDate(afternoonDate.getDate() + 1);
-    }
-
-    const pomodoroTitle = '🍅 Sesión con Técnica Pomodoro';
-    const pomodoroBody = 'Aprovecha la tarde: 25 minutos de estudio concentrado y 5 minutos de descanso. ¡Máxima retención!';
-
-    // 3. Notificación Matutina: Reto del Día en Aprender (8:30 AM)
-    const morningDate = new Date();
-    morningDate.setHours(8, 30, 0, 0);
-    if (morningDate.getTime() <= Date.now()) {
-      morningDate.setDate(morningDate.getDate() + 1);
-    }
-
-    const morningTitle = '☀️ Reto del día en Aprender';
-    const morningBody = 'Comienza con la mente fresca. Supera un nuevo nivel de práctica y suma puntos a tu meta.';
-
-    // Cancelar previamente para evitar duplicados
-    try {
-      await LocalNotifications.cancel({ notifications: [{ id: 77777 }, { id: 77778 }, { id: 77779 }] });
-    } catch {}
-
-    // Programar las 3 notificaciones automáticas
+    // Aviso inmediato (sin hora exacta = sin permiso de alarma).
     await LocalNotifications.schedule({
-      notifications: [
-        {
-          title: nightTitle,
-          body: nightBody,
-          id: 77777,
-          schedule: { at: nightDate },
-          extra: { url: '/aprender' }
-        },
-        {
-          title: pomodoroTitle,
-          body: pomodoroBody,
-          id: 77778,
-          schedule: { at: afternoonDate },
-          extra: { url: '/pomodoro' }
-        },
-        {
-          title: morningTitle,
-          body: morningBody,
-          id: 77779,
-          schedule: { at: morningDate },
-          extra: { url: '/aprender' }
-        }
-      ]
+      notifications: [{ title, body, id, extra: { url } }]
     });
+    try { localStorage.setItem(flagKey, '1'); } catch {}
   } catch (err) {
     console.debug('Schedule study reminder notice:', err);
   }

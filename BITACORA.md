@@ -370,6 +370,21 @@
 - **Fix**: agregado `import { DuolingoFlameIcon } from '../components/DuolingoFlameIcon'` (1 línea, sin tocar diseño ni accesos).
 - **Build**: `npm run build` OK (13.60s) + `npx cap sync android` OK.
 
+### 3.27 Textos de notificaciones en lenguaje de app
+- `NotificationsModal.jsx`: "Pop-ups en el Teléfono (Android)" → "Notificaciones"; subtextos a "Permite avisos de clases y simulacros." / "Activas: recibirás avisos de clases y simulacros."
+- `SettingsModal.jsx`: "Alertas en el Teléfono (Pop-ups)" → "Notificaciones".
+- Solo textos, sin tocar flujos ni permisos. Build + `cap sync` OK.
+
+### 3.28 Recordatorios por hora Lima sin alarma + menú ⋯ móvil sin Pomodoro/Fórmulas
+- `src/lib/notifications.js`: `scheduleDailyStudyReminder` reescrita. Fuera los 3 `schedule:{at}` exactos (8:30/16:30/20:30 del dispositivo) que invocaban el permiso de "alarmas" de Android. Ahora calcula hora de `America/Lima` con `Intl` (no del dispositivo) y muestra 1 aviso inmediato por ventana (mañana 7-11, tarde 15-19, noche 19-24, flag diario `rastro_lima_reminder_*`). Condición: sin alarma exacta no hay avisos con app cerrada, solo al abrirla.
+- `src/components/LiquidNavbar.jsx`: menú ⋯ en móvil (`isMobileNav`) ya no muestra "Fórmulas & Truquitos Pre-U" ni "Temporizador Pomodoro". Siguen en escritorio y por sus accesos (icono superior, Cursos, Inicio). Sin tocar accesos.
+- Build + `cap sync` OK.
+
+### 3.29 Ventanita inicial de mascotas pidiendo notificaciones
+- `src/components/NotifWelcomeModal.jsx` (nuevo): ORSTTY (`waving`) + ARTYON (`happy`) vía `ORSTTY_EMOTIONS`/`ARTYON_EMOTIONS` (`resolveMascotAsset`, archivos verificados en `public/assets/mascots/`). Texto "¿Nos permites enviarte notificaciones?", botones "Sí, permitir" (pide permiso + 1 aviso) y "No quiero". Sale 1 sola vez al inicio (flag `rastro_notif_welcome_seen`), no bloquea login.
+- `src/App.jsx`: montado junto a `DeviceNotificationsListener`.
+- Build + `cap sync` OK.
+
 ## 4. Si falla algo, mira aquí
 
 | Síntoma | Revisar |

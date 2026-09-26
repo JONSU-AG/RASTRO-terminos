@@ -1647,7 +1647,9 @@ export const LiquidNavbar = () => {
                     {/* Línea divisoria */}
                     <div style={{ height: '1px', background: 'var(--card-border)', margin: '4px 0' }} />
 
-                    {/* Fórmulas & Truquitos Pre-U */}
+                    {/* Fórmulas & Truquitos Pre-U (solo escritorio: en móvil sale del menú ⋯) */}
+                    {!isMobileNav && (
+                      <>
                     <motion.div whileHover={{ x: 3, scale: 1.01 }} whileTap={{ scale: 0.97 }} style={{ width: '100%' }}>
                       <NavLink
                         to="/formulario"
@@ -1688,7 +1690,7 @@ export const LiquidNavbar = () => {
                       </NavLink>
                     </motion.div>
 
-                    {/* Temporizador Pomodoro */}
+                    {/* Temporizador Pomodoro (solo escritorio: en móvil sale del menú ⋯) */}
                     <motion.button
                       whileHover={{ x: 3, scale: 1.01 }}
                       whileTap={{ scale: 0.97 }}
@@ -1720,6 +1722,8 @@ export const LiquidNavbar = () => {
                         Temporizador Pomodoro
                       </span>
                     </motion.button>
+                      </>
+                    )}
 
                     {/* Configuración / Cambiar Tema */}
                     <motion.button
