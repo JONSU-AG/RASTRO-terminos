@@ -40,7 +40,7 @@ export const EXAM_SCHEDULE = [
   },
   {
     id: 'quintos',
-    name: 'CICLO ESCOLARES',
+    name: 'CEPREQUINTOS',
     subtitle: 'Admisión Preferencial',
     targetDate: '2026-11-01T08:00:00',
     tagColor: '#F59E0B',

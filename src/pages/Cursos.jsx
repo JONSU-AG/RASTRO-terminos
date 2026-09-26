@@ -43,6 +43,10 @@ import { VERSION_CONFIG } from '../config/appVersionConfig';
 import { CourseFlashcardsModal } from '../components/CourseFlashcardsModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { SUBJECTS_CONFIG } from '../data/learningPathData';
+import { AddPlaylistModal } from '../components/AddPlaylistModal';
+import { YouTubePlayerModal } from '../components/YouTubePlayerModal';
+import { GoogleSignPromptModal } from '../components/GoogleSignPromptModal';
+import { subscribeMyPlaylists, subscribeSharedPlaylists, subscribeCuratedPlaylists, setPlaylistShared, deleteUserPlaylist, toPlayerCourse } from '../lib/userPlaylistsService';
 
 export const WhatsAppIconSVG = ({ size = 18, color = "currentColor", style = {} }) => (
   <svg
@@ -58,7 +62,7 @@ export const WhatsAppIconSVG = ({ size = 18, color = "currentColor", style = {} 
 );
 
 export const Cursos = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isGuest } = useAuth();
   const navigate = useNavigate();
   const [accessSettings, setAccessSettings] = useState(getCachedAccessSettings);
   const [siteSettings, setSiteSettings] = useState(getCachedSiteSettings);
@@ -92,6 +96,29 @@ export const Cursos = () => {
   });
   const [isCustomPlaylistModalOpen, setIsCustomPlaylistModalOpen] = useState(false);
   const [playlistToEdit, setPlaylistToEdit] = useState(null);
+
+  // NUEVO sistema aislado rastro_yt_playlists: privado por defecto, arranque vacío.
+  // No lee cursos/academias/youtubePlaylistsData. Briceño/Esparta/Kelsen siguen ocultos por VERSION_CONFIG.
+  const [myYtPlaylists, setMyYtPlaylists] = useState([]);
+  const [sharedYtPlaylists, setSharedYtPlaylists] = useState([]);
+  const [curatedYtPlaylists, setCuratedYtPlaylists] = useState([]);
+  const [ytSectionTab, setYtSectionTab] = useState('mias');
+  const [isAddYtModalOpen, setIsAddYtModalOpen] = useState(false);
+  const [needAccountModal, setNeedAccountModal] = useState(false);
+  const [playerCourse, setPlayerCourse] = useState(null);
+  const [playerLesson, setPlayerLesson] = useState(null);
+
+  useEffect(() => {
+    if (!user || isGuest) { setMyYtPlaylists([]); return; }
+    const unsub = subscribeMyPlaylists(user.uid, setMyYtPlaylists);
+    return () => unsub && unsub();
+  }, [user, isGuest]);
+
+  useEffect(() => {
+    const unsubShared = subscribeSharedPlaylists(setSharedYtPlaylists);
+    const unsubCurated = subscribeCuratedPlaylists(setCuratedYtPlaylists);
+    return () => { unsubShared && unsubShared(); unsubCurated && unsubCurated(); };
+  }, []);
 
   const handleDeleteAcademy = (acad) => {
     const isOwner = Boolean(
@@ -300,7 +327,9 @@ export const Cursos = () => {
     });
   };
 
-  const allYtPlaylists = [...customPlaylists, ...YOUTUBE_COURSES_CATALOG];
+  // LEGADO aislado: no se usa YOUTUBE_COURSES_CATALOG ni se mezcla con el sistema nuevo.
+  // Se deja en [] para no romper el bloque antiguo (que sigue en {false && ...}).
+  const allYtPlaylists = [...customPlaylists];
   const filteredYtCourses = allYtPlaylists.filter(c => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -975,6 +1004,118 @@ export const Cursos = () => {
         </div>
       )}
 
+      {/* ================= VIDEOS YOUTUBE (nuevo, aislado, arranque vacío) ================= */}
+      <section style={{ marginBottom: '36px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '12px', background: 'rgba(239,68,68,0.12)', border: '1.5px solid rgba(239,68,68,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444' }}>
+                <Video size={20} />
+              </div>
+              <h2 style={{ fontSize: 'clamp(1.15rem, 2vw, 1.35rem)', fontWeight: 800, margin: 0, color: 'var(--text-main)' }}>
+                Videos YouTube
+              </h2>
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+              Guarda por URL o ID. Nace privado; solo se publica si tocas Compartir con todos.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { if (!user || isGuest) { setNeedAccountModal(true); return; } setIsAddYtModalOpen(true); }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: '999px', background: '#EF4444', border: 'none', color: '#fff', fontWeight: 800, fontSize: '0.8rem', cursor: 'pointer' }}
+          >
+            <Plus size={15} />
+            <span>Agregar</span>
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+          {[['mias', 'Mías'], ['comunidad', 'Compartidas'], ['oficial', 'Oficial']].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setYtSectionTab(key)}
+              style={{ padding: '7px 14px', borderRadius: '999px', border: ytSectionTab === key ? 'none' : '1px solid var(--card-border)', background: ytSectionTab === key ? 'var(--text-main, #0F172A)' : 'transparent', color: ytSectionTab === key ? 'var(--card-bg, #fff)' : 'var(--text-main)', fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer' }}
+            >
+              {label}
+              {key === 'mias' && myYtPlaylists.length > 0 ? ` (${myYtPlaylists.length})` : ''}
+            </button>
+          ))}
+        </div>
+
+        {ytSectionTab === 'mias' && (
+          (!user || isGuest) ? (
+            <div className="glass-card" style={{ padding: '28px 20px', borderRadius: '20px', textAlign: 'center', border: '1px solid var(--card-border)' }}>
+              <p style={{ margin: '0 0 14px', color: 'var(--text-secondary)', fontSize: '0.86rem' }}>Inicia sesión con cuenta para guardar tus playlists. Los invitados no guardan.</p>
+              <button type="button" onClick={() => setNeedAccountModal(true)} style={{ padding: '10px 18px', borderRadius: '12px', border: 'none', background: '#007AFF', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>Acceder con cuenta</button>
+            </div>
+          ) : myYtPlaylists.length === 0 ? (
+            <div className="glass-card" style={{ padding: '32px 20px', borderRadius: '20px', textAlign: 'center', border: '1px solid var(--card-border)' }}>
+              <p style={{ margin: '0 0 6px', fontWeight: 800, color: 'var(--text-main)' }}>Aún no hay videos</p>
+              <p style={{ margin: '0 0 16px', color: 'var(--text-secondary)', fontSize: '0.84rem' }}>Agrega tu primera playlist o video público de YouTube por URL o ID.</p>
+              <button type="button" onClick={() => setIsAddYtModalOpen(true)} style={{ padding: '10px 18px', borderRadius: '12px', border: 'none', background: '#EF4444', color: '#fff', fontWeight: 800, cursor: 'pointer' }}>Agregar ahora</button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '12px' }}>
+              {myYtPlaylists.map((p) => (
+                <div key={p.id} className="glass-card" style={{ padding: '14px', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.9rem', marginBottom: '2px' }}>{p.title}</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>{p.subject || 'General'} · {p.type === 'playlist' ? 'Playlist' : 'Video'} · {p.isShared ? 'Compartida' : 'Privada'}</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button type="button" onClick={() => { setPlayerCourse(toPlayerCourse(p)); setPlayerLesson(null); }} style={{ flex: 1, padding: '8px', borderRadius: '10px', border: 'none', background: '#EF4444', color: '#fff', fontWeight: 800, fontSize: '0.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                      <Play size={13} fill="#fff" /><span>Ver</span>
+                    </button>
+                    <button type="button" onClick={async () => { try { await setPlaylistShared(p.id, !p.isShared); } catch {} }} title={p.isShared ? 'Dejar de compartir' : 'Compartir con todos'} style={{ padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--card-border)', background: p.isShared ? 'rgba(16,185,129,0.12)' : 'transparent', color: p.isShared ? '#059669' : 'var(--text-main)', fontWeight: 800, fontSize: '0.76rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Share2 size={13} /><span>{p.isShared ? 'Compartida' : 'Compartir'}</span>
+                    </button>
+                    <button type="button" onClick={() => setConfirmModal({ isOpen: true, title: '¿Eliminar?', message: `Eliminar "${p.title}" de tus guardados.`, confirmText: 'Sí, Eliminar', variant: 'danger', onConfirm: async () => { try { await deleteUserPlaylist(p.id); } catch {} } })} style={{ padding: '8px 10px', borderRadius: '10px', border: 'none', background: 'rgba(239,68,68,0.12)', color: '#EF4444', cursor: 'pointer' }}>
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {ytSectionTab === 'comunidad' && (
+          sharedYtPlaylists.length === 0 ? (
+            <div className="glass-card" style={{ padding: '28px 20px', borderRadius: '20px', textAlign: 'center', border: '1px solid var(--card-border)' }}>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.86rem' }}>Nadie ha compartido aún. Cuando un usuario toque Compartir con todos, aparece aquí.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '12px' }}>
+              {sharedYtPlaylists.map((p) => (
+                <div key={p.id} className="glass-card" style={{ padding: '14px', borderRadius: '16px', border: '1px solid var(--card-border)' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.9rem' }}>{p.title}</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '2px 0 10px' }}>{p.subject || 'General'} · {p.type === 'playlist' ? 'Playlist' : 'Video'}</div>
+                  <button type="button" onClick={() => { setPlayerCourse(toPlayerCourse(p)); setPlayerLesson(null); }} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: 'none', background: '#0F172A', color: '#fff', fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer' }}>Ver</button>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {ytSectionTab === 'oficial' && (
+          curatedYtPlaylists.length === 0 ? (
+            <div className="glass-card" style={{ padding: '28px 20px', borderRadius: '20px', textAlign: 'center', border: '1px solid var(--card-border)' }}>
+              <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.86rem' }}>Curaduría oficial vacía. El admin la llenará desde la app cuando suba playlists.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))', gap: '12px' }}>
+              {curatedYtPlaylists.map((p) => (
+                <div key={p.id} className="glass-card" style={{ padding: '14px', borderRadius: '16px', border: '1.5px solid rgba(16,185,129,0.35)' }}>
+                  <div style={{ fontWeight: 800, color: 'var(--text-main)', fontSize: '0.9rem' }}>{p.title}</div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: '2px 0 10px' }}>{p.subject || 'General'}</div>
+                  <button type="button" onClick={() => { setPlayerCourse(toPlayerCourse(p)); setPlayerLesson(null); }} style={{ width: '100%', padding: '8px', borderRadius: '10px', border: 'none', background: '#059669', color: '#fff', fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer' }}>Ver oficial</button>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </section>
+
       {/* ================= RUTAS TEMÁTICAS Y SECCIÓN APRENDER ================= */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
           <section>
@@ -1566,6 +1707,27 @@ export const Cursos = () => {
         cancelText="Cancelar"
         variant={confirmModal.variant || "danger"}
       />
+
+      {/* NUEVO: agregar playlist privada + reproductor + muro de cuenta */}
+      <AddPlaylistModal
+        isOpen={isAddYtModalOpen}
+        onClose={() => setIsAddYtModalOpen(false)}
+        onSaved={() => setYtSectionTab('mias')}
+      />
+      <YouTubePlayerModal
+        isOpen={!!playerCourse}
+        onClose={() => { setPlayerCourse(null); setPlayerLesson(null); }}
+        course={playerCourse}
+        initialLesson={playerLesson}
+      />
+      {needAccountModal && (
+        <GoogleSignPromptModal
+          isOpen={true}
+          hideGuest={true}
+          destination="/cursos"
+          onClose={() => setNeedAccountModal(false)}
+        />
+      )}
     </div>
     </AccessGate>
   );

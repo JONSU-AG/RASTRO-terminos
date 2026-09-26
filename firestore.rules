@@ -158,6 +158,23 @@ service cloud.firestore {
       allow write: if author();
     }
 
+    // —— Playlists YouTube por cuenta (nuevo, aislado): privado por defecto, público solo si isShared ——
+    // PROPUESTA sin desplegar: requiere deploy manual con permiso explícito.
+    match /rastro_yt_playlists/{d} {
+      allow create: if signedIn()
+        && request.resource.data.get('ownerUid', '') == request.auth.uid
+        && request.resource.data.get('isShared', false) == false
+        && request.resource.data.get('isCurated', false) == false
+        && request.resource.data.get('isHidden', false) == false;
+      allow read: if resource.data.get('isHidden', false) == false && (
+        (resource.data.get('isShared', false) == true) ||
+        (signedIn() && resource.data.get('ownerUid', '') == request.auth.uid) ||
+        author()
+      );
+      allow update: if (signedIn() && resource.data.get('ownerUid', '') == request.auth.uid) || author();
+      allow delete: if (signedIn() && resource.data.get('ownerUid', '') == request.auth.uid) || author();
+    }
+
     // —— Todo lo demás: denegado por defecto ——
     match /{document=**} {
       allow read, write: if author();

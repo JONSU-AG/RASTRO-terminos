@@ -578,6 +578,11 @@ export const UserProfile = () => {
   const isProfileAdmin = Boolean(
     profileUser?.email && isAuthorOfFirebase(profileUser.email)
   );
+  // Poderes de moderación: SOLO admin verificado (contexto o correo autor).
+  // Las banderas del documento visto solo decoran insignias, nunca otorgan poder.
+  const isUserAdmin = Boolean(
+    isAdmin || (user?.email && (ADMIN_EMAILS.includes(user.email.toLowerCase()) || isAuthorOfFirebase(user.email)))
+  );
 
   // Handle endorsing individual profile data points
   const handleEndorse = async (field) => {

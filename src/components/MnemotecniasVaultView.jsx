@@ -13,6 +13,7 @@ import {
   ChevronUp,
   Zap,
   Layers,
+  Compass,
   HelpCircle,
   ArrowRight
 } from 'lucide-react';

@@ -60,6 +60,7 @@ import { getThemePalette } from '../utils/themeImmersion';
 import { LessonEngine } from '../components/aprender/LessonEngine';
 import { RankingSimulacroModal } from '../components/RankingSimulacroModal';
 import AnimatedCounter from '../components/AnimatedCounter';
+import { DuolingoFlameIcon } from '../components/DuolingoFlameIcon';
 import { OrsttyMascot, ArtyonMascot, MascotDialogue, DynamicMascot, DualMascotDuo } from '../components/Mascots';
 import { FormulaDisplay } from '../components/FormulaDisplay';
 import { CourseFlashcardsModal } from '../components/CourseFlashcardsModal';

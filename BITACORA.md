@@ -1,5 +1,5 @@
 # RASTRO · Bitácora técnica y mapa de cambios
-> Última actualización: 2026-09-25 · v1.0.1
+> Última actualización: 2026-09-26 · v1.0.2 (versionCode 2)
 > Si algo falla, busca aquí QUÉ se tocó y DÓNDE. Nunca guardar contraseñas en este archivo.
 
 ## 1. Mapa rápido del proyecto
@@ -357,6 +357,19 @@
     - `widget_exam_countdown_info.xml` (`@layout/widget_exam_countdown`)
   - En Android 12 y versiones superiores, el selector de widgets del launcher renderiza directamente la vista previa visual real con sus tipografías, mascotas y colores, eliminando las vistas previas vacías o genéricas.
 
+### 3.25 Sistema nuevo Videos YouTube por cuenta (aislado, arranque vacío, privado por defecto)
+- **Aislamiento**: colección nueva `rastro_yt_playlists`. NO lee `cursos`, `academias`, `youtubePlaylistsData.js` (vacío) ni `localStorage rastro_custom_youtube_playlists`. Briceño/Esparta/Kelsen siguen ocultos por `VERSION_CONFIG.disconnect*`. Bloque antiguo en `Cursos.jsx` sigue en `{false && ...}`.
+- **Archivos**: `src/lib/userPlaylistsService.js` (nuevo, CRUD + `toPlayerCourse`), `src/components/AddPlaylistModal.jsx` (nuevo, URL/ID + validación), `src/utils/videoValidation.js` (extendido: shorts, `extractPlaylistId`, `parseYouTubeInput`), `src/pages/Cursos.jsx` (sección visible `Videos YouTube` con tabs Mías/Compartidas/Oficial + `YouTubePlayerModal` reutilizado + muro cuenta `hideGuest`).
+- **Privacidad**: nace `isShared:false` (solo dueño). Botón `Compartir/Compartida` conmuta público. `Oficial` vacío hasta que el admin marque `isCurated:true` desde la app. Arranque con cero videos, solo CTA Agregar.
+- **Fix colateral**: `allYtPlaylists` referenciaba `YOUTUBE_COURSES_CATALOG` sin import (ReferenceError en runtime). Cambiado a `[...customPlaylists]` aislado.
+- **Reglas**: `firestore.rules` con bloque `rastro_yt_playlists` PROPUESTO sin desplegar (crear solo dueño con `isShared/isCurated/isHidden:false`; leer público solo si `isShared && !isHidden`; update/delete dueño o autor). Requiere `firebase deploy --only firestore:rules` con permiso explícito. Sin eso, la escritura falla y la lectura compartida no sale.
+- **Build**: `npm run build` OK (16.39s) + `npx cap sync android` OK.
+
+### 3.26 Fix crash Aprender (`DuolingoFlameIcon is not defined`)
+- **Causa**: `src/pages/Aprender.jsx:812` usaba `<DuolingoFlameIcon>` sin import (solo `MiRachaModal` y `StudyWidgetsHub` lo importaban). Rompía toda la pestaña Aprender con pantalla "Algo salió mal".
+- **Fix**: agregado `import { DuolingoFlameIcon } from '../components/DuolingoFlameIcon'` (1 línea, sin tocar diseño ni accesos).
+- **Build**: `npm run build` OK (13.60s) + `npx cap sync android` OK.
+
 ## 4. Si falla algo, mira aquí
 
 | Síntoma | Revisar |
@@ -397,3 +410,21 @@
   - Firma Play (la que instalan testers/usuarios): `29:C5:E8:91:...:AB:27:D9` ← la que vale para login
 - Tras subir a pista cerrada: copiar SHA-1 de Play (Firma de apps) a Firebase si cambia; testers reinstalan desde Play.
 - Web y APK van separados: el APK lleva copia congelada de `dist/` del día del `cap:sync`. Siempre `npm run build` + `cap:sync` ANTES de generar el AAB.
+
+## 7. Addendum v1.0.1 → v1.0.2 (post-seguridad)
+
+- **Login triple**: correo promovido a primera clase + recuperar contraseña (`Auth.jsx`, wrappers en `AuthContext`); invitado (`loginGuest`, `GuestSaveBanner.jsx`, fusión auto o diálogo de conflicto `resolveGuestConflict`); Drive bloqueado para invitados con aviso (`ensureDriveToken`, `UploadModal`).
+- **Accesos**: libre todo SALVO `/perfil` (`RequireAccount` en `App.jsx`), `/chats` y Subir (muro `GoogleSignPromptModal hideGuest` en `UploadModal` + tabs chat de `UserProfile`). Muro `AccessGate` desactivado (`if (!user && false)`); navbar cursos libre.
+- **Notificaciones nativas**: plugin `@capacitor/local-notifications`; rama nativa en `triggerSystemNotification` + permiso OS; BUG corregido (Ajustes escribía otra clave que el motor).
+- **Racha**: cuenta al abrir la app + fechas LOCALES (era UTC); widgets y recordatorio en local.
+- **Username**: memoria local `rastro_username_chosen[_uid]` (no lo repide tras actualizar).
+- **Carrusel**: tope 10 + "Ver todos"; vista pública SOLO creador + 10+ aportes (fuentes solicitudes/destacados fuera).
+- **Biblioteca**: maestro `disableAllOficiales`; moderación SOLO-OCULTAR (`handleDeleteGeneric`, `handleDeleteAllyCard`); papelera reetiquetada.
+- **Imágenes**: borradas sin uso; `LOGOR`→applogo; kelsen→aviso; mascotas remapeadas (feliz/pensativo).
+- **Icono único**: `public/applogo.png` = logo RASTRO Preuniversitario (PWA, favicon, notifs, avatares); `rastro-pwa-icon*.png` ELIMINADOS y referencias a applogo; mipmaps regenerados; `play-store/` regenerado.
+- **UI/perf**: tema pre-pintado + fondo síncrono; ventana/WebView `#F2F2F7`; sin blur en Settings/Tema/Pomodoro; Tema sin rebote; `willChange`; sin `background-attachment: fixed`; flashcards lazy + prewarm datos-primero; chat topado 40; Pomodoro (botón atrás navega; layout 1 columna; header iconos; steppers 34px); paleta Tema en header móvil; WhatsApp flotante solo Inicio; popups fuera de rutas legales; aviso IA; `/eliminar-cuenta`; assetlinks + filtro App Links.
+- **Reglas (fix post-deploy)**: `gamificacion` propia + `system_config` pública.
+- **Play**: AAB v1 subido (versionCode 1); login Play verificado por Logcat; SHA firma `29:C5:E8:91:...:AB:27:D9` registrado (el `CF:0D` era otra llave).
+- **Git**: tags `v1.0`, `v1.0.1`, `v1.0.2`. REGLA: no push sin permiso explícito.
+- **Errores de refactors externos corregidos**: `isUserAdmin` (redefinido seguro en `UserProfile`), `Compass` (import en `MnemotecniasVaultView`), `isListening` (stub fijo en `OrsttyChat`); examen `CICLO ESCOLARES`→`CEPREQUINTOS` (`StudyWidgetsHub`).
+- **DECISIÓN VIDEOS (importante)**: los videos actuales (Firebase: videos de academias; local: arrays como `youtubePlaylistsData.js`) NO se usan: quedan intactos y AISLADOS. El sistema futuro será de playlists PÚBLICAS de YouTube agregadas por admin y usuarios, guardadas por cuenta. Lo curado por el autor irá a Firebase o local, PERO AÚN NO (solo plan, sin implementar ni contenido inicial).

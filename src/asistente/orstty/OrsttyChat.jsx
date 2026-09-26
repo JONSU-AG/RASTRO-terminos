@@ -117,6 +117,8 @@ export function OrsttyChat({
 
   const [inputVal, setInputVal] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  // Voz por micrófono retirada del chat: bandera fija en falso (no renderiza bloques de voz)
+  const [isListening] = useState(false);
   const [activeContext, setActiveContext] = useState(() => getContext());
   
   // Selector rápido de Materias
